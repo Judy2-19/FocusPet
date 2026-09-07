@@ -10,9 +10,11 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.focuspets.db.dao.FocusRecordDao
 import com.example.focuspets.db.dao.PetDao
 import com.example.focuspets.db.dao.UserCollectionDao
+import com.example.focuspets.db.dao.WardrobeDao
 import com.example.focuspets.db.entity.FocusRecordEntity
 import com.example.focuspets.db.entity.PetEntity
 import com.example.focuspets.db.entity.UserCollectionEntity
+import com.example.focuspets.db.entity.WardrobePurchaseEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -22,9 +24,10 @@ import kotlinx.coroutines.launch
     entities = [
         PetEntity::class,
         UserCollectionEntity::class,
-        FocusRecordEntity::class
+        FocusRecordEntity::class,
+        WardrobePurchaseEntity::class
     ],
-    version = 2,            // v1 → v2：预置宠物数据更新（表结构不变，仅数据行）
+    version = 3,            // v2 → v3：新增 wardrobe_purchases 表，记录猫咪妆扮消费
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -33,12 +36,30 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun petDao(): PetDao
     abstract fun userCollectionDao(): UserCollectionDao
     abstract fun focusRecordDao(): FocusRecordDao
+    abstract fun wardrobeDao(): WardrobeDao
 
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
         private val seedScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+        /**
+         * v2 → v3 结构迁移：新增 wardrobe_purchases 表，记录猫咪妆扮消费。
+         */
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS wardrobe_purchases (
+                        item_id TEXT PRIMARY KEY NOT NULL,
+                        item_type TEXT NOT NULL,
+                        cost INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
 
         /**
          * v1 → v2 数据迁移：把宠物图鉴数据替换为新的 9 只。
@@ -72,7 +93,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "focus_pets.db"
                 )
-                    .addMigrations(MIGRATION_1_2)   // 老版本设备：原地更新宠物数据，保留专注记录
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)   // 老版本设备：原地更新宠物数据，保留专注记录
                     .addCallback(SeedCallback)      // 首次建库：写入预置数据
                     .build()
                     .also { INSTANCE = it }

@@ -44,7 +44,9 @@ class FragmentCollection : Fragment() {
         viewModel.availablePoints.observe(viewLifecycleOwner) {
             binding.tvPoints.text = "可用积分 $it"
         }
-        viewModel.uiState.observe(viewLifecycleOwner) { petAdapter.submitList(it) }
+        viewModel.uiState.observe(viewLifecycleOwner) { list ->
+            petAdapter.submitList(list)
+        }
         viewModel.unlockEvent.observe(viewLifecycleOwner) { pet ->
             pet ?: return@observe
             Toast.makeText(

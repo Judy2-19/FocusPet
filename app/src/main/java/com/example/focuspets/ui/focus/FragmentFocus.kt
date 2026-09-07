@@ -104,8 +104,16 @@ class FragmentFocus : Fragment() {
                 }
                 if (!FocusService.isRunning) {
                     binding.tvRemaining.text = formatMillis(selectedMinutes * 60_000L)
+                    binding.etCustomMinutes.setText(selectedMinutes.toString())
                 }
             }
+        }
+
+        // 自定义时长
+        binding.btnCustom.setOnClickListener { applyCustomMinutes() }
+        binding.etCustomMinutes.setOnEditorActionListener { _, _, _ ->
+            applyCustomMinutes()
+            true
         }
 
         // 开始 / 放弃（同一按钮，按状态切换行为）
@@ -190,6 +198,19 @@ class FragmentFocus : Fragment() {
         }
     }
 
+    private fun applyCustomMinutes() {
+        if (FocusService.isRunning) return
+        val input = binding.etCustomMinutes.text.toString().trim()
+        val minutes = input.toIntOrNull()
+        if (minutes == null || minutes < 1 || minutes > 180) {
+            Toast.makeText(requireContext(), "请输入 1~180 之间的分钟数", Toast.LENGTH_SHORT).show()
+            return
+        }
+        selectedMinutes = minutes
+        binding.tvRemaining.text = formatMillis(selectedMinutes * 60_000L)
+        binding.toggleDuration.clearChecked()
+    }
+
     private fun startFocus() {
         val intent = Intent(requireContext(), FocusService::class.java).apply {
             action = FocusService.ACTION_START
@@ -259,13 +280,15 @@ class FragmentFocus : Fragment() {
     private fun renderRunning(remaining: Long?) {
         binding.btnStart.text = "放弃专注"
         binding.toggleDuration.isEnabled = false
+        binding.etCustomMinutes.isEnabled = false
+        binding.btnCustom.isEnabled = false
         binding.tvSubtitle.text = "专注中…请保持 App 在前台"
         if (remaining != null) {
             binding.tvRemaining.text = formatMillis(remaining)
             val percent = if (totalMillisAtStart > 0)
                 (((totalMillisAtStart - remaining) * 100) / totalMillisAtStart).toInt()
             else 0
-            binding.progressFocus.setProgressCompat(percent.coerceIn(0, 100), true)
+            binding.progressFocus.setProgress(percent.coerceIn(0, 100))
         } else {
             binding.tvRemaining.text = formatMillis(totalMillisAtStart)
         }
@@ -274,9 +297,11 @@ class FragmentFocus : Fragment() {
     private fun renderIdle() {
         binding.btnStart.text = "开始专注"
         binding.toggleDuration.isEnabled = true
+        binding.etCustomMinutes.isEnabled = true
+        binding.btnCustom.isEnabled = true
         binding.tvSubtitle.text = "选择时长，开始一次专注"
         binding.tvRemaining.text = formatMillis(selectedMinutes * 60_000L)
-        binding.progressFocus.setProgressCompat(0, true)
+        binding.progressFocus.setProgress(0)
     }
 
     private fun refreshPetMood() {

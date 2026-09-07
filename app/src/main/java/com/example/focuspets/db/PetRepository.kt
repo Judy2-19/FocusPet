@@ -5,6 +5,7 @@ import androidx.room.withTransaction
 import com.example.focuspets.db.dao.PetWithState
 import com.example.focuspets.db.entity.PetEntity
 import com.example.focuspets.db.entity.UserCollectionEntity
+import com.example.focuspets.db.entity.WardrobePurchaseEntity
 
 class PetRepository(private val db: AppDatabase) {
 
@@ -32,4 +33,18 @@ class PetRepository(private val db: AppDatabase) {
         val points = db.userCollectionDao().getAvailablePointsOnce()
         return db.petDao().getAffordableLockedPets(points)
     }
+
+    /** 已购买的猫咪妆扮 id 列表（LiveData） */
+    fun getWardrobeOwnedIds(): LiveData<List<String>> = db.wardrobeDao().getOwnedItemIds()
+
+    /**
+     * 购买猫咪妆扮：事务内校验积分并写入购买记录。
+     * 可用积分已包含 wardrobe_purchases 总消费，所以直接比较即可。
+     */
+    suspend fun buyWardrobeItem(itemId: String, itemType: String, cost: Int): Boolean =
+        db.withTransaction {
+            if (db.userCollectionDao().getAvailablePointsOnce() < cost) return@withTransaction false
+            db.wardrobeDao()
+                .insert(WardrobePurchaseEntity(itemId, itemType, cost)) > 0
+        }
 }

@@ -38,7 +38,9 @@
         android:id="@+id/pet_touch_area"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:clickable="true"
+        android:focusable="true">
 
         <View
             android:id="@+id/v_glow"
@@ -48,12 +50,21 @@
             android:background="@drawable/bg_glow_circle"
             android:visibility="gone" />
 
+        <!-- 小猫咪立绘（1 号宠物专用，按装备动态加载 assets 图） -->
+        <ImageView
+            android:id="@+id/iv_pet_cat"
+            android:layout_width="280dp"
+            android:layout_height="280dp"
+            android:layout_gravity="center"
+            android:scaleType="fitCenter"
+            android:visibility="gone" />
+
         <TextView
             android:id="@+id/tv_pet_emoji"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="💧"
+            android:text="🐱"
             android:textSize="130sp" />
 
         <!-- 生病状态的额头温度计贴纸 -->
@@ -66,6 +77,22 @@
             android:translationY="-74dp"
             android:text="🤒"
             android:textSize="40sp"
+            android:visibility="gone" />
+
+        <!-- 喵叫气泡 -->
+        <TextView
+            android:id="@+id/tv_meow_bubble"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_badge"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="4dp"
+            android:text="喵~"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:translationX="72dp"
+            android:translationY="-96dp"
             android:visibility="gone" />
     </FrameLayout>
 
@@ -136,5 +163,17 @@
             android:text="点击宠物切换 · 左右滑动也可以"
             android:textColor="#9E9E9E"
             android:textSize="11sp" />
+
+        <!-- 装扮小猫咪（仅 1 号宠物时显示） -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_wardrobe"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="🐱 装扮小猫"
+            android:visibility="gone"
+            app:cornerRadius="16dp" />
+
     </LinearLayout>
 </LinearLayout>

@@ -18,7 +18,7 @@ object InitialDataProvider {
 
     /** 9 只预置宠物：普通 x3、稀有 x3、传说 x3（id 固定 1~9，与 MIGRATION 保持一致） */
     val PRESET_PETS: List<PetEntity> = listOf(
-        PetEntity(1, "小水滴", "💧", Rarity.COMMON, 0, "最基础的元素精灵"),
+        PetEntity(1, "小猫咪", "🐱", Rarity.COMMON, 0, "可换装的小猫咪，默认灰色"),
         PetEntity(2, "火苗崽", "🔥", Rarity.COMMON, 50, "充满热情的小家伙"),
         PetEntity(3, "木灵", "🌿", Rarity.COMMON, 100, "喜欢安静地睡觉"),
         PetEntity(4, "星光兽", "⭐", Rarity.RARE, 300, "只在深夜出现"),
@@ -30,7 +30,7 @@ object InitialDataProvider {
     )
 
     /** 首次赠送的宠物：1 号小水滴（unlock_cost = 0，天然不需要特判） */
-    private const val FREE_PET_ID = 1
+    const val FREE_PET_ID = 1
 
     /**
      * 检查数据库是否为空；为空则插入预置宠物并默认赠送解锁 1 号。

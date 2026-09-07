@@ -41,24 +41,26 @@ interface UserCollectionDao {
     )
     suspend fun getSpentPoints(): Int
 
-    /** 可用积分（LiveData 版）：总专注分钟 - 已消耗，随数据库变化自动刷新 */
+    /** 可用积分（LiveData 版）：总专注分钟 - 已解锁宠物消耗 - 妆扮消费 */
     @Query(
         """
         SELECT (SELECT COALESCE(SUM(duration_minutes), 0) FROM focus_records)
              - (SELECT COALESCE(SUM(pets.unlock_cost), 0)
                 FROM pets
                 INNER JOIN user_collection ON pets.id = user_collection.pet_id)
+             - (SELECT COALESCE(SUM(cost), 0) FROM wardrobe_purchases)
         """
     )
     fun getAvailablePoints(): LiveData<Int>
 
-    /** 可用积分（suspend 版）：解锁事务内校验用 */
+    /** 可用积分（suspend 版）：解锁/购买事务内校验用 */
     @Query(
         """
         SELECT (SELECT COALESCE(SUM(duration_minutes), 0) FROM focus_records)
              - (SELECT COALESCE(SUM(pets.unlock_cost), 0)
                 FROM pets
                 INNER JOIN user_collection ON pets.id = user_collection.pet_id)
+             - (SELECT COALESCE(SUM(cost), 0) FROM wardrobe_purchases)
         """
     )
     suspend fun getAvailablePointsOnce(): Int

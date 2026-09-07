@@ -43,17 +43,12 @@
             android:textColor="#757575"
             android:textSize="14sp" />
 
-        <!-- 进度条：已专注时长占比 -->
-        <com.google.android.material.progressindicator.LinearProgressIndicator
+        <!-- 进度条：已专注时长占比（自定义：橘色已走 + 白色未走 + 黑色竖线分割） -->
+        <com.example.focuspets.ui.focus.FocusProgressBar
             android:id="@+id/progress_focus"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:max="100"
-            app:indicatorColor="#FF7043"
-            app:trackColor="#F5F5F5"
-            app:trackCornerRadius="6dp"
-            app:trackThickness="12dp" />
+            android:layout_height="12dp"
+            android:layout_marginTop="32dp" />
 
         <!-- 时长选择：15 / 25 / 45 分钟 -->
         <com.google.android.material.button.MaterialButtonToggleGroup
@@ -62,7 +57,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="40dp"
             app:checkedButton="@id/btn_25"
-            app:selectionRequired="true"
+            app:selectionRequired="false"
             app:singleSelection="true">
 
             <Button
@@ -86,6 +81,38 @@
                 android:layout_height="wrap_content"
                 android:text="45 分钟" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <!-- 自定义时长 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="自定义分钟（1~180）">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_custom_minutes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:maxLength="3"
+                    android:text="25" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_custom"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:text="应用" />
+        </LinearLayout>
 
         <!-- 开始 / 放弃 -->
         <com.google.android.material.button.MaterialButton
