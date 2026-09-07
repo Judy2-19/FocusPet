@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- GLOW 心情下的金色光环（配合 alpha 脉冲动画） -->
+<!-- GLOW 心情下的柔光光晕：中心暖金、向外渐隐（代替原先的硬描边大圈），
+     配合 alpha + scale 脉冲，营造「小猫周围有光晕」的氛围 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="oval">
-    <solid android:color="#29FFB300" />
-    <stroke
-        android:width="6dp"
-        android:color="#66FFB300" />
+    <gradient
+        android:type="radial"
+        android:gradientRadius="150dp"
+        android:centerX="0.5"
+        android:centerY="0.5"
+        android:centerColor="#B3FFD54F"
+        android:endColor="#00FFFFFF" />
 </shape>

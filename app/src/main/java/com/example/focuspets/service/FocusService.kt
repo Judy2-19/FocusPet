@@ -58,6 +58,14 @@ class FocusService : Service() {
         @Volatile
         var isRunning: Boolean = false
             private set
+
+        /**
+         * 锁机模式接管会话时为 true：屏蔽"切后台 5 秒失败"判定。
+         * 锁机时底层专注页会被暂停，但用户其实仍在 App 内（被屏幕固定锁住），
+         * 不应因此判失败。
+         */
+        @Volatile
+        var lockActive: Boolean = false
     }
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)

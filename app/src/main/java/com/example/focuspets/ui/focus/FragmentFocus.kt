@@ -30,6 +30,7 @@ import com.example.focuspets.db.AppDatabase
 import com.example.focuspets.db.PetRepository
 import com.example.focuspets.db.entity.PetEntity
 import com.example.focuspets.model.PetCareState
+import com.example.focuspets.model.Backgrounds
 import com.example.focuspets.service.FocusService
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
@@ -93,6 +94,9 @@ class FragmentFocus : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // 应用用户选中的背景色
+        Backgrounds.apply(requireContext(), binding.root)
 
         // 时长选择（MaterialButtonToggleGroup 单选）
         binding.toggleDuration.addOnButtonCheckedListener { _, checkedId, isChecked ->
@@ -159,7 +163,8 @@ class FragmentFocus : Fragment() {
     /** 失去焦点：启动 5 秒倒计时，期间不回来就通知服务判定失败 */
     override fun onPause() {
         super.onPause()
-        if (FocusService.isRunning) {
+        // 锁机模式已接管会话时不判失败（用户在 App 内被屏幕固定锁住）
+        if (FocusService.isRunning && !FocusService.lockActive) {
             bgHandler.postDelayed(failRunnable, BACKGROUND_TOLERANCE_MS)
         }
     }

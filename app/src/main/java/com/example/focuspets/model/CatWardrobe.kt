@@ -98,9 +98,9 @@ object CatWardrobe {
      * 所以解析时若未穿裙子，皇冠自动忽略。
      */
     fun assetPathFor(color: String, dress: Boolean, crown: String?): String = when {
-        dress && !crown.isNullOrBlank() -> "cat/${color}_dress_$crown.jpg"
-        dress -> "cat/${color}_dress.jpg"
-        else -> "cat/$color.jpg"
+        dress && !crown.isNullOrBlank() -> "cat/${color}_dress_$crown.png"
+        dress -> "cat/${color}_dress.png"
+        else -> "cat/$color.png"
     }
 
     fun assetPath(context: Context): String = assetPathFor(

@@ -19,8 +19,8 @@ object InitialDataProvider {
     /** 9 只预置宠物：普通 x3、稀有 x3、传说 x3（id 固定 1~9，与 MIGRATION 保持一致） */
     val PRESET_PETS: List<PetEntity> = listOf(
         PetEntity(1, "小猫咪", "🐱", Rarity.COMMON, 0, "可换装的小猫咪，默认灰色"),
-        PetEntity(2, "火苗崽", "🔥", Rarity.COMMON, 50, "充满热情的小家伙"),
-        PetEntity(3, "木灵", "🌿", Rarity.COMMON, 100, "喜欢安静地睡觉"),
+        PetEntity(2, "小狗", "🐶", Rarity.COMMON, 50, "忠诚的小伙伴（暂未实装立绘）"),
+        PetEntity(3, "龙猫", "🐹", Rarity.COMMON, 100, "软糯的小毛球（暂未实装立绘）"),
         PetEntity(4, "星光兽", "⭐", Rarity.RARE, 300, "只在深夜出现"),
         PetEntity(5, "雷电犬", "⚡", Rarity.RARE, 500, "行动迅捷如闪电"),
         PetEntity(6, "冰晶狐", "❄️", Rarity.RARE, 700, "高傲的冰雪贵族"),

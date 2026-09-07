@@ -23,6 +23,12 @@
             </intent-filter>
         </activity>
 
+        <!-- 锁机专注：独立全屏、屏幕固定；singleTask 避免重复入栈 -->
+        <activity
+            android:name=".ui.lock.LockActivity"
+            android:exported="false"
+            android:launchMode="singleTask" />
+
         <!-- 专注计时前台服务：specialUse 类型 + 子类型说明 -->
         <service
             android:name=".service.FocusService"

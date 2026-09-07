@@ -12,6 +12,7 @@ import com.example.focuspets.databinding.FragmentCollectionBinding
 import com.example.focuspets.db.AppDatabase
 import com.example.focuspets.db.PetRepository
 import com.example.focuspets.debug.DebugHelper
+import com.example.focuspets.model.Backgrounds
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class FragmentCollection : Fragment() {
@@ -38,6 +39,9 @@ class FragmentCollection : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // 应用用户选中的背景色
+        Backgrounds.apply(requireContext(), binding.root)
 
         val petAdapter = PetAdapter(::handlePetClick)
         binding.rvPokedex.apply {

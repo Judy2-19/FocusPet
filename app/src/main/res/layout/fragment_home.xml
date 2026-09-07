@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#FAFAFA">
+    android:background="@color/page_background">
 
     <!-- 顶栏：标题 + 图鉴入口 -->
     <LinearLayout
@@ -44,8 +44,8 @@
 
         <View
             android:id="@+id/v_glow"
-            android:layout_width="280dp"
-            android:layout_height="280dp"
+            android:layout_width="340dp"
+            android:layout_height="340dp"
             android:layout_gravity="center"
             android:background="@drawable/bg_glow_circle"
             android:visibility="gone" />
@@ -143,7 +143,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="距解锁 🔥 火苗崽 还差 50 积分"
+            android:text="距解锁 🐶 小狗 还差 50 积分"
             android:textColor="#757575"
             android:textSize="12sp" />
 
@@ -173,6 +173,16 @@
             android:layout_marginTop="14dp"
             android:text="🐱 装扮小猫"
             android:visibility="gone"
+            app:cornerRadius="16dp" />
+
+        <!-- 换背景色（番茄 ToDo 风格色板） -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_bg"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="🎨 换背景"
             app:cornerRadius="16dp" />
 
         <!-- 调试按钮：循环切换宠物心情三态（仅 test 分支用） -->

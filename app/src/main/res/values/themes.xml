@@ -1,3 +1,7 @@
 <resources>
-    <style name="Theme.FocusPets" parent="Theme.Material3.DayNight.NoActionBar" />
+    <style name="Theme.FocusPets" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- 整 App 窗口背景统一为小猫图片底色（暖米白），避免猫图与纯白页面产生突兀的色块边界 -->
+        <item name="android:windowBackground">@color/page_background</item>
+        <item name="android:colorBackground">@color/page_background</item>
+    </style>
 </resources>

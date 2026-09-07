@@ -1,11 +1,17 @@
 package com.example.focuspets.db
 
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.liveData
 import androidx.room.withTransaction
+import com.example.focuspets.db.dao.DayMinutes
 import com.example.focuspets.db.dao.PetWithState
 import com.example.focuspets.db.entity.PetEntity
 import com.example.focuspets.db.entity.UserCollectionEntity
 import com.example.focuspets.db.entity.WardrobePurchaseEntity
+import kotlinx.coroutines.Dispatchers
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 class PetRepository(private val db: AppDatabase) {
 
@@ -47,4 +53,69 @@ class PetRepository(private val db: AppDatabase) {
             db.wardrobeDao()
                 .insert(WardrobePurchaseEntity(itemId, itemType, cost)) > 0
         }
+
+    // ---------------- 专注统计 ----------------
+
+    /** 今日专注分钟数 */
+    fun getTodayMinutes(): LiveData<Int> = liveData(Dispatchers.IO) {
+        emit(db.focusRecordDao().getMinutesOnDate(todayStr()))
+    }
+
+    /** 累计专注分钟数（= 累计获得积分） */
+    fun getTotalMinutes(): LiveData<Int> = liveData(Dispatchers.IO) {
+        emit(db.focusRecordDao().getTotalPoints())
+    }
+
+    /** 专注总次数 */
+    fun getSessionCount(): LiveData<Int> = liveData(Dispatchers.IO) {
+        emit(db.focusRecordDao().getSessionCount())
+    }
+
+    /** 连续打卡天数（今天没专注也不算断签，从昨天往前数） */
+    fun getStreak(): LiveData<Int> = liveData(Dispatchers.IO) {
+        emit(computeStreak())
+    }
+
+    /** 近 7 天专注分钟数（含今天），用于柱状图 */
+    fun getLast7Days(): LiveData<List<DayBar>> = liveData(Dispatchers.IO) {
+        emit(buildLast7())
+    }
+
+    // ---- 统计计算辅助（日期用 Calendar 兼容 minSdk 24） ----
+
+    private fun todayStr(): String =
+        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Calendar.getInstance().time)
+
+    private suspend fun computeStreak(): Int {
+        val dates = db.focusRecordDao().getDailyMinutes().map { it.date }.toSet()
+        if (dates.isEmpty()) return 0
+        val cal = Calendar.getInstance()
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        // 今天尚未专注不算断签：从今天或昨天开始往前数
+        if (sdf.format(cal.time) !in dates) cal.add(Calendar.DAY_OF_MONTH, -1)
+        var streak = 0
+        while (sdf.format(cal.time) in dates) {
+            streak++
+            cal.add(Calendar.DAY_OF_MONTH, -1)
+        }
+        return streak
+    }
+
+    private suspend fun buildLast7(): List<DayBar> {
+        val map = db.focusRecordDao().getDailyMinutes().associate { it.date to it.minutes }
+        val cal = Calendar.getInstance()
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val weekLabels = arrayOf("日", "一", "二", "三", "四", "五", "六")
+        cal.add(Calendar.DAY_OF_MONTH, -6)
+        return (0..6).map {
+            val key = sdf.format(cal.time)
+            val label = "周" + weekLabels[cal.get(Calendar.DAY_OF_WEEK) - 1]
+            val bar = DayBar(label, map[key] ?: 0)
+            cal.add(Calendar.DAY_OF_MONTH, 1)
+            bar
+        }
+    }
 }
+
+/** 近 7 天柱状图的一项：星期标签 + 当天专注分钟数 */
+data class DayBar(val label: String, val minutes: Int)

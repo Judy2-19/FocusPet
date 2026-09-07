@@ -33,6 +33,9 @@ import com.example.focuspets.debug.DebugHelper
 import com.example.focuspets.model.CatWardrobe
 import com.example.focuspets.model.PetCareState
 import com.example.focuspets.model.PetMood
+import com.example.focuspets.model.Backgrounds
+import com.example.focuspets.model.SettingsManager
+import com.example.focuspets.ui.settings.BgColorPickerDialog
 import com.example.focuspets.service.FocusService
 import com.example.focuspets.ui.wardrobe.CatWardrobeBottomSheet
 import com.example.focuspets.ui.wardrobe.WARDROBE_CHANGED_KEY
@@ -58,6 +61,9 @@ class HomeFragment : Fragment() {
     // 动画引用（离开页面时取消，防止内存泄漏）
     private var breathingAnimator: AnimatorSet? = null
     private var glowPulseAnimator: ObjectAnimator? = null
+    private var glowScaleAnimator: AnimatorSet? = null
+    /** 当前呼吸动画是否处于 GLOW 的「更快更活泼」模式，避免每次 render 都重启 */
+    private var glowBreathOn = false
 
     // 小猫咪活体行为：喵叫 / 侧壁跳跃 / 凑近嗅探
     private var soundPool: SoundPool? = null
@@ -90,6 +96,14 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // 应用用户选中的背景色（首页始终铺满用户色）
+        Backgrounds.apply(requireContext(), binding.root)
+
+        // 首次进入还没选过背景色 → 弹出色板选择（番茄 ToDo 风格）
+        if (!SettingsManager.isBgChosen(requireContext())) {
+            showBgPicker()
+        }
+
         // 右上角图鉴入口
         binding.btnPokedex.setOnClickListener {
             (activity as? MainActivity)?.navigateToCollection()
@@ -102,6 +116,9 @@ class HomeFragment : Fragment() {
         binding.btnWardrobe.setOnClickListener {
             CatWardrobeBottomSheet().show(parentFragmentManager, "cat_wardrobe")
         }
+
+        // 换背景：随时重新选择全局背景色
+        binding.btnBg.setOnClickListener { showBgPicker() }
         parentFragmentManager.setFragmentResultListener(
             WARDROBE_CHANGED_KEY, viewLifecycleOwner
         ) { _, _ -> loadCatImage() }
@@ -122,6 +139,14 @@ class HomeFragment : Fragment() {
         }
 
         viewModel.uiState.observe(viewLifecycleOwner) { render(it) }
+    }
+
+    /** 弹出背景色选择（首次进入 or 手动点击「换背景」） */
+    private fun showBgPicker() {
+        if (_binding == null) return
+        val dialog = BgColorPickerDialog()
+        dialog.onApplied = { Backgrounds.apply(requireContext(), binding.root) }
+        dialog.show(parentFragmentManager, "bg_picker")
     }
 
     override fun onStart() {
@@ -188,19 +213,21 @@ class HomeFragment : Fragment() {
 
     // ---------------- 属性动画 ----------------
 
-    /** 呼吸动画：scale 1.0 ↔ 1.06 无限往返 */
-    private fun startBreathing() {
+    /** 呼吸动画：scale 1.0 ↔ 1.06 无限往返；glow=true 时更快、幅度更大，显得更活泼 */
+    private fun startBreathing(glow: Boolean = false) {
         // repeatMode / repeatCount 是 ObjectAnimator 的属性，不能写在 AnimatorSet 上
         val target = activePetView
         breathingAnimator?.cancel()
-        val scaleX = ObjectAnimator.ofFloat(target, View.SCALE_X, 1f, 1.06f).apply {
-            duration = 1200
+        val amp = if (glow) 1.10f else 1.06f
+        val dur = if (glow) 600L else 1200L
+        val scaleX = ObjectAnimator.ofFloat(target, View.SCALE_X, 1f, amp).apply {
+            duration = dur
             repeatMode = ValueAnimator.REVERSE
             repeatCount = ValueAnimator.INFINITE
             interpolator = AccelerateDecelerateInterpolator()
         }
-        val scaleY = ObjectAnimator.ofFloat(target, View.SCALE_Y, 1f, 1.06f).apply {
-            duration = 1200
+        val scaleY = ObjectAnimator.ofFloat(target, View.SCALE_Y, 1f, amp).apply {
+            duration = dur
             repeatMode = ValueAnimator.REVERSE
             repeatCount = ValueAnimator.INFINITE
             interpolator = AccelerateDecelerateInterpolator()
@@ -354,20 +381,45 @@ class HomeFragment : Fragment() {
         }, 1000)
     }
 
-    /** GLOW 状态：金色光环呼吸脉冲 */
+    /** GLOW 状态：柔光光晕呼吸（alpha + scale 脉冲），营造「周围有光晕」的活泼氛围 */
     private fun startGlowPulse() {
-        if (glowPulseAnimator?.isRunning == true) return
-        glowPulseAnimator = ObjectAnimator.ofFloat(binding.vGlow, View.ALPHA, 0.4f, 1f).apply {
-            duration = 800
-            repeatMode = ValueAnimator.REVERSE
-            repeatCount = ValueAnimator.INFINITE
-            start()
+        if (glowPulseAnimator?.isRunning != true) {
+            glowPulseAnimator = ObjectAnimator.ofFloat(binding.vGlow, View.ALPHA, 0.5f, 1f).apply {
+                duration = 700
+                repeatMode = ValueAnimator.REVERSE
+                repeatCount = ValueAnimator.INFINITE
+                start()
+            }
+        }
+        if (glowScaleAnimator?.isRunning != true) {
+            val sx = ObjectAnimator.ofFloat(binding.vGlow, View.SCALE_X, 0.92f, 1.08f).apply {
+                duration = 1100
+                repeatMode = ValueAnimator.REVERSE
+                repeatCount = ValueAnimator.INFINITE
+                interpolator = AccelerateDecelerateInterpolator()
+            }
+            val sy = ObjectAnimator.ofFloat(binding.vGlow, View.SCALE_Y, 0.92f, 1.08f).apply {
+                duration = 1100
+                repeatMode = ValueAnimator.REVERSE
+                repeatCount = ValueAnimator.INFINITE
+                interpolator = AccelerateDecelerateInterpolator()
+            }
+            glowScaleAnimator = AnimatorSet().apply {
+                playTogether(sx, sy)
+                start()
+            }
         }
     }
 
     private fun stopGlowPulse() {
         glowPulseAnimator?.cancel()
         glowPulseAnimator = null
+        glowScaleAnimator?.cancel()
+        glowScaleAnimator = null
+        // 复位光晕视图，避免离开 GLOW 后留下缩放/透明度残留
+        binding.vGlow.scaleX = 1f
+        binding.vGlow.scaleY = 1f
+        binding.vGlow.alpha = 1f
     }
 
     // ---------------- 渲染 ----------------
@@ -379,7 +431,7 @@ class HomeFragment : Fragment() {
         val isCat = state.selectedPet.id == CatWardrobe.CAT_PET_ID
         if (isCat != isCatSelected) {
             isCatSelected = isCat
-            startBreathing()      // 动画目标视图换了，重启呼吸动画
+            startBreathing(glow = glowBreathOn)      // 动画目标视图换了，重启呼吸（保持当前 GLOW 节奏）
         }
         if (isCat) {
             binding.ivPetCat.visibility = View.VISIBLE
@@ -418,6 +470,10 @@ class HomeFragment : Fragment() {
                 binding.vGlow.visibility = View.GONE
                 activePetView.alpha = 0.55f      // 无精打采
                 stopGlowPulse()
+                if (glowBreathOn) {        // 退出 GLOW：呼吸恢复普通节奏
+                    glowBreathOn = false
+                    startBreathing(glow = false)
+                }
             }
 
             PetMood.GLOW -> {
@@ -429,6 +485,11 @@ class HomeFragment : Fragment() {
                 binding.vGlow.visibility = View.VISIBLE
                 activePetView.alpha = 1f
                 startGlowPulse()
+                // 小猫更活泼：切换到更快、幅度更大的呼吸（仅切换一次，避免每次 render 重启）
+                if (!glowBreathOn) {
+                    glowBreathOn = true
+                    startBreathing(glow = true)
+                }
             }
 
             PetMood.NORMAL -> {
@@ -440,6 +501,10 @@ class HomeFragment : Fragment() {
                 binding.vGlow.visibility = View.GONE
                 activePetView.alpha = 1f
                 stopGlowPulse()
+                if (glowBreathOn) {        // 退出 GLOW：呼吸恢复普通节奏
+                    glowBreathOn = false
+                    startBreathing(glow = false)
+                }
             }
         }
     }

@@ -4,5 +4,6 @@
     <color name="rarity_legend">#FFB300</color>
     <color name="text_primary">#212121</color>
     <color name="text_hint">#9E9E9E</color>
-    <color name="page_background">#FAFAFA</color>
+    <color name="page_background">#FEF8EA</color>
+    <color name="cat_accent">#FFB300</color>
 </resources>
