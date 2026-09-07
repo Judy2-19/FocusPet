@@ -1,0 +1,8 @@
+<resources>
+    <color name="rarity_common">#9E9E9E</color>
+    <color name="rarity_rare">#2196F3</color>
+    <color name="rarity_legend">#FFB300</color>
+    <color name="text_primary">#212121</color>
+    <color name="text_hint">#9E9E9E</color>
+    <color name="page_background">#FAFAFA</color>
+</resources>

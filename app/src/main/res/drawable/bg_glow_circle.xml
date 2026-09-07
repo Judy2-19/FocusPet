@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GLOW 心情下的金色光环（配合 alpha 脉冲动画） -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="#29FFB300" />
+    <stroke
+        android:width="6dp"
+        android:color="#66FFB300" />
+</shape>
