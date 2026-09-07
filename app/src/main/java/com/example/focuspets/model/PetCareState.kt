@@ -47,6 +47,32 @@ object PetCareState {
         else -> PetMood.NORMAL
     }
 
+    /**
+     * 调试专用（仅 test 分支）：强制写入某种心情状态。
+     * - SICK：饥饿=true、连续成功=0
+     * - GLOW：饥饿=false、连续成功=阈值
+     * - NORMAL：饥饿=false、连续成功=0
+     */
+    fun debugForceMood(context: Context, mood: PetMood) {
+        prefs(context).edit().apply {
+            when (mood) {
+                PetMood.SICK -> {
+                    putBoolean(KEY_HUNGRY, true)
+                    putInt(KEY_CONSECUTIVE_SUCCESS, 0)
+                }
+                PetMood.GLOW -> {
+                    putBoolean(KEY_HUNGRY, false)
+                    putInt(KEY_CONSECUTIVE_SUCCESS, GLOW_THRESHOLD)
+                }
+                PetMood.NORMAL -> {
+                    putBoolean(KEY_HUNGRY, false)
+                    putInt(KEY_CONSECUTIVE_SUCCESS, 0)
+                }
+            }
+            apply()
+        }
+    }
+
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 }

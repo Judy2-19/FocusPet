@@ -21,4 +21,8 @@ interface FocusRecordDao {
         "SELECT COALESCE(SUM(duration_minutes), 0) FROM focus_records WHERE focus_date = :date"
     )
     suspend fun getMinutesOnDate(date: String): Int
+
+    /** 调试（仅 test 分支）：删除测试注入的积分记录，方便清掉大额积分 */
+    @Query("DELETE FROM focus_records WHERE focus_date = :marker")
+    suspend fun deleteTestGrants(marker: String)
 }

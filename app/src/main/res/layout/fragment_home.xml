@@ -175,5 +175,15 @@
             android:visibility="gone"
             app:cornerRadius="16dp" />
 
+        <!-- 调试按钮：循环切换宠物心情三态（仅 test 分支用） -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_debug_mood"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="🎭 调试心情：普通"
+            app:cornerRadius="16dp" />
+
     </LinearLayout>
 </LinearLayout>

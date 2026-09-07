@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.example.focuspets.databinding.FragmentCollectionBinding
 import com.example.focuspets.db.AppDatabase
 import com.example.focuspets.db.PetRepository
+import com.example.focuspets.debug.DebugHelper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class FragmentCollection : Fragment() {
@@ -22,6 +23,9 @@ class FragmentCollection : Fragment() {
         val db = AppDatabase.getInstance(requireActivity().applicationContext)
         CollectionViewModelFactory(PetRepository(db))
     }
+
+    /** 调试（仅 test 分支）：当前是否已全部解锁，决定满配按钮的行为 */
+    private var allUnlocked = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -46,6 +50,21 @@ class FragmentCollection : Fragment() {
         }
         viewModel.uiState.observe(viewLifecycleOwner) { list ->
             petAdapter.submitList(list)
+            // 调试按钮：根据「是否已全部解锁」切换文案
+            allUnlocked = list.isNotEmpty() && list.all { it.isUnlocked }
+            binding.btnDebugUnlock.text = if (allUnlocked) "🛠 重置进度" else "🛠 一键满配"
+        }
+
+        // 调试：满配 / 重置进度
+        binding.btnDebugUnlock.setOnClickListener {
+            if (allUnlocked) DebugHelper.resetToInitial(requireContext())
+            else DebugHelper.unlockAll(requireContext())
+        }
+
+        // 调试：把可用积分补到 100 万
+        binding.btnDebugPoints.setOnClickListener {
+            DebugHelper.grantPoints(requireContext())
+            Toast.makeText(requireContext(), "💰 积分已补到 100 万", Toast.LENGTH_SHORT).show()
         }
         viewModel.unlockEvent.observe(viewLifecycleOwner) { pet ->
             pet ?: return@observe

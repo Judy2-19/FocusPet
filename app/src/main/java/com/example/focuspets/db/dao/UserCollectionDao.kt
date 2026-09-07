@@ -32,6 +32,14 @@ interface UserCollectionDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun unlockPet(collection: UserCollectionEntity)
 
+    /** 调试（仅 test 分支）：批量解锁（IGNORE 冲突跳过，幂等） */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun unlockPets(collections: List<UserCollectionEntity>)
+
+    /** 调试（仅 test 分支）：清空除 keepId 以外的所有收藏记录（回到初始仅赠送首只） */
+    @Query("DELETE FROM user_collection WHERE pet_id != :keepId")
+    suspend fun deleteExcept(keepId: Int)
+
     /** 已消耗积分（已解锁宠物的 unlock_cost 之和） */
     @Query(
         """

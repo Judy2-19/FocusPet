@@ -29,7 +29,9 @@ import com.example.focuspets.R
 import com.example.focuspets.databinding.FragmentHomeBinding
 import com.example.focuspets.db.AppDatabase
 import com.example.focuspets.db.PetRepository
+import com.example.focuspets.debug.DebugHelper
 import com.example.focuspets.model.CatWardrobe
+import com.example.focuspets.model.PetCareState
 import com.example.focuspets.model.PetMood
 import com.example.focuspets.service.FocusService
 import com.example.focuspets.ui.wardrobe.CatWardrobeBottomSheet
@@ -105,6 +107,19 @@ class HomeFragment : Fragment() {
         ) { _, _ -> loadCatImage() }
 
         initMeowSound()
+
+        // 调试：循环切换心情三态，验证 SICK / NORMAL / GLOW 渲染（仅 test 分支）
+        fun moodLabel(m: PetMood) = when (m) {
+            PetMood.SICK -> "生病"
+            PetMood.GLOW -> "发光"
+            PetMood.NORMAL -> "普通"
+        }
+        binding.btnDebugMood.text = "🎭 调试心情：" + moodLabel(PetCareState.getMood(requireContext()))
+        binding.btnDebugMood.setOnClickListener {
+            val mood = DebugHelper.cycleMood(requireContext())
+            viewModel.refreshMood(requireContext())
+            binding.btnDebugMood.text = "🎭 调试心情：" + moodLabel(mood)
+        }
 
         viewModel.uiState.observe(viewLifecycleOwner) { render(it) }
     }

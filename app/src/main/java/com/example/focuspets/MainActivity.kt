@@ -3,6 +3,7 @@ package com.example.focuspets
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.example.focuspets.databinding.ActivityMainBinding
+import com.example.focuspets.debug.DebugHelper
 import com.example.focuspets.ui.collection.FragmentCollection
 import com.example.focuspets.ui.focus.FragmentFocus
 import com.example.focuspets.ui.home.HomeFragment
@@ -15,6 +16,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // test 分支：首次启动自动满配 + 积分补到 100 万（仅一次）
+        DebugHelper.ensureTestSetup(this)
 
         binding.bottomNav.setOnItemSelectedListener { item ->
             selectTab(item.itemId)
