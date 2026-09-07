@@ -6,19 +6,26 @@
     android:layout_height="match_parent"
     android:background="@color/page_background">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center_horizontal"
-        android:orientation="vertical"
-        android:padding="24dp">
+        android:fillViewport="true"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:paddingBottom="40dp">
 
         <TextView
             android:id="@+id/tv_lock_badge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="48dp"
-            android:text="🔒 锁机专注中"
+            android:text="🔒 锁机模式"
             android:textColor="@color/cat_accent"
             android:textSize="16sp"
             android:textStyle="bold" />
@@ -136,7 +143,8 @@
             android:text="🔒 开始后手机会被固定在本页面（屏幕固定）\n专注结束或主动放弃后可解锁离开"
             android:textColor="@color/text_hint"
             android:textSize="12sp" />
-    </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
 
     <!-- 专注完成遮罩 -->
     <FrameLayout

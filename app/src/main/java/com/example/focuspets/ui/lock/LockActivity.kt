@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
@@ -62,7 +63,6 @@ class LockActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         Backgrounds.apply(this, binding.lockRoot)
-        enterImmersive()
 
         // 接管会话：屏蔽底层专注页的「切后台失败」判定
         FocusService.lockActive = true
@@ -76,6 +76,7 @@ class LockActivity : AppCompatActivity() {
         binding.btnUnlock.setOnClickListener { unlockAndFinish() }
 
         loadCatImage()
+        onBackPressedDispatcher.addCallback(this, backCallback)
         if (FocusService.isRunning) renderRunning(null) else renderIdle()
     }
 
@@ -103,9 +104,11 @@ class LockActivity : AppCompatActivity() {
         try { if (pinned) stopLockTask() } catch (_: Exception) { }
     }
 
-    override fun onBackPressed() {
-        // 锁机中：返回键不直接退出，必须主动放弃，避免误触解屏
-        if (FocusService.isRunning) confirmCancel() else super.onBackPressed()
+    // 返回键处理：空闲态直接退出，锁机中弹「放弃」二次确认（避免误触解屏）
+    private val backCallback = object : OnBackPressedCallback(true) {
+        override fun handleOnBackPressed() {
+            if (FocusService.isRunning) confirmCancel() else finish()
+        }
     }
 
     // ---------------- 沉浸 / 锁屏 ----------------
@@ -157,6 +160,8 @@ class LockActivity : AppCompatActivity() {
         ContextCompat.startForegroundService(this, intent)
         totalMillisAtStart = selectedMinutes * 60_000L
         renderRunning(null)
+        // 进入锁机瞬间才隐藏系统栏（沉浸），避免误入时无法一次返回退出
+        enterImmersive()
         // 屏幕固定：番茄 ToDo 学霸模式同款，把手机锁在当前页面
         try {
             startLockTask()
