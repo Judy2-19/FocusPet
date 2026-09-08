@@ -43,7 +43,7 @@
 
 ### 1. 首页 · 宠物陪伴（`ui/home`）
 
-- **双形态渲染**：1 号「小猫咪」用 `assets/cat/*.jpg` 立绘（`ImageView`），其余 8 只仍用 emoji（`TextView`），按当前选中宠物自动切换。
+- **双形态渲染**：1 号「小猫咪」与 2 号「小狗」均用 `assets/cat/*.jpg` / `assets/dog/*.png` 立绘（`ImageView`），其余 7 只仍用 emoji（`TextView`），按当前选中宠物自动切换。
 - **呼吸动画**：宠物以 1.0 ↔ 1.06 缩放无限往返（`AnimatorSet` + `REVERSE`），作用于当前可见的宠物视图。
 - **切换宠物**：点击宠物 / 左右滑动，在「已解锁列表」中循环切换（`selectNext` / `selectPrev`）。
 - **跳跃反馈**：每次切换触发 `OvershootInterpolator` 跳跃动画。
@@ -80,6 +80,25 @@
 - **立绘路径解析**：`cat/{颜色}.jpg` → `cat/{颜色}_dress.jpg` → `cat/{颜色}_dress_{王冠}.jpg`，由 `CatWardrobe.assetPathFor()` 统一生成。
 - **水印处理**：原始素材左上角与右下角有「豆包AI生成」水印，已用 `process_cat_assets.py` 采样背景色后将四角区域涂平（输出在 `app/src/main/assets/cat/`，共 21 张）。
 - **积分扣减**：购买写入 `wardrobe_purchases` 表，可用积分公式同步纳入该项消费（见第六节）。
+
+### 1.3 小狗妆扮系统（积购买 · 可换装）
+
+入口：首页「🐶 装扮小狗」按钮（仅 2 号小狗被选中时显示），打开 `DogWardrobeBottomSheet` 底部面板。
+
+| 类别   | 条目                     | 单价              | 说明                                          |
+| ---- | ---------------------- | --------------- | ------------------------------------------- |
+| 尾巴   | 长尾巴 / 短尾巴             | 免费自选            | 免费切换，决定本体与配饰树（长尾=礼服、短尾=西服）                  |
+| 皮肤颜色 | 灰（默认）/ 白 / 粉 / 黄 / 黑 / 彩色 | 50 积分（灰色免费）      | 灰色默认拥有，其余需购买；把猫的"蓝"换成了"彩色"                 |
+| 配饰   | 红领带 → 西服/礼服 → 学士帽       | 120 / 150 / 180 积分 | 必须按"领带 → 西服或礼服 → 学士帽"顺序购买                 |
+
+规则与实现要点：
+
+- **买断制、随时换**：可购买多个，已拥有的条目点击即穿上/脱下，不重复扣费。
+- **配饰依赖链**：领带最优先；西服/礼服需先有领带；学士帽需先有西服/礼服。脱下前置会自动连带摘掉后续配饰（如摘领带会连脱西服与学士帽）。
+- **素材完整性**：不同颜色并非都配齐所有服饰（如彩色狗无裙/帽立绘、粉色短尾无西服），面板用 `DogWardrobe.outfitChangesImage()` / `capChangesImage()` 探测，没有立绘的按钮自动禁用并提示，避免"买了却看不到"。
+- **立绘路径解析**：`dog/{尾巴}_{颜色}[_tie][_{礼服|西服}][_cap].png`，由 `DogWardrobe.assetPathFor()` 统一生成；若某个精确组合不存在（素材缺口），会逐级回退（摘帽 → 脱衣 → 摘领带）到能加载的最接近立绘，最后兜底为同尾巴灰狗。
+- **活体行为**：小狗被选中且页面在前台时，随机触发「汪汪叫」（播放 `res/raw/bark.wav` + 冒出「汪~」气泡）或侧壁跳跃，与小猫行为调度共用同一套机制。
+- **积分扣减**：购买写入 `wardrobe_purchases` 表（itemId 形如 `dog_color_white` / `dog_tie` / `dog_outfit` / `dog_cap`），可用积分公式同步纳入该项消费。
 
 ### 2. 专注 · 番茄钟（`ui/focus` + `service`）
 
@@ -124,7 +143,7 @@
 | # | 名称  | emoji | 稀有度 | 解锁积分 | 简介             |
 | - | --- | ----- | --- | ---- | -------------- |
 | 1 | 小猫咪 | 🐱    | 普通  | 0    | 可换装的小猫咪，默认灰色（首只赠送） |
-| 2 | 小狗   | 🐶    | 普通  | 50   | 忠诚的小伙伴（暂未实装立绘）       |
+| 2 | 小狗   | 🐶    | 普通  | 50   | 忠诚的小伙伴（可换装：尾巴/颜色/领带/西服或礼服/学士帽） |
 | 3 | 龙猫   | 🐹    | 普通  | 100  | 软糯的小毛球（暂未实装立绘）        |
 | 4 | 星光兽 | ⭐     | 稀有  | 300  | 只在深夜出现         |
 | 5 | 雷电犬 | ⚡     | 稀有  | 500  | 行动迅捷如闪电        |
@@ -196,7 +215,8 @@ app/src/main/java/com/example/focuspets/
 │   └── dao/                     # PetDao / UserCollectionDao / FocusRecordDao
 ├── model/
 │   ├── PetCareState.kt          # 心情状态机（SharedPreferences）
-│   └── CatWardrobe.kt           # 猫咪妆扮：价格/目录/装备状态/立绘路径
+│   ├── CatWardrobe.kt           # 猫咪妆扮：价格/目录/装备状态/立绘路径
+│   └── DogWardrobe.kt           # 小狗妆扮：尾巴/颜色/配饰链 + 立绘路径（按实际素材回退）
 ├── service/
 │   └── FocusService.kt          # 前台计时服务
 ├── ui/
@@ -205,7 +225,8 @@ app/src/main/java/com/example/focuspets/
 │   │   └── FocusProgressBar.kt  # 自定义进度条：橘色已走 + 白色未走 + 黑色竖线
 │   ├── collection/              # 图鉴网格 + 详情弹窗
 │   └── wardrobe/
-│       └── CatWardrobeBottomSheet.kt  # 妆扮面板（购买 / 穿戴）
+│       ├── CatWardrobeBottomSheet.kt  # 小猫妆扮面板（购买 / 穿戴）
+│       └── DogWardrobeBottomSheet.kt  # 小狗妆扮面板（尾巴/颜色/配饰链）
 └── debug/
     └── DebugHelper.kt           # test 分支调试工具
 ```
@@ -214,8 +235,11 @@ app/src/main/java/com/example/focuspets/
 
 ```
 app/src/main/assets/cat/    # 21 张猫咪立绘（已去水印），命名：{颜色}[_dress][_{王冠}].jpg
-app/src/main/res/raw/       # meow.wav：合成的小声喵叫
+app/src/main/assets/dog/    # 42 张小狗立绘（透明 PNG，cutout_dog.py 抠图），命名：{尾巴}_{颜色}[_tie][_{礼服|西服}][_cap].png
+app/src/main/res/raw/       # meow.wav：合成的小声喵叫；bark.wav：合成的小声狗叫
 process_cat_assets.py       # 一次性脚本：去水印 + 重命名 + 生成 meow.wav
+tools/cutout_dog.py         # 小狗抠图：从「图片/狗」生成 assets/dog/ 透明 PNG
+tools/gen_bark.py           # 合成 bark.wav 的脚本
 ```
 
 ---
@@ -228,6 +252,42 @@ process_cat_assets.py       # 一次性脚本：去水印 + 重命名 + 生成 m
 4. 数据库结构变更时，需提升 `AppDatabase.version` 并编写对应 `Migration`，否则旧库会崩溃。
 
 详见团队仓库提交记录与对话历史中的环境排障笔记。
+
+---
+
+## 十、无障碍支持（深色模式 / TalkBack）
+
+深色模式与屏幕阅读器均采用「跟随系统 + 语义补全」的思路实现，不引入任何新的运行时依赖。
+
+### 1. 深色模式
+
+- 主题本身就是 `Theme.Material3.DayNight.NoActionBar`，默认**自动跟随系统深色模式开关**。
+- **支持手动切换（脱离系统跟随）**：设置页「外观 → 深色模式」提供三选一分段开关——`跟随系统` / `浅色` / `深色`。
+  - 选择会持久化到 `SharedPreferences`（键 `theme_mode`），并在 `FocusPetsApp.onCreate()` 首屏绘制前通过 `AppCompatDelegate.setDefaultNightMode()` 应用，避免闪屏。
+  - 切换即生效：设置页本身会随主题重建，全 App 立即统一深浅。
+- 深色配色集中放在 `res/values-night/`：
+- 深色配色集中放在 `res/values-night/`：
+  - `values-night/colors.xml` —— `page_background` / `text_primary` / `text_hint` / `cat_accent` / `rarity_*` 的深色取值；
+  - `values-night/themes.xml` —— 窗口底色指向深色资源；
+  - `drawable-night/bg_card.xml`、`drawable-night/bg_badge.xml` —— 卡片与徽章的深色底。
+- **兼容用户自定义背景色**：色板原本是浅色柔和色（番茄 ToDo 风格），直接套进深色模式会破坏文字对比度。
+  `Backgrounds` 在夜间模式下调用 `util/ThemeExt.kt` 的 `toNightSurface()`，把任意背景色**压暗成深色表层并保留色相**，
+  因此「换背景」选的蜜桃粉 / 天空蓝，在深色模式下依然是深色底 + 浅色字，不会刺眼。
+- 代码里原本写死的浅色（图鉴卡片白底、柱状图标签灰字、详情文案灰字等）已改为引用颜色资源，随深浅色自动切换。
+
+### 2. TalkBack（屏幕阅读器）
+
+| 位置 | 无障碍处理 |
+| --- | --- |
+| 首页宠物舞台 | 整个舞台作为一个可聚焦节点，朗读「宠物舞台：点击或左右滑动切换宠物」；内部立绘 / emoji / 光晕 / 生病贴纸 / 喵叫气泡标记为 `importantForAccessibility="no"`，避免重复播报 |
+| 专注 / 锁机计时 | 剩余时间与进度条分别带 `contentDescription`「剩余专注时间」「专注进度」（**不加 live region**，避免每秒播报刷屏） |
+| 图鉴卡片 | 动态生成描述：`小猫咪，普通，已解锁` / `冰晶狐，稀有，未解锁，需要 700 积分解锁` |
+| 排行榜条目 | `第 3 名，专注者1234，200 分，这是你` |
+| 宠物详情 | 大图 emoji 的 `contentDescription` 设为宠物名 |
+| 背景色色板 | 每个色块带中文色名（暖米色 / 蜜桃粉 / …），可朗读、可选中 |
+| 按钮 / 输入框 | 本身有文字或 `hint`，沿用系统默认朗读 |
+
+> 新增工具方法集中在 `app/src/main/java/com/example/focuspets/util/ThemeExt.kt`：`Context.isNightMode()`、`Int.toNightSurface()`。
 
 ```
 ```

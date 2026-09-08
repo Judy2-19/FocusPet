@@ -5,6 +5,8 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.app.usage.UsageStatsManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
@@ -14,12 +16,20 @@ import androidx.core.app.NotificationCompat
 import com.example.focuspets.MainActivity
 import com.example.focuspets.db.AppDatabase
 import com.example.focuspets.db.entity.FocusRecordEntity
+import com.example.focuspets.cloud.CloudSyncManager
 import com.example.focuspets.model.PetCareState
+import com.example.focuspets.model.SettingsManager
+import com.example.focuspets.ui.lock.LockActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineExceptionHandler
+import android.util.Log
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -30,6 +40,7 @@ import java.util.Locale
  * - 每秒广播剩余时间给 UI 刷新（包内定向广播，不对外暴露）
  * - 成功完成 → 写入 focus_records（积分结算）→ 广播 FINISHED → 停止服务
  * - 切后台超 5 秒 → UI 层发 ACTION_FAIL → 宠物进入饥饿状态，不结算积分
+ * - 锁机白名单软监控：锁机期间周期性检测前台应用，非白名单则把锁机页拉回前台
  */
 class FocusService : Service() {
 
@@ -38,6 +49,7 @@ class FocusService : Service() {
         const val ACTION_START = "com.example.focuspets.action.START"
         const val ACTION_FAIL = "com.example.focuspets.action.FAIL"
         const val ACTION_STOP = "com.example.focuspets.action.STOP"
+        const val ACTION_LOCK_MONITOR_STOP = "com.example.focuspets.action.LOCK_MONITOR_STOP"
 
         // 对外广播
         const val BROADCAST_TICK = "com.example.focuspets.broadcast.TICK"
@@ -47,9 +59,11 @@ class FocusService : Service() {
 
         // Intent extra 键
         const val EXTRA_MINUTES = "extra_minutes"
+        const val EXTRA_CONTENT = "extra_content"          // 本次专注内容（如「写代码」），写入专注记录
         const val EXTRA_REMAINING_MILLIS = "extra_remaining"
         const val EXTRA_TOTAL_MILLIS = "extra_total"
         const val EXTRA_MINUTES_DONE = "extra_minutes_done"
+        const val EXTRA_LOCK_MONITOR = "extra_lock_monitor"
 
         const val NOTIFICATION_ID = 1001
         const val CHANNEL_ID = "focus_timer_channel"
@@ -61,16 +75,28 @@ class FocusService : Service() {
 
         /**
          * 锁机模式接管会话时为 true：屏蔽"切后台 5 秒失败"判定。
-         * 锁机时底层专注页会被暂停，但用户其实仍在 App 内（被屏幕固定锁住），
+         * 锁机时底层专注页会被暂停，但用户其实仍在 App 内（被屏幕固定或软监控锁住），
          * 不应因此判失败。
          */
         @Volatile
         var lockActive: Boolean = false
     }
 
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val serviceScope = CoroutineScope(
+        SupervisorJob() + Dispatchers.IO + CoroutineExceptionHandler { _, t ->
+            Log.e("FocusService", "service coroutine failed (non-fatal): ${t.message}", t)
+        }
+    )
     private var countdown: CountDownTimer? = null
     private var totalMillis = 0L
+    /** 本次专注内容，由 UI 在启动时通过 EXTRA_CONTENT 传入，完成时写入专注记录 */
+    private var focusContent: String = ""
+
+    // 锁机白名单软监控状态：监控期间检测前台应用，白名单外则拉回锁机页
+    @Volatile
+    var lockMonitorActive: Boolean = false
+        private set
+    private var monitorJob: Job? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -81,9 +107,14 @@ class FocusService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_START -> startTimer(intent.getIntExtra(EXTRA_MINUTES, 25))
+            ACTION_START -> startTimer(
+                intent.getIntExtra(EXTRA_MINUTES, 25),
+                intent.getStringExtra(EXTRA_CONTENT) ?: "",
+                intent.getBooleanExtra(EXTRA_LOCK_MONITOR, false)
+            )
             ACTION_FAIL -> failFocus()
             ACTION_STOP -> cancelByUser()
+            ACTION_LOCK_MONITOR_STOP -> stopMonitor()
             else -> stopSelf()
         }
         return START_NOT_STICKY   // 被系统回收后不自动重启（专注连续性应由用户重新发起）
@@ -91,13 +122,17 @@ class FocusService : Service() {
 
     // ------------------------- 计时核心 -------------------------
 
-    private fun startTimer(minutes: Int) {
+    private fun startTimer(minutes: Int, content: String, enableMonitor: Boolean = false) {
         if (isRunning) return
         totalMillis = minutes * 60_000L
+        focusContent = content.trim()
         isRunning = true
 
         // 前台服务：必须在 5 秒内调用 startForeground，否则 ANR + 崩溃
         startForegroundCompat(buildNotification(totalMillis))
+
+        // 锁机白名单软监控：开启后不再依赖系统屏幕固定，改用前台应用检测放行白名单 app
+        if (enableMonitor) startMonitor()
 
         countdown = object : CountDownTimer(totalMillis, 1_000L) {
             override fun onTick(millisUntilFinished: Long) {
@@ -116,18 +151,24 @@ class FocusService : Service() {
     private fun completeFocus() {
         val minutes = (totalMillis / 60_000L).toInt()
         serviceScope.launch {
-            // 1. 积分结算：每专注 1 分钟得 1 分 → 写入一条专注记录
+            // 1. 积分结算：每专注 1 分钟得 1 分 → 写入一条专注记录（含本次专注内容）
             val dao = AppDatabase.getInstance(applicationContext).focusRecordDao()
             dao.insert(
                 FocusRecordEntity(
                     focusDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()),
-                    durationMinutes = minutes
+                    content = focusContent,
+                    durationMinutes = minutes,
+                    points = minutes
                 )
             )
             // 2. 专注成功：宠物恢复健康 + 连续成功计数 +1（阶段四心情状态机）
             PetCareState.recordSuccess(applicationContext)
 
+            // 3. 上报云端（匿名已登录则增量同步积分 / 收藏 / 妆扮 / 心情）
+            CloudSyncManager.notifyChanged()
+
             isRunning = false
+            stopMonitor()
             send(BROADCAST_FINISHED) { putExtra(EXTRA_MINUTES_DONE, minutes) }
             stopSelf()
         }
@@ -138,6 +179,7 @@ class FocusService : Service() {
         if (!isRunning) return
         countdown?.cancel()
         isRunning = false
+        stopMonitor()
         // 专注失败：连续成功计数清零，宠物进入生病状态
         PetCareState.recordFailure(applicationContext)
         send(BROADCAST_FAILED)
@@ -149,15 +191,69 @@ class FocusService : Service() {
         if (!isRunning) return
         countdown?.cancel()
         isRunning = false
+        stopMonitor()
         send(BROADCAST_CANCELLED)
         stopSelf()
     }
 
     override fun onDestroy() {
         countdown?.cancel()
+        stopMonitor()
         serviceScope.cancel()
         isRunning = false
         super.onDestroy()
+    }
+
+    // ------------------------- 锁机白名单软监控 -------------------------
+
+    /** 启动前台应用监控：周期性检测当前前台 app，若不在白名单且非本应用，则把锁机页拉回前台 */
+    private fun startMonitor() {
+        if (monitorJob != null) return
+        lockMonitorActive = true
+        monitorJob = serviceScope.launch {
+            while (isActive && lockMonitorActive) {
+                delay(700)
+                try {
+                    val fg = currentForegroundPackage()
+                    if (fg != null && fg != packageName &&
+                        !SettingsManager.getLockWhitelist(this@FocusService).contains(fg)
+                    ) {
+                        bringLockToFront()
+                    }
+                } catch (_: Exception) { }
+            }
+        }
+    }
+
+    /** 停止前台应用监控 */
+    private fun stopMonitor() {
+        lockMonitorActive = false
+        monitorJob?.cancel()
+        monitorJob = null
+    }
+
+    /** 通过 UsageStatsManager 取当前前台应用包名（需「使用情况访问」权限） */
+    private fun currentForegroundPackage(): String? {
+        val usm = getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager ?: return null
+        val now = System.currentTimeMillis()
+        val stats = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, now - 4000, now)
+        if (stats.isNullOrEmpty()) return null
+        return stats.filter { it.lastTimeUsed > 0 }
+            .maxByOrNull { it.lastTimeUsed }?.packageName
+    }
+
+    /** 把锁机页重新带到前台（锁机 Activity 为 singleTask，拉起即回到原栈顶） */
+    private fun bringLockToFront() {
+        try {
+            val lockIntent = Intent(this, LockActivity::class.java).apply {
+                addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                            Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
+                            Intent.FLAG_ACTIVITY_SINGLE_TOP
+                )
+            }
+            startActivity(lockIntent)
+        } catch (_: Exception) { }
     }
 
     // ------------------------- 通知 -------------------------

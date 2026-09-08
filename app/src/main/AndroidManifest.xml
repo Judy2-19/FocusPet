@@ -1,18 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- 前台服务通知（API 33+ 需要运行时申请） -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 网络状态监听（ConnectivityManager.registerNetworkCallback 需要，普通权限无需运行时申请） -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- 云端同步 / 排行榜网络请求需要，普通权限无需运行时申请 -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <!-- 前台服务基础权限 -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- 结束提醒：震动（普通权限，无需运行时申请） -->
+    <uses-permission android:name="android.permission.VIBRATE" />
     <!-- API 34+：非媒体/定位等标准类型的前台服务需声明 specialUse -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- 锁机白名单软监控：检测前台应用需「使用情况访问」特殊权限（运行期引导用户在系统设置授权） -->
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
 
     <application
+        android:name=".FocusPetsApp"
         android:allowBackup="true"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.FocusPets">
+        android:theme="@style/Theme.FocusPets"
+        android:usesCleartextTraffic="true">
 
         <activity
             android:name=".MainActivity"
@@ -23,11 +36,43 @@
             </intent-filter>
         </activity>
 
+        <!-- 崩溃展示页：全局异常处理器拉起，把堆栈显示在屏幕上（不涉及数据库/云端） -->
+        <activity
+            android:name=".CrashActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.DeviceDefault.Light.NoActionBar" />
+
+        <!-- 新手引导：首次启动由 MainActivity 判断后拉起，完成后回到主页 -->
+        <activity
+            android:name=".ui.onboarding.OnboardingActivity"
+            android:exported="false"
+            android:launchMode="singleTop" />
+
+        <!-- 设置：昵称 / 注销 / 重置进度 / 重新查看引导 -->
+        <activity
+            android:name=".ui.settings.SettingsActivity"
+            android:exported="false"
+            android:launchMode="singleTop" />
+
         <!-- 锁机专注：独立全屏、屏幕固定；singleTask 避免重复入栈 -->
         <activity
             android:name=".ui.lock.LockActivity"
             android:exported="false"
             android:launchMode="singleTask" />
+
+        <!-- 锁机白名单管理：列出本机可启动应用，勾选锁机期间允许使用的 app -->
+        <activity
+            android:name=".ui.lock.LockWhitelistActivity"
+            android:exported="false"
+            android:label="锁机白名单应用"
+            android:parentActivityName=".ui.lock.LockActivity"
+            android:theme="@style/Theme.FocusPets" />
+
+        <!-- 专注记录页：日/周/月/年筛选 + 详情列表 + 内容占比饼图（可分享） -->
+        <activity
+            android:name=".ui.focus.FocusRecordsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.FocusPets" />
 
         <!-- 专注计时前台服务：specialUse 类型 + 子类型说明 -->
         <service
@@ -38,6 +83,17 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="focus_countdown_timer" />
         </service>
+
+        <!-- 成就海报分享：把 cache/posters 下的海报图以 content:// 暴露给分享目标 -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

@@ -61,3 +61,16 @@ desktop.ini
 .workbuddy/
 # 本地课程笔记（如需提交请删除下一行）
 .memory/
+
+# ---------- 设计源图 / 抠图原始素材（体积大、非工程产物，不进仓库） ----------
+图片/
+tools/originals/
+
+# ---------- 生成预览 / 测试产物（不进仓库） ----------
+tools/preview_*.png
+tools/_test_*.png
+tools/*preview*.html
+tools/rembg_run.log
+
+# ---------- 本地数据库快照（二进制，无 diff 意义，不进仓库） ----------
+*.db

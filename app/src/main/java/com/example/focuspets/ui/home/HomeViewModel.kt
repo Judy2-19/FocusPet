@@ -33,6 +33,14 @@ class HomeViewModel(private val repository: PetRepository) : ViewModel() {
     /** 当前选中的宠物下标（基于「已解锁列表」，0 = 默认第一只） */
     private val selectedIndex = MutableLiveData(0)
 
+    /** 跨进程重启后待恢复的首页宠物 id（由 SettingsManager 持久化；-1 表示无需恢复） */
+    private var pendingPetId = -1
+
+    /** 指定下次 emit 时恢复到某个宠物（用于「退出后再进入保持同一只宠物」） */
+    fun selectPetById(id: Int) {
+        pendingPetId = id
+    }
+
     /** 宠物心情（专注成功/失败后由 Fragment 调 refreshMood 刷新） */
     private val mood = MutableLiveData(PetMood.NORMAL)
 
@@ -53,6 +61,16 @@ class HomeViewModel(private val repository: PetRepository) : ViewModel() {
             val unlocked = p.filter { it.isUnlocked }.map { it.pet }
             if (unlocked.isEmpty()) return
             unlockedCount = unlocked.size
+            // 跨进程重启后恢复上次首页选中的宠物（SettingsManager 持久化）
+            if (pendingPetId >= 0) {
+                var idx = unlocked.indexOfFirst { it.id == pendingPetId }
+                if (idx < 0) idx = 0
+                pendingPetId = -1
+                if (idx != selectedIndex.value ?: 0) {
+                    selectedIndex.value = idx
+                    return          // 下标变化会重新触发 emit，用新下标渲染
+                }
+            }
             val index = (selectedIndex.value ?: 0).coerceIn(0, unlocked.size - 1)
 
             // 进度条目标：解锁积分最低的未解锁宠物（列表已按 unlock_cost 升序）

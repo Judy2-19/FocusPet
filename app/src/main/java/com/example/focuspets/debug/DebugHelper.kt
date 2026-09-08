@@ -7,6 +7,8 @@ import com.example.focuspets.db.entity.FocusRecordEntity
 import com.example.focuspets.db.entity.UserCollectionEntity
 import com.example.focuspets.model.PetCareState
 import com.example.focuspets.model.PetMood
+import android.util.Log
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -26,7 +28,12 @@ import kotlinx.coroutines.launch
  */
 object DebugHelper {
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    // 调试操作在后台写库，必须用异常处理器兜底，否则任一 Room 查询异常都会杀进程
+    private val scope = CoroutineScope(
+        SupervisorJob() + Dispatchers.IO + CoroutineExceptionHandler { _, t ->
+            Log.e("DebugHelper", "debug op failed (non-fatal): ${t.message}", t)
+        }
+    )
 
     private const val PREFS = "debug_prefs"
     // 换过 key：旧版已把 full_unlock_done 置为 true，用新 key 才能让「补 100 万积分」重新执行一次
@@ -39,8 +46,9 @@ object DebugHelper {
     private const val TEST_GRANT_MARKER = "test-grant"
 
     /**
-     * 测试版首次启动：一次性解锁全部宠物并把积分补到 100 万。
-     * SharedPreferences 守卫保证只做一次，不会覆盖你后续手动「重置进度」。
+     * 测试版首次启动：一次性解锁全部宠物 + 发放测试积分。
+     * 积分通过 points 列单独注入（duration=0），不会污染「累计专注时间」统计。
+     * 需要更多积分时仍可在图鉴页手动点「补 100 万积分」。
      */
     fun ensureTestSetup(context: Context) {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -99,7 +107,7 @@ object DebugHelper {
 
     /**
      * 补积分到 TEST_POINTS：先读当前可用积分，只补差额。
-     * 这样无论是否已解锁花钱，最终可用积分都正好是 100 万。
+     * 用 points 列单独注入、duration 固定为 0，这样「累计专注时间」不会被刷成假数据。
      */
     private suspend fun topUpPointsSync(context: Context) {
         val db = AppDatabase.getInstance(context.applicationContext)
@@ -108,7 +116,9 @@ object DebugHelper {
             db.focusRecordDao().insert(
                 FocusRecordEntity(
                     focusDate = TEST_GRANT_MARKER,
-                    durationMinutes = TEST_POINTS - current
+                    content = "测试积分",
+                    durationMinutes = 0,
+                    points = TEST_POINTS - current
                 )
             )
         }

@@ -12,6 +12,93 @@
         android:gravity="center_horizontal"
         android:padding="24dp">
 
+        <!-- 顶部栏：标题（左）+ 专注记录入口（右上角） -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingTop="4dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="专注"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_open_records"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📊 记录"
+                android:textSize="13sp"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp" />
+        </LinearLayout>
+
+        <!-- 本次专注内容：记录 + 复用历史 -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="@color/surface_card"
+            app:cardCornerRadius="16dp"
+            app:strokeColor="@color/stroke_hint"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="本次专注内容"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:hint="写代码 / 看书 / 写报告…">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_focus_content"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="text"
+                        android:maxLines="1"
+                        android:imeOptions="actionNext" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <TextView
+                    android:id="@+id/tv_history_hint"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="最近用过"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_hint"
+                    android:visibility="gone" />
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chip_history"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    app:chipSpacingHorizontal="8dp"
+                    app:chipSpacingVertical="6dp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- 宠物饥饿提醒（专注失败时显示） -->
         <TextView
             android:id="@+id/tv_hunger_warning"
@@ -32,7 +119,8 @@
             android:text="25:00"
             android:textSize="64sp"
             android:textStyle="bold"
-            android:fontFamily="monospace" />
+            android:fontFamily="monospace"
+            android:contentDescription="剩余专注时间" />
 
         <TextView
             android:id="@+id/tv_subtitle"
@@ -40,7 +128,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:text="选择时长，开始一次专注"
-            android:textColor="#757575"
+            android:textColor="@color/text_hint"
             android:textSize="14sp" />
 
         <!-- 进度条：已专注时长占比（自定义：橘色已走 + 白色未走 + 黑色竖线分割） -->
@@ -48,7 +136,8 @@
             android:id="@+id/progress_focus"
             android:layout_width="match_parent"
             android:layout_height="12dp"
-            android:layout_marginTop="32dp" />
+            android:layout_marginTop="32dp"
+            android:contentDescription="专注进度" />
 
         <!-- 时长选择：15 / 25 / 45 分钟 -->
         <com.google.android.material.button.MaterialButtonToggleGroup
@@ -112,7 +201,35 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
                 android:text="应用" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_save_preset"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:text="⭐ 存为预设"
+                android:textSize="13sp" />
         </LinearLayout>
+
+        <!-- 常用预设：点击一键套用「内容 + 时长」 -->
+        <TextView
+            android:id="@+id/tv_preset_hint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="常用预设"
+            android:textSize="12sp"
+            android:textColor="@color/text_hint"
+            android:visibility="gone" />
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chip_presets"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            app:chipSpacingHorizontal="8dp"
+            app:chipSpacingVertical="6dp" />
 
         <!-- 开始 / 放弃 -->
         <com.google.android.material.button.MaterialButton
@@ -139,7 +256,7 @@
             android:layout_marginTop="32dp"
             android:gravity="center"
             android:text="🍅 专注期间请保持 App 在前台\n切后台超过 5 秒，本次专注将失败"
-            android:textColor="#9E9E9E"
+            android:textColor="@color/text_hint"
             android:textSize="12sp" />
     </LinearLayout>
 </ScrollView>

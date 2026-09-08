@@ -14,7 +14,12 @@ import com.example.focuspets.db.dao.WardrobeDao
 import com.example.focuspets.db.entity.FocusRecordEntity
 import com.example.focuspets.db.entity.PetEntity
 import com.example.focuspets.db.entity.UserCollectionEntity
+import com.example.focuspets.db.dao.SyncDao
+import com.example.focuspets.db.entity.SyncMetaEntity
+import com.example.focuspets.db.entity.SyncQueueEntity
 import com.example.focuspets.db.entity.WardrobePurchaseEntity
+import android.util.Log
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -25,9 +30,11 @@ import kotlinx.coroutines.launch
         PetEntity::class,
         UserCollectionEntity::class,
         FocusRecordEntity::class,
-        WardrobePurchaseEntity::class
+        WardrobePurchaseEntity::class,
+        SyncQueueEntity::class,
+        SyncMetaEntity::class
     ],
-    version = 3,            // v2 → v3：新增 wardrobe_purchases 表，记录猫咪妆扮消费
+    version = 6,            // v5 → v6：focus_records 新增 points 列，把「积分」从「专注分钟」中拆出，支持测试注入纯积分
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -37,12 +44,18 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun userCollectionDao(): UserCollectionDao
     abstract fun focusRecordDao(): FocusRecordDao
     abstract fun wardrobeDao(): WardrobeDao
+    abstract fun syncDao(): SyncDao
 
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
-        private val seedScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        // 种子数据写入放到后台协程；用异常处理器兜底，避免 seed 失败（如数据异常）杀进程
+        private val seedScope = CoroutineScope(
+            SupervisorJob() + Dispatchers.IO + CoroutineExceptionHandler { _, t ->
+                Log.e("AppDatabase", "seed failed (non-fatal): ${t.message}", t)
+            }
+        )
 
         /**
          * v2 → v3 结构迁移：新增 wardrobe_purchases 表，记录猫咪妆扮消费。
@@ -69,6 +82,57 @@ abstract class AppDatabase : RoomDatabase() {
          * 而 user_collection 对 pet_id 声明了 ON DELETE CASCADE——
          * REPLACE 会连带删掉用户已有的解锁记录！UPDATE 不触发级联，用户数据安全。
          */
+        /**
+         * v3 → v4 结构迁移：新增 sync_queue（离线写队列）与 sync_meta（同步状态）两张表。
+         */
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS sync_queue (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        op_type TEXT NOT NULL,
+                        created_at INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS sync_meta (
+                        `key` TEXT PRIMARY KEY NOT NULL,
+                        value TEXT NOT NULL
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
+        /**
+         * v4 → v5 结构迁移：focus_records 新增 content 列（TEXT，默认空串），
+         * 老记录原样保留、content 统一为空串，不影响积分与已有统计。
+         */
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE focus_records ADD COLUMN content TEXT NOT NULL DEFAULT ''"
+                )
+            }
+        }
+
+        /**
+         * v5 → v6 结构迁移：focus_records 新增 points 列（本次获得积分，独立于时长）。
+         * 回填：老记录 points = 原 duration_minutes，保证历史「积分」不丢；
+         * 新记录由 FocusService / 调试工具显式写入 points。
+         */
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE focus_records ADD COLUMN points INTEGER NOT NULL DEFAULT 0"
+                )
+                db.execSQL("UPDATE focus_records SET points = duration_minutes")
+            }
+        }
+
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 // ---- 普通 ----
@@ -93,7 +157,8 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "focus_pets.db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)   // 老版本设备：原地更新宠物数据，保留专注记录
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)   // 老版本设备：原地更新宠物数据，保留专注记录
+                    .fallbackToDestructiveMigration()   // 兜底：真机上残留的旧版本库与当前 schema 不一致时，直接重建而非崩溃（演示数据可丢弃）
                     .addCallback(SeedCallback)      // 首次建库：写入预置数据
                     .build()
                     .also { INSTANCE = it }
@@ -114,8 +179,12 @@ abstract class AppDatabase : RoomDatabase() {
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
                 seedScope.launch {
-                    val database = INSTANCE ?: return@launch
-                    InitialDataProvider.ensureSeeded(database)
+                    try {
+                        val database = INSTANCE ?: return@launch
+                        InitialDataProvider.ensureSeeded(database)
+                    } catch (e: Exception) {
+                        Log.e("AppDatabase", "seed in callback failed (non-fatal): ${e.message}", e)
+                    }
                 }
             }
         }

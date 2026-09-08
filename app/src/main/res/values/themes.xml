@@ -3,5 +3,76 @@
         <!-- 整 App 窗口背景统一为小猫图片底色（暖米白），避免猫图与纯白页面产生突兀的色块边界 -->
         <item name="android:windowBackground">@color/page_background</item>
         <item name="android:colorBackground">@color/page_background</item>
+        <!-- 覆盖 Material3 默认紫色：主色用番茄 ToDo 风琥珀强调色，按钮/强调元素不再发紫 -->
+        <item name="colorPrimary">@color/cat_accent</item>
+        <item name="colorPrimaryContainer">@color/cat_accent</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <!-- 状态栏 / 导航栏与页面同色，消除「顶部紫色边框」；浅底用深色状态栏图标 -->
+        <item name="android:statusBarColor">@color/page_background</item>
+        <item name="android:navigationBarColor">@color/page_background</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+
+    <!-- 新手引导「怎么玩」的步骤行：文字色用 text_primary（已有 values-night 覆盖，深浅模式都可读） -->
+    <style name="OnboardingStep">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">16dp</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">15sp</item>
+    </style>
+
+    <!-- 设置页基础样式
+         注意：统一用 marginStart/End、paddingStart/End，
+         不用 *Horizontal / *Vertical（那些是 API 26+ 属性，minSdk 24 会失效）。 -->
+
+    <style name="SettingsSectionTitle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">20dp</item>
+        <item name="android:layout_marginTop">18dp</item>
+        <item name="android:layout_marginBottom">8dp</item>
+        <item name="android:textColor">@color/text_hint</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="SettingsCard">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">16dp</item>
+        <item name="android:layout_marginEnd">16dp</item>
+        <item name="android:layout_marginBottom">4dp</item>
+    </style>
+
+    <style name="SettingsLabel">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="SettingsValue">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">3dp</item>
+        <item name="android:textColor">@color/text_hint</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+
+    <style name="SettingsHint">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">6dp</item>
+        <item name="android:lineSpacingExtra">3dp</item>
+        <item name="android:textColor">@color/text_hint</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="SettingsDivider">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item>
+        <item name="android:background">@color/stroke_hint</item>
     </style>
 </resources>

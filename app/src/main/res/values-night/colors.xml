@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 深色模式配色：在系统开启夜间模式时自动启用（Theme.Material3.DayNight） -->
+<resources>
+    <!-- 页面/窗口底色：暖调深灰，替代浅奶油色，保证深色下文字对比度 -->
+    <color name="page_background">#1C1916</color>
+    <!-- 主要 / 次要文字：浅暖白 / 柔和灰，在深底上清晰可读 -->
+    <color name="text_primary">#EDE6DD</color>
+    <color name="text_hint">#9C948A</color>
+    <!-- 主强调色：稍微提亮，深色背景下更醒目 -->
+    <color name="cat_accent">#FFC94D</color>
+    <!-- 稀有度：在深底上提高明度，避免发暗 -->
+    <color name="rarity_common">#B0B0B0</color>
+    <color name="rarity_rare">#64B5F6</color>
+    <color name="rarity_legend">#FFCA28</color>
+    <!-- 卡片 / 描边 / 进度轨道等表层元素 -->
+    <color name="surface_card">#2A2520</color>
+    <color name="surface_card_locked">#221E1A</color>
+    <color name="stroke_hint">#4A4540</color>
+    <color name="progress_track">#3A3530</color>
+</resources>

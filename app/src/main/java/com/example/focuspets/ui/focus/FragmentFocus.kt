@@ -18,10 +18,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import com.example.focuspets.MainActivity
 import com.example.focuspets.R
@@ -31,9 +33,14 @@ import com.example.focuspets.db.PetRepository
 import com.example.focuspets.db.entity.PetEntity
 import com.example.focuspets.model.PetCareState
 import com.example.focuspets.model.Backgrounds
+import com.example.focuspets.model.FocusPresetManager
 import com.example.focuspets.service.FocusService
+import com.example.focuspets.ui.focus.FocusRecordsActivity
+import com.google.android.material.chip.Chip
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class FragmentFocus : Fragment() {
 
@@ -51,6 +58,11 @@ class FragmentFocus : Fragment() {
 
     private var selectedMinutes = 25
     private var totalMillisAtStart = 0L
+
+    /** 本地仓库实例（读取专注内容历史用，与 ViewModel 共用同一 PetRepository） */
+    private val repository by lazy {
+        PetRepository(AppDatabase.getInstance(requireActivity().applicationContext))
+    }
 
     /** 用户后台期间收到庆祝事件时暂存，回到前台再弹 */
     private var pendingCelebration: List<PetEntity>? = null
@@ -97,6 +109,20 @@ class FragmentFocus : Fragment() {
 
         // 应用用户选中的背景色
         Backgrounds.apply(requireContext(), binding.root)
+
+        // 右上角「专注记录」入口：打开专注记录页（日/周/月/年 + 饼图）
+        binding.btnOpenRecords.setOnClickListener {
+            startActivity(Intent(requireContext(), FocusRecordsActivity::class.java))
+        }
+
+        // 加载历史专注内容（用于复用）
+        loadContentHistory()
+
+        // 加载常用预设（内容 + 时长 组合，可一键套用）
+        loadPresets()
+
+        // 保存当前「内容 + 时长」为预设，下次直接复用
+        binding.btnSavePreset.setOnClickListener { saveCurrentAsPreset() }
 
         // 时长选择（MaterialButtonToggleGroup 单选）
         binding.toggleDuration.addOnButtonCheckedListener { _, checkedId, isChecked ->
@@ -216,10 +242,76 @@ class FragmentFocus : Fragment() {
         binding.toggleDuration.clearChecked()
     }
 
+    // ---------------- 常用预设（内容 + 时长 组合） ----------------
+
+    /** 把当前「专注内容 + 所选时长」存成预设 */
+    private fun saveCurrentAsPreset() {
+        if (FocusService.isRunning) return
+        val content = binding.etFocusContent.text.toString().trim()
+        if (content.isEmpty()) {
+            Toast.makeText(requireContext(), "请先填写专注内容再保存预设", Toast.LENGTH_SHORT).show()
+            return
+        }
+        FocusPresetManager.savePreset(requireContext(), content, selectedMinutes)
+        loadPresets()
+        Toast.makeText(
+            requireContext(), "已保存预设：$content · ${selectedMinutes} 分钟", Toast.LENGTH_SHORT
+        ).show()
+    }
+
+    private fun loadPresets() {
+        if (lifecycle.currentState == Lifecycle.State.DESTROYED) return
+        lifecycleScope.launch(Dispatchers.IO) {
+            val presets = FocusPresetManager.getPresets(requireContext())
+            withContext(Dispatchers.Main) {
+                if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+                    populatePresetChips(presets)
+                }
+            }
+        }
+    }
+
+    private fun populatePresetChips(presets: List<FocusPresetManager.Preset>) {
+        binding.chipPresets.removeAllViews()
+        if (presets.isEmpty()) {
+            binding.tvPresetHint.visibility = View.GONE
+            return
+        }
+        binding.tvPresetHint.visibility = View.VISIBLE
+        for (p in presets) {
+            val chip = Chip(requireContext()).apply {
+                text = "${p.content} · ${p.minutes}分"
+                isCheckable = false
+                isCloseIconVisible = true
+                closeIconContentDescription = "删除预设 ${p.content}"
+                setOnClickListener { applyPreset(p) }
+                setOnCloseIconClickListener {
+                    FocusPresetManager.removePreset(requireContext(), p.content)
+                    loadPresets()
+                }
+            }
+            binding.chipPresets.addView(chip)
+        }
+    }
+
+    /** 一键套用预设：内容填入输入框、时长设为预设值 */
+    private fun applyPreset(p: FocusPresetManager.Preset) {
+        if (FocusService.isRunning) return
+        selectedMinutes = p.minutes
+        binding.etFocusContent.setText(p.content)
+        binding.etFocusContent.setSelection(p.content.length)
+        binding.etCustomMinutes.setText(p.minutes.toString())
+        binding.toggleDuration.clearChecked()
+        binding.tvRemaining.text = formatMillis(selectedMinutes * 60_000L)
+    }
+
     private fun startFocus() {
+        // 读取本次专注内容（可空，留空则记录为空串，饼图里归为「未命名」）
+        val content = binding.etFocusContent.text.toString().trim()
         val intent = Intent(requireContext(), FocusService::class.java).apply {
             action = FocusService.ACTION_START
             putExtra(FocusService.EXTRA_MINUTES, selectedMinutes)
+            putExtra(FocusService.EXTRA_CONTENT, content)
         }
         ContextCompat.startForegroundService(requireContext(), intent)
         totalMillisAtStart = selectedMinutes * 60_000L
@@ -245,6 +337,7 @@ class FragmentFocus : Fragment() {
     private fun onFinished(minutes: Int) {
         renderIdle()
         refreshPetMood()
+        com.example.focuspets.util.AlertPlayer.play(requireContext())
         Toast.makeText(
             requireContext(), "🍅 专注完成！+$minutes 积分", Toast.LENGTH_SHORT
         ).show()
@@ -287,6 +380,7 @@ class FragmentFocus : Fragment() {
         binding.toggleDuration.isEnabled = false
         binding.etCustomMinutes.isEnabled = false
         binding.btnCustom.isEnabled = false
+        binding.etFocusContent.isEnabled = false
         binding.tvSubtitle.text = "专注中…请保持 App 在前台"
         if (remaining != null) {
             binding.tvRemaining.text = formatMillis(remaining)
@@ -304,6 +398,7 @@ class FragmentFocus : Fragment() {
         binding.toggleDuration.isEnabled = true
         binding.etCustomMinutes.isEnabled = true
         binding.btnCustom.isEnabled = true
+        binding.etFocusContent.isEnabled = true
         binding.tvSubtitle.text = "选择时长，开始一次专注"
         binding.tvRemaining.text = formatMillis(selectedMinutes * 60_000L)
         binding.progressFocus.setProgress(0)
@@ -317,6 +412,62 @@ class FragmentFocus : Fragment() {
     private fun formatMillis(ms: Long): String {
         val totalSeconds = ms / 1000
         return "%02d:%02d".format(totalSeconds / 60, totalSeconds % 60)
+    }
+
+    // ---------------- 专注内容复用 ----------------
+
+    /** 读取历史专注内容：用最近一次内容预填输入框，并展示高频内容 Chip 供一键复用 */
+    private fun loadContentHistory() {
+        if (lifecycle.currentState == Lifecycle.State.DESTROYED) return
+        lifecycleScope.launch(Dispatchers.IO) {
+            val latest = runCatching { repository.getLatestContent() }.getOrNull()
+            val frequent = runCatching { repository.getFrequentContents(8) }.getOrNull().orEmpty()
+            withContext(Dispatchers.Main) {
+                if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+                    if (!latest.isNullOrEmpty()) binding.etFocusContent.setText(latest)
+                    populateChips(frequent)
+                }
+            }
+        }
+    }
+
+    /** 用历史内容渲染 Chip，点击即把该内容填回输入框；点 × 可删除该内容的全部记录 */
+    private fun populateChips(contents: List<String>) {
+        binding.chipHistory.removeAllViews()
+        if (contents.isEmpty()) {
+            binding.tvHistoryHint.visibility = View.GONE
+            return
+        }
+        binding.tvHistoryHint.visibility = View.VISIBLE
+        for (text in contents) {
+            val chip = Chip(requireContext()).apply {
+                this.text = text
+                isCheckable = false
+                isCloseIconVisible = true
+                closeIconContentDescription = "删除 $text"
+                setOnClickListener {
+                    binding.etFocusContent.setText(text)
+                    binding.etFocusContent.setSelection(text.length)
+                }
+                setOnCloseIconClickListener { confirmDeleteContent(text) }
+            }
+            binding.chipHistory.addView(chip)
+        }
+    }
+
+    /** 删除「最近用过」的某条内容：确认后删除其全部专注记录并刷新 */
+    private fun confirmDeleteContent(content: String) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("删除专注内容？")
+            .setMessage("将删除所有「$content」的专注记录（含对应积分）。此操作不可撤销。")
+            .setPositiveButton("删除") { _, _ ->
+                lifecycleScope.launch(Dispatchers.IO) {
+                    runCatching { repository.deleteRecordsByContent(content) }
+                    withContext(Dispatchers.Main) { loadContentHistory() }
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
     }
 
     override fun onDestroyView() {

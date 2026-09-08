@@ -66,7 +66,9 @@ class PetAdapter(private val onClick: (PetDisplay) -> Unit) :
                 )
                 tvUnlockHint.visibility = View.GONE
                 petCard.strokeColor = rarityColor          // 稀有度彩色边框
-                petCard.setCardBackgroundColor(Color.WHITE)
+                petCard.setCardBackgroundColor(
+                    ContextCompat.getColor(context, R.color.surface_card)
+                )
             } else {
                 tvEmoji.text = "❓"
                 tvEmoji.alpha = 0.35f
@@ -75,9 +77,19 @@ class PetAdapter(private val onClick: (PetDisplay) -> Unit) :
                 tvRarityTag.visibility = View.GONE
                 tvUnlockHint.visibility = View.VISIBLE
                 tvUnlockHint.text = "需要 ${item.pet.unlockCost} 积分解锁"
-                petCard.strokeColor = Color.parseColor("#E0E0E0")
-                petCard.setCardBackgroundColor(Color.parseColor("#F7F7F7"))
+                petCard.strokeColor = ContextCompat.getColor(context, R.color.stroke_hint)
+                petCard.setCardBackgroundColor(
+                    ContextCompat.getColor(context, R.color.surface_card_locked)
+                )
             }
+            val rarityLabel = when (item.pet.rarity) {
+                Rarity.COMMON -> "普通"
+                Rarity.RARE -> "稀有"
+                Rarity.LEGENDARY -> "传说"
+            }
+            petCard.contentDescription = if (item.isUnlocked)
+                "${item.pet.name}，$rarityLabel，已解锁"
+            else "${item.pet.name}，$rarityLabel，未解锁，需要 ${item.pet.unlockCost} 积分解锁"
             petCard.setOnClickListener { onClick(item) }
         }
     }

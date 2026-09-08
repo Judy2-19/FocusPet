@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/onboarding_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingBottom="12dp">
+
+    <!-- 三页引导：欢迎 / 怎么玩 / 选背景色 -->
+    <ViewFlipper
+        android:id="@+id/flipper"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:inAnimation="@android:anim/fade_in"
+        android:outAnimation="@android:anim/fade_out">
+
+        <!-- 第 1 页：欢迎 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingStart="32dp"
+            android:paddingEnd="32dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🐾"
+                android:textSize="80sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:gravity="center"
+                android:text="欢迎来到 专注养宠"
+                android:textColor="@color/text_primary"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:gravity="center"
+                android:text="用每一次专注，点亮属于你的小宠物"
+                android:textColor="@color/text_hint"
+                android:textSize="15sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="28dp"
+                android:gravity="center"
+                android:lineSpacingExtra="4dp"
+                android:text="专注越久，积分越多，\n伙伴也会越来越开心 ✨"
+                android:textColor="@color/text_hint"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- 第 2 页：怎么玩 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingStart="32dp"
+            android:paddingEnd="32dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:text="怎么玩？"
+                android:textColor="@color/text_primary"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/step1"
+                style="@style/OnboardingStep"
+                android:text="🍅 在「专注」页开始一次专注计时" />
+
+            <TextView
+                android:id="@+id/step2"
+                style="@style/OnboardingStep"
+                android:text="✅ 完成后获得积分，宠物心情变好" />
+
+            <TextView
+                android:id="@+id/step3"
+                style="@style/OnboardingStep"
+                android:text="📖 用积分在「图鉴」解锁更多伙伴" />
+
+            <TextView
+                android:id="@+id/step4"
+                style="@style/OnboardingStep"
+                android:text="🔒 用「锁机」强制专注，还能给小猫换装" />
+
+            <TextView
+                android:id="@+id/step5"
+                style="@style/OnboardingStep"
+                android:text="🏆 在「排行」里和朋友比比专注时长" />
+        </LinearLayout>
+
+        <!-- 第 3 页：选背景色 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingStart="32dp"
+            android:paddingEnd="32dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🎨"
+                android:textSize="64sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="选一个喜欢的背景色"
+                android:textColor="@color/text_primary"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="之后随时可以在首页「换背景」里改"
+                android:textColor="@color/text_hint"
+                android:textSize="13sp" />
+
+            <!-- 色板：由代码按 SettingsManager.PALETTE 动态填充 -->
+            <GridLayout
+                android:id="@+id/color_grid"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="26dp"
+                android:alignmentMode="alignMargins"
+                android:columnCount="4" />
+        </LinearLayout>
+    </ViewFlipper>
+
+    <!-- 底部：跳过 / 圆点 / 下一步 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="8dp">
+
+        <TextView
+            android:id="@+id/btn_skip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:text="跳过"
+            android:textColor="@color/text_hint"
+            android:textSize="15sp" />
+
+        <LinearLayout
+            android:id="@+id/dots"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="horizontal" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_next"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="下一步"
+            app:cornerRadius="22dp" />
+    </LinearLayout>
+</LinearLayout>

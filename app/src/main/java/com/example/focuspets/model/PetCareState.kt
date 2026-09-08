@@ -47,6 +47,9 @@ object PetCareState {
         else -> PetMood.NORMAL
     }
 
+    /** 云端同步写入心情（逻辑与调试强制写入一致） */
+    fun setMood(context: Context, mood: PetMood) = debugForceMood(context, mood)
+
     /**
      * 调试专用（仅 test 分支）：强制写入某种心情状态。
      * - SICK：饥饿=true、连续成功=0

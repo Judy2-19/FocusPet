@@ -36,12 +36,12 @@ object CatWardrobe {
      * 素材由豆包生成，并非每种颜色都配齐全套，只提供存在的组合，避免加载不到图。
      */
     val CROWN_OPTIONS_BY_COLOR: Map<String, List<String>> = mapOf(
-        "gray" to listOf("blue_crown"),
+        "gray" to listOf("blue_crown", "pink_crown"),
         "blue" to listOf("blue_crown", "pink_crown"),
         "pink" to listOf("blue_crown", "pink_crown"),
         "yellow" to listOf("blue_crown", "pink_crown"),
         "black" to listOf("blue_crown", "pink_crown"),
-        "white" to emptyList()
+        "white" to listOf("blue_crown", "pink_crown")
     )
 
     // ---- itemId 约定（与 Room wardrobe_purchases.item_id 一致） ----
@@ -111,4 +111,12 @@ object CatWardrobe {
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+
+    /**
+     * 重置进度时清空「穿在身上」的装扮状态（SharedPreferences 整体清空，回到默认
+     * 灰色 / 无裙无冠）。与 Room 的购买记录（wardrobe_purchases）一起复位。
+     */
+    fun clearEquipped(context: Context) {
+        prefs(context).edit().clear().apply()
+    }
 }

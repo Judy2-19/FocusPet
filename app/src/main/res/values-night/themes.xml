@@ -1,0 +1,16 @@
+<resources>
+    <!-- 深色模式沿用 DayNight 主题，仅把窗口底色指向深色资源；
+         其余颜色由 values-night/colors.xml 自动覆盖 -->
+    <style name="Theme.FocusPets" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- 深色模式也要覆盖 Material3 默认紫色：主色用提亮的琥珀强调色 -->
+        <item name="colorPrimary">@color/cat_accent</item>
+        <item name="colorPrimaryContainer">@color/cat_accent</item>
+        <item name="colorOnPrimary">#1C1916</item>
+        <item name="android:windowBackground">@color/page_background</item>
+        <item name="android:colorBackground">@color/page_background</item>
+        <!-- 深色模式下状态栏/导航栏与深底同色；深底用浅色状态栏图标 -->
+        <item name="android:statusBarColor">@color/page_background</item>
+        <item name="android:navigationBarColor">@color/page_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

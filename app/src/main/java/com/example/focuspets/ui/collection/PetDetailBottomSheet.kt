@@ -26,6 +26,7 @@ class PetDetailBottomSheet : BottomSheetDialogFragment() {
         val pet = arguments?.getParcelable<PetEntity>(ARG_PET) ?: error("缺少 pet 参数")
 
         binding.tvDetailEmoji.text = pet.emoji
+        binding.tvDetailEmoji.contentDescription = pet.name
         binding.tvDetailName.text = pet.name
         binding.tvDetailDesc.text = pet.description
 

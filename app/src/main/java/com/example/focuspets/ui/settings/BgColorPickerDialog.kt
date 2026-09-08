@@ -47,8 +47,14 @@ class BgColorPickerDialog : DialogFragment() {
     }
 
     private fun buildSwatches() {
+        // 与 SettingsManager.PALETTE 顺序一一对应的中文色名，供屏幕阅读器朗读
+        val labels = listOf(
+            "暖米色", "蜜桃粉", "天空蓝", "薄荷绿",
+            "薰衣草紫", "奶油黄", "樱花粉", "青瓷绿"
+        )
         val size = (resources.displayMetrics.density * 52).toInt()
-        for (color in SettingsManager.PALETTE) {
+        SettingsManager.PALETTE.forEachIndexed { index, color ->
+            val label = labels.getOrElse(index) { "背景" }
             val swatch = View(requireContext()).apply {
                 val d = GradientDrawable().apply {
                     shape = GradientDrawable.OVAL
@@ -56,6 +62,7 @@ class BgColorPickerDialog : DialogFragment() {
                     setStroke((resources.displayMetrics.density * 4).toInt(), Color.WHITE)
                 }
                 background = d
+                contentDescription = "$label 背景色"
                 val lp = GridLayout.LayoutParams().apply {
                     width = size
                     height = size

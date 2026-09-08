@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -15,6 +17,15 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+
+        // 云端后端地址：从 local.properties 读取 CLOUD_BASE_URL，缺省回退模拟器回环
+        val props = Properties().also { p ->
+            val f = rootProject.file("local.properties")
+            if (f.exists()) f.inputStream().use { p.load(it) }
+        }
+        val baseUrl = props.getProperty("CLOUD_BASE_URL", "http://10.0.2.2:8080/")
+        val normalized = if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/"
+        buildConfigField("String", "CLOUD_BASE_URL", "\"$normalized\"")
     }
 
     buildTypes {
@@ -29,6 +40,8 @@ android {
 
     buildFeatures {
         viewBinding = true
+        // 云端后端地址需要 BuildConfig 字段（CLOUD_BASE_URL）
+        buildConfig = true
     }
 
     compileOptions {
@@ -56,4 +69,9 @@ dependencies {
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
+
+    // 云端同步 / 排行榜：HTTP 客户端（Retrofit + OkHttp + Gson）
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }

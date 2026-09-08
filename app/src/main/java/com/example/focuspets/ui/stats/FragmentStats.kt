@@ -1,19 +1,24 @@
 package com.example.focuspets.ui.stats
 
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.recyclerview.widget.GridLayoutManager
+import com.example.focuspets.MainActivity
 import com.example.focuspets.R
 import com.example.focuspets.databinding.FragmentStatsBinding
 import com.example.focuspets.db.AppDatabase
 import com.example.focuspets.db.PetRepository
 import com.example.focuspets.model.Backgrounds
+import com.example.focuspets.ui.stats.BadgeAdapter
 
 class FragmentStats : Fragment() {
 
@@ -24,6 +29,8 @@ class FragmentStats : Fragment() {
         val db = AppDatabase.getInstance(requireActivity().applicationContext)
         StatsViewModelFactory(PetRepository(db))
     }
+
+    private val badgeAdapter = BadgeAdapter()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -38,6 +45,15 @@ class FragmentStats : Fragment() {
         // 应用用户选中的背景色
         Backgrounds.apply(requireContext(), binding.root)
 
+        // 全球排行榜入口（底部导航最多 5 项，排行榜挪到统计页）
+        binding.btnLeaderboard.setOnClickListener {
+            (requireActivity() as MainActivity).showLeaderboard()
+        }
+
+        // 成就徽章网格（3 列）
+        binding.badges.layoutManager = GridLayoutManager(requireContext(), 3)
+        binding.badges.adapter = badgeAdapter
+
         viewModel.today.observe(viewLifecycleOwner) {
             binding.tvToday.text = formatMinutes(it)
         }
@@ -50,6 +66,12 @@ class FragmentStats : Fragment() {
         viewModel.streak.observe(viewLifecycleOwner) {
             binding.tvStreak.text = "$it 天"
         }
+        viewModel.heatmap.observe(viewLifecycleOwner) {
+            binding.heatmap.setData(it)
+        }
+        viewModel.achievements.observe(viewLifecycleOwner) {
+            badgeAdapter.submit(it)
+        }
         viewModel.last7.observe(viewLifecycleOwner) {
             buildBarChart(it)
         }
@@ -60,25 +82,40 @@ class FragmentStats : Fragment() {
         else -> "$min 分钟"
     }
 
-    /** 近 7 天柱状图：每根柱子底部对齐，高度按最大值等比缩放 */
+    /** 近 7 天柱状图：柱底对齐、按最大值等比缩放；底部预留星期标签空间，避免标签被挤出/遮挡 */
     private fun buildBarChart(bars: List<com.example.focuspets.db.DayBar>) {
         if (_binding == null || bars.isEmpty()) return
         binding.barChart.removeAllViews()
         val max = bars.maxOfOrNull { it.minutes } ?: 0
         val density = resources.displayMetrics.density
-        val availH = (140 * density).toInt()      // 柱子可用最大高度
-        val barW = (26 * density).toInt()
+        // 容器固定 180dp、内边距 14dp → 内容区约 152dp；底部预留 24dp 放星期标签
+        val contentH = (180 * density).toInt() - 2 * (14 * density).toInt()
+        val labelArea = (24 * density).toInt()
+        val maxBarH = (contentH - labelArea).coerceAtLeast((40 * density).toInt())
+        val barW = (24 * density).toInt()
+        val minBar = (6 * density).toInt()
         val accent = ContextCompat.getColor(requireContext(), R.color.cat_accent)
 
         for (bar in bars) {
             val col = LinearLayout(requireContext()).apply {
                 orientation = LinearLayout.VERTICAL
-                gravity = android.view.Gravity.CENTER_HORIZONTAL
-                val lp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
+                // 关键：列内容底部对齐 → 所有柱体共享同一条基线，星期标签恒定显示在底部
+                gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
+            }
+            val h = if (max == 0) minBar
+            else ((bar.minutes.toFloat() / max) * maxBarH).toInt().coerceAtLeast(minBar)
+
+            // 数值标签（柱顶）：点击柱子也能看到具体分钟数
+            val valueLabel = TextView(requireContext()).apply {
+                text = if (bar.minutes > 0) "${bar.minutes}" else ""
+                textSize = 11f
+                setTextColor(ContextCompat.getColor(requireContext(), R.color.cat_accent))
+                gravity = Gravity.CENTER
+                val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                lp.bottomMargin = (3 * density).toInt()
                 layoutParams = lp
             }
-            val h = if (max == 0) (8 * density).toInt()
-            else ((bar.minutes.toFloat() / max) * availH).toInt().coerceAtLeast((8 * density).toInt())
 
             val barView = View(requireContext()).apply {
                 setBackgroundColor(accent)
@@ -89,16 +126,25 @@ class FragmentStats : Fragment() {
             val label = TextView(requireContext()).apply {
                 text = bar.label
                 textSize = 11f
-                setTextColor(0xFF757575.toInt())
-                gravity = android.view.Gravity.CENTER
+                setTextColor(ContextCompat.getColor(requireContext(), R.color.text_hint))
+                gravity = Gravity.CENTER
             }
+            col.addView(valueLabel)
             col.addView(barView)
             col.addView(label)
+
+            // 点击柱子 → 提示该天具体分钟数
+            col.setOnClickListener {
+                val msg = if (bar.minutes > 0) "${bar.label}：${bar.minutes} 分钟"
+                else "${bar.label}：暂无专注记录"
+                Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+            }
+
             binding.barChart.addView(col)
         }
         binding.tvChartHint.text =
             if (max == 0) "还没有专注记录，开始第一个番茄钟吧～"
-            else "近 7 天最高 ${max} 分钟 · 数据来自专注记录"
+            else "近 7 天最高 ${max} 分钟 · 点击柱子看具体分钟数"
     }
 
     override fun onDestroyView() {

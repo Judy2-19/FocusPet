@@ -20,15 +20,32 @@
             android:padding="24dp"
             android:paddingBottom="40dp">
 
-        <TextView
-            android:id="@+id/tv_lock_badge"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="48dp"
-            android:text="🔒 锁机模式"
-            android:textColor="@color/cat_accent"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_lock_badge"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="🔒 锁机模式"
+                android:textColor="@color/cat_accent"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_exit"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:text="退出"
+                android:textSize="13sp"
+                app:cornerRadius="20dp" />
+        </LinearLayout>
 
         <ImageView
             android:id="@+id/iv_cat"
@@ -36,7 +53,8 @@
             android:layout_height="220dp"
             android:layout_marginTop="16dp"
             android:scaleType="fitCenter"
-            android:src="@android:drawable/ic_menu_compass" />
+            android:src="@android:drawable/ic_menu_compass"
+            android:contentDescription="专注中的小猫" />
 
         <TextView
             android:id="@+id/tv_remaining"
@@ -47,7 +65,8 @@
             android:text="25:00"
             android:textColor="@color/text_primary"
             android:textSize="68sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:contentDescription="剩余专注时间" />
 
         <TextView
             android:id="@+id/tv_subtitle"
@@ -62,7 +81,8 @@
             android:id="@+id/progress_focus"
             android:layout_width="match_parent"
             android:layout_height="12dp"
-            android:layout_marginTop="28dp" />
+            android:layout_marginTop="28dp"
+            android:contentDescription="专注进度" />
 
         <com.google.android.material.button.MaterialButtonToggleGroup
             android:id="@+id/toggle_duration"
@@ -95,6 +115,7 @@
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
         <LinearLayout
+            android:id="@+id/layout_custom"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
@@ -134,15 +155,35 @@
             android:textSize="16sp"
             app:cornerRadius="30dp" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_whitelist"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="14dp"
+            android:text="📋 白名单应用（锁机期间可用）"
+            android:textSize="14sp"
+            app:cornerRadius="26dp" />
+
         <TextView
             android:id="@+id/tv_hint"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
             android:gravity="center"
-            android:text="🔒 开始后手机会被固定在本页面（屏幕固定）\n专注结束或主动放弃后可解锁离开"
+            android:text="🔒 开始后手机将被锁定在本页面，无法主动退出（白名单内的应用仍可使用）；专注结束自动解锁。"
             android:textColor="@color/text_hint"
             android:textSize="12sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_force_exit"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginTop="16dp"
+            android:text="强制退出（今日剩余 1 次）"
+            android:textSize="16sp"
+            android:visibility="gone"
+            app:cornerRadius="30dp" />
         </LinearLayout>
     </ScrollView>
 

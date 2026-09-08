@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="24dp"
-    android:background="@android:color/white">
+    android:background="?attr/colorSurface">
 
     <TextView
         android:layout_width="wrap_content"
@@ -12,7 +13,7 @@
         android:text="选一个你喜欢的背景色 🎨"
         android:textSize="17sp"
         android:textStyle="bold"
-        android:textColor="#212121" />
+        android:textColor="@color/text_primary" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -20,7 +21,7 @@
         android:layout_marginTop="6dp"
         android:text="番茄 ToDo 风格 · 之后也能在首页「换背景」重新选择"
         android:textSize="12sp"
-        android:textColor="#9E9E9E" />
+        android:textColor="@color/text_hint" />
 
     <GridLayout
         android:id="@+id/grid_bg"
@@ -37,7 +38,6 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:text="稍后再说"
-        app:cornerRadius="20dp"
-        xmlns:app="http://schemas.android.com/apk/res-auto" />
+        app:cornerRadius="20dp" />
 
 </LinearLayout>
