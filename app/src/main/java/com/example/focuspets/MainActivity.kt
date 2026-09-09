@@ -65,7 +65,13 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         // test 分支：首次启动自动满配 + 积分补到 100 万（仅一次）
-        DebugHelper.ensureTestSetup(this)
+        // 守卫：仅 Debug 构建 + IS_TEST_BUILD=true。
+        //   - main 默认 IS_TEST_BUILD=false → 不调调试注入，与 release 一致
+        //   - test 分支开发者打包：./gradlew assembleDebug -PisTestBuild=true
+        //   - BuildConfig.DEBUG 在 release 自动 false → 第二道防线
+        if (BuildConfig.DEBUG && BuildConfig.IS_TEST_BUILD) {
+            DebugHelper.ensureTestSetup(this)
+        }
 
         // 统一窗口背景为用户选中的背景色（各 Fragment 根布局也会各自应用）
         val bg = Backgrounds.colorInt(this)

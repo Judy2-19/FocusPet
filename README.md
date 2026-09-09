@@ -289,5 +289,64 @@ tools/gen_bark.py           # 合成 bark.wav 的脚本
 
 > 新增工具方法集中在 `app/src/main/java/com/example/focuspets/util/ThemeExt.kt`：`Context.isNightMode()`、`Int.toNightSurface()`。
 
+---
+
+## 十一、如何运行排行榜后端（本地后端 + 真机转发）
+
+排行榜与云端同步依赖一个极简本地后端 `server/leaderboard_server.py`：**零第三方依赖**（仅 Python 标准库 + `sqlite3`），负责匿名账号、状态镜像与排行榜。数据落地在 `server/focuspets.db`。
+
+> 后端不是 App 运行的必需项：未启动时，排行榜页会自动回退到上一次成功拉取的缓存，App 不会崩溃。
+
+### 1. 一键启动（推荐，Windows）
+
+直接双击 `developer\start_backend.bat`（或在 Git Bash / CMD 中运行）。它会自动完成：
+
+1. 检查并杀掉占用 **8090** 端口的旧进程；
+2. **自动 `adb reverse tcp:8090 tcp:8090`**（需手机已通过 USB 调试连上电脑；连不上则跳过，不影响后端启动）；
+3. 在多个 Python 里挑一个能正常 `import` 标准库的（优先用 WorkBuddy 自带的托管 Python，规避系统 Python 标准库丢失的情况）；
+4. 运行 `python leaderboard_server.py 8090`。
+
+窗口保持打开即代表后端在跑；**关闭窗口即停止**。启动后控制台会打印：
+
+- 模拟器访问：`http://10.0.2.2:8090/`
+- 真机（USB）访问：`http://127.0.0.1:8090/`
+
+### 2. 手动启动
+
+```bash
+cd server
+python leaderboard_server.py 8090
 ```
+
+### 3. 让 App 连上后端（关键）
+
+App 的后端地址在**编译期**写死进 `BuildConfig.CLOUD_BASE_URL`，来源是项目根目录 `local.properties` 的 `CLOUD_BASE_URL`。因此改完地址必须**重新构建**才会生效（仅 Apply Changes 热更新不行）。
+
+按运行环境改 `local.properties`：
+
+| 运行环境 | CLOUD_BASE_URL 取值 | 说明 |
+| --- | --- | --- |
+| 安卓模拟器 | `http://10.0.2.2:8090/` | 10.0.2.2 是模拟器回环到宿主机的地址 |
+| **真机 USB 调试（adb reverse）** | `http://127.0.0.1:8090/` | 配合 bat 的 `adb reverse`，把手机本机 8090 转发到电脑 8090，最稳、不受 WiFi 网段隔离影响 |
+| 真机同一 WiFi | `http://<开发机局域网IP>:8090/` | 如 `http://192.168.1.23:8090/`，需手机与电脑同网段且防火墙放行 |
+
+> 当前 `local.properties` 默认就是 `http://127.0.0.1:8090/`（对应「真机 + adb reverse」链路）。若切回模拟器，把它改成 `http://10.0.2.2:8090/` 并重新 build 即可。bat 与 `local.properties` 已对齐在 8090；若改端口，bat 的 `PORT` 与 `local.properties` 的地址要一起改。
+
+改完后重新构建安装：`./gradlew installDebug`（或 Android Studio 点 Run）。
+
+### 4. 验证后端在跑
+
+```bash
+# 排行榜（仅有过匿名注册的用户才会出现在榜上）
+curl "http://127.0.0.1:8090/api/leaderboard?limit=10"
+
+# 匿名注册一个新账号（App 首次启动会自动调用，这里仅供手动验证）
+curl -X POST "http://127.0.0.1:8090/api/auth/anon"
 ```
+
+能返回 JSON 即代表链路通。打开 App → 统计页 →「🏆 查看全球排行榜」即可看到榜单；若榜单为空，先在 App 内专注完成一次（产生积分并同步）即可上榜。
+
+### 5. 端口与数据库
+
+- 默认端口 `8090`（bat 写死；手动启动时 `leaderboard_server.py` 的参数可改，但必须和 `local.properties` 里的地址一致）。
+- 数据文件：`server/focuspets.db`（SQLite）。要清空榜单 / 账号，直接删这个文件，下次启动会自动重建空库。

@@ -26,6 +26,13 @@ android {
         val baseUrl = props.getProperty("CLOUD_BASE_URL", "http://10.0.2.2:8080/")
         val normalized = if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/"
         buildConfigField("String", "CLOUD_BASE_URL", "\"$normalized\"")
+
+        // 调试开关：默认 main=false（生产构建不调 DebugHelper），test 分支开发者打包时用
+        //   ./gradlew assembleDebug -PisTestBuild=true
+        // 覆盖为 true，则 MainActivity 在首启自动调 ensureTestSetup（解锁全部宠物 + 补 100 万积分）。
+        // BuildConfig.DEBUG 在 release 构建会自动为 false，构成第二道防线。
+        val isTestBuild = (project.findProperty("isTestBuild") as? String)?.toBoolean() ?: false
+        buildConfigField("boolean", "IS_TEST_BUILD", isTestBuild.toString())
     }
 
     buildTypes {
