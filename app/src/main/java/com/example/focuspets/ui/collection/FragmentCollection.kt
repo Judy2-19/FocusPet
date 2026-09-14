@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.example.focuspets.databinding.FragmentCollectionBinding
 import com.example.focuspets.db.AppDatabase
 import com.example.focuspets.db.PetRepository
+import com.example.focuspets.BuildConfig
 import com.example.focuspets.debug.DebugHelper
 import com.example.focuspets.model.Backgrounds
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -55,22 +56,31 @@ class FragmentCollection : Fragment() {
             binding.tvPoints.text = "可用积分 $it"
         }
         viewModel.uiState.observe(viewLifecycleOwner) { list ->
-            // 调试按钮：根据「是否已全部解锁」切换文案
-            allUnlocked = list.isNotEmpty() && list.all { it.isUnlocked }
-            binding.btnDebugUnlock.text = if (allUnlocked) "🛠 重置进度" else "🛠 一键满配"
             adapter.submitList(list)
+            // 调试按钮文案（仅 test 构建可见）：根据「是否已全部解锁」切换
+            if (BuildConfig.DEBUG && BuildConfig.IS_TEST_BUILD) {
+                allUnlocked = list.isNotEmpty() && list.all { it.isUnlocked }
+                binding.btnDebugUnlock.text = if (allUnlocked) "🛠 重置进度" else "🛠 一键满配"
+            }
         }
 
-        // 调试：满配 / 重置进度
-        binding.btnDebugUnlock.setOnClickListener {
-            if (allUnlocked) DebugHelper.resetToInitial(requireContext())
-            else DebugHelper.unlockAll(requireContext())
-        }
+        // 调试工具（仅 test 构建 -PisTestBuild=true 时可见可用；main 默认 GONE，
+        // 避免误触「满配 / 补满积分 / 重置进度」等测试入口）
+        val showDebug = BuildConfig.DEBUG && BuildConfig.IS_TEST_BUILD
+        binding.btnDebugUnlock.visibility = if (showDebug) View.VISIBLE else View.GONE
+        binding.btnDebugPoints.visibility = if (showDebug) View.VISIBLE else View.GONE
+        if (showDebug) {
+            // 调试：满配 / 重置进度
+            binding.btnDebugUnlock.setOnClickListener {
+                if (allUnlocked) DebugHelper.resetToInitial(requireContext())
+                else DebugHelper.unlockAll(requireContext())
+            }
 
-        // 调试：把可用积分补到 100 万
-        binding.btnDebugPoints.setOnClickListener {
-            DebugHelper.grantPoints(requireContext())
-            Toast.makeText(requireContext(), "💰 积分已补到 100 万", Toast.LENGTH_SHORT).show()
+            // 调试：把可用积分补到 100 万
+            binding.btnDebugPoints.setOnClickListener {
+                DebugHelper.grantPoints(requireContext())
+                Toast.makeText(requireContext(), "💰 积分已补到 100 万", Toast.LENGTH_SHORT).show()
+            }
         }
         viewModel.unlockEvent.observe(viewLifecycleOwner) { pet ->
             pet ?: return@observe

@@ -32,6 +32,7 @@ import com.example.focuspets.R
 import com.example.focuspets.databinding.FragmentHomeBinding
 import com.example.focuspets.db.AppDatabase
 import com.example.focuspets.db.PetRepository
+import com.example.focuspets.BuildConfig
 import com.example.focuspets.debug.DebugHelper
 import com.example.focuspets.model.CatWardrobe
 import com.example.focuspets.model.DogWardrobe
@@ -148,17 +149,22 @@ class HomeFragment : Fragment() {
 
         initMeowSound()
 
-        // 调试：循环切换心情三态，验证 SICK / NORMAL / GLOW 渲染（仅 test 分支）
-        fun moodLabel(m: PetMood) = when (m) {
-            PetMood.SICK -> "生病"
-            PetMood.GLOW -> "发光"
-            PetMood.NORMAL -> "普通"
-        }
-        binding.btnDebugMood.text = "🎭 调试心情：" + moodLabel(PetCareState.getMood(requireContext()))
-        binding.btnDebugMood.setOnClickListener {
-            val mood = DebugHelper.cycleMood(requireContext())
-            viewModel.refreshMood(requireContext())
-            binding.btnDebugMood.text = "🎭 调试心情：" + moodLabel(mood)
+        // 调试心情切换：仅 test 构建（-PisTestBuild=true）可见，避免 main 误触调试入口
+        val showDebugMood = BuildConfig.DEBUG && BuildConfig.IS_TEST_BUILD
+        binding.btnDebugMood.visibility = if (showDebugMood) View.VISIBLE else View.GONE
+        if (showDebugMood) {
+            // 循环切换心情三态，验证 SICK / NORMAL / GLOW 渲染
+            fun moodLabel(m: PetMood) = when (m) {
+                PetMood.SICK -> "生病"
+                PetMood.GLOW -> "发光"
+                PetMood.NORMAL -> "普通"
+            }
+            binding.btnDebugMood.text = "🎭 调试心情：" + moodLabel(PetCareState.getMood(requireContext()))
+            binding.btnDebugMood.setOnClickListener {
+                val mood = DebugHelper.cycleMood(requireContext())
+                viewModel.refreshMood(requireContext())
+                binding.btnDebugMood.text = "🎭 调试心情：" + moodLabel(mood)
+            }
         }
 
         // 退出 App 后再进入时，恢复上次首页选中的宠物（猫/狗及其装扮已各自持久化）
