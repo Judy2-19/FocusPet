@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>宠物卡牌</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden;
+    background: radial-gradient(circle at 50% 32%, #2a2440, #0c0a16);
+    font-family: -apple-system, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  #c { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+  #close { position: fixed; top: 16px; right: 16px; width: 42px; height: 42px;
+    border-radius: 50%; background: rgba(0,0,0,.42); color: #fff; font-size: 22px;
+    line-height: 42px; text-align: center; border: none; cursor: pointer; z-index: 10; }
+  #hint { position: fixed; bottom: 16px; left: 0; right: 0; text-align: center;
+    color: rgba(255,255,255,.5); font-size: 12px; z-index: 10; pointer-events: none; }
+  #samplebar { position: fixed; bottom: 12px; left: 0; right: 0; text-align: center;
+    z-index: 11; display: none; }
+  #samplebar button { margin: 0 5px; padding: 7px 14px; border-radius: 16px;
+    border: 1px solid rgba(255,255,255,.35); background: rgba(0,0,0,.35); color: #fff;
+    font-size: 13px; cursor: pointer; }
+</style>
+</head>
+<body>
+  <button id="close" title="关闭">✕</button>
+  <canvas id="c"></canvas>
+  <div id="hint">拖动旋转 · 正面轻点放大 · 转到背面轻点看简介</div>
+  <div id="samplebar">
+    <button data-r="COMMON">普通</button>
+    <button data-r="RARE">稀有</button>
+    <button data-r="LEGENDARY">传说</button>
+  </div>
+
+  <script src="three.min.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    var THREE = window.THREE;
+    var gotData = false;   // 是否已收到真实数据（App 注入或 sample）
+    // 任何 JS 错误直接显示出来，避免"空白页"无从排查
+    window.onerror = function (m, s, l, c) {
+      var h = document.getElementById('hint');
+      if (h) { h.style.color = '#ff9a9a'; h.textContent = 'JS 错误: ' + m + ' (行 ' + l + ')'; }
+    };
+
+    // ---- 稀有度主题：普通=蓝(无闪)、稀有=紫(微闪)、传说=金(很亮很闪) ----
+    var THEMES = {
+      COMMON:    { bg: ['#3a5f9e', '#24406e', '#12233f'], back: '#101d33', accent: '#a9c8ff', label: '普通',
+                   sparkle: 0,  sparkleSize: 0,  sheen: 0.0,  glow: 0x000000, glowI: 0.0,  sparkleColor: 0xa9c8ff },
+      RARE:      { bg: ['#6a3fb0', '#432a75', '#221040'], back: '#1d1036', accent: '#d9b3ff', label: '稀有',
+                   sparkle: 9,  sparkleSize: 9,  sheen: 0.16, glow: 0x2a1b4d, glowI: 0.45, sparkleColor: 0xe0c4ff },
+      LEGENDARY: { bg: ['#f6d271', '#e0a233', '#9c6a12'], back: '#2a1c05', accent: '#fff4c2', label: '传说',
+                   sparkle: 36, sparkleSize: 13, sheen: 0.42, glow: 0x4a3200, glowI: 0.55, sparkleColor: 0xffe9a0 }
+    };
+
+    var CW = 640, CH = 896;          // 卡面画布分辨率（高清）
+    var CARD_H = 4.0;                // 卡牌世界高度
+    var CARD_W = CARD_H * CW / CH;
+    var CARD_D = 0.12;
+
+    var renderer, scene, camera, group, cardMesh;
+    var frontTex, backTex, backMat, backCanvas, sheenMesh, sparkles, sparkleMat;
+    var currentData = null, descShown = false;
+    var W = 0, H = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var startTime = performance.now();
+
+    // 交互状态（拖动自由旋转 + 惯性 + 空闲自转）
+    var dragging = false, idle = true;
+    var lastX = 0, lastY = 0, downX = 0, downY = 0, downT = 0, moved = false;
+    var target = { x: -0.15, y: 0.3 };
+    var cur = { x: -0.15, y: 0.3 };
+    var vel = { x: 0, y: 0 };
+    var zoomed = false, zoomT = 1.0;
+
+    function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+
+    // 解析查询参数（不依赖 URLSearchParams —— 老版本 Android WebView 没有它）
+    function q(name) {
+      var m = new RegExp('[?&]' + name + '=([^&]*)').exec(location.search);
+      return m ? decodeURIComponent(m[1]) : null;
+    }
+
+    // ---------- 画卡面 ----------
+    function roundRect(x, a, b, w, h, r) {
+      r = Math.min(r, w / 2, h / 2);
+      x.beginPath();
+      x.moveTo(a + r, b);
+      x.arcTo(a + w, b, a + w, b + h, r);
+      x.arcTo(a + w, b + h, a, b + h, r);
+      x.arcTo(a, b + h, a, b, r);
+      x.arcTo(a, b, a + w, b, r);
+      x.closePath();
+    }
+
+    // 小爪印（程序绘制，不依赖 emoji 字体）
+    function drawPaw(x, cx, cy, s, color, alpha) {
+      x.save();
+      x.globalAlpha = alpha;
+      x.fillStyle = color;
+      x.beginPath(); x.ellipse(cx, cy + 3 * s, 5 * s, 4 * s, 0, 0, Math.PI * 2); x.fill();
+      var toes = [[-4.2, -2.6], [-1.4, -4.6], [1.4, -4.6], [4.2, -2.6]];
+      for (var i = 0; i < toes.length; i++) {
+        x.beginPath(); x.arc(cx + toes[i][0] * s, cy + toes[i][1] * s, 2 * s, 0, Math.PI * 2); x.fill();
+      }
+      x.restore();
+    }
+
+    // 中文自动换行
+    function wrapText(x, text, cx, y, maxW, lineH) {
+      var chars = String(text).split(''), line = '', lines = [];
+      for (var i = 0; i < chars.length; i++) {
+        var test = line + chars[i];
+        if (x.measureText(test).width > maxW && line) { lines.push(line); line = chars[i]; }
+        else { line = test; }
+      }
+      if (line) lines.push(line);
+      for (var j = 0; j < lines.length; j++) x.fillText(lines[j], cx, y + j * lineH);
+    }
+
+    function drawBase(x, data, th) {
+      var g = x.createLinearGradient(0, 0, 0, CH);
+      g.addColorStop(0, th.bg[0]); g.addColorStop(0.55, th.bg[1]); g.addColorStop(1, th.bg[2]);
+      x.fillStyle = g; x.fillRect(0, 0, CW, CH);
+
+      var rg = x.createRadialGradient(CW * 0.5, CH * 0.22, CH * 0.05, CW * 0.5, CH * 0.22, CH * 0.5);
+      rg.addColorStop(0, 'rgba(255,255,255,0.18)');
+      rg.addColorStop(1, 'rgba(255,255,255,0)');
+      x.fillStyle = rg; x.fillRect(0, 0, CW, CH);
+
+      x.lineWidth = 10; x.strokeStyle = th.accent;
+      roundRect(x, 14, 14, CW - 28, CH - 28, 40); x.stroke();
+      x.lineWidth = 3; x.strokeStyle = 'rgba(255,255,255,0.5)';
+      roundRect(x, 32, 32, CW - 64, CH - 64, 30); x.stroke();
+
+      x.fillStyle = 'rgba(255,255,255,0.92)'; x.font = 'bold 40px sans-serif';
+      x.textAlign = 'left'; x.textBaseline = 'alphabetic';
+      x.fillText('#' + data.id, 60, 100);
+
+      x.font = 'bold 34px sans-serif'; x.textAlign = 'right';
+      var rw = x.measureText(th.label).width + 44;
+      x.fillStyle = 'rgba(0,0,0,0.28)';
+      roundRect(x, CW - 60 - rw, 66, rw, 54, 27); x.fill();
+      x.fillStyle = th.accent; x.fillText(th.label, CW - 78, 104);
+    }
+
+    function drawName(x, data) {
+      x.fillStyle = 'rgba(0,0,0,0.34)';
+      roundRect(x, 70, 744, CW - 140, 92, 46); x.fill();
+      x.fillStyle = '#ffffff'; x.font = 'bold 46px sans-serif';
+      x.textAlign = 'center'; x.textBaseline = 'middle';
+      x.fillText(data.name, CW / 2, 792);
+    }
+
+    function placePet(x, img, data) {
+      var bx = 60, by = 150, bw = CW - 120, bh = 560;
+      if (img) {
+        var ir = img.width / img.height, fr = bw / bh, dw = bw, dh = bh;
+        if (ir > fr) { dh = bw / ir; } else { dw = bh * ir; }
+        var dx = bx + (bw - dw) / 2, dy = by + (bh - dh) / 2;
+        x.save();
+        x.shadowColor = 'rgba(0,0,0,0.35)'; x.shadowBlur = 34; x.shadowOffsetY = 16;
+        x.drawImage(img, dx, dy, dw, dh);
+        x.restore();
+      }
+      if (data.locked) {
+        x.fillStyle = 'rgba(15,15,20,0.5)';
+        roundRect(x, 14, 14, CW - 28, CH - 28, 40); x.fill();
+        x.textAlign = 'center'; x.textBaseline = 'alphabetic';
+        x.font = '150px sans-serif'; x.fillStyle = '#fff';
+        x.fillText('🔒', CW / 2, CH / 2);
+        x.font = 'bold 44px sans-serif';
+        x.fillText('未解锁', CW / 2, CH / 2 + 90);
+      }
+    }
+
+    // ---------- 画卡背：品牌卡背（默认）/ 宠物简介（轻点展开） ----------
+    function drawBack(cv, data, th, showDesc) {
+      var x = cv.getContext('2d');
+      x.fillStyle = th.back; x.fillRect(0, 0, CW, CH);
+
+      x.lineWidth = 10; x.strokeStyle = th.accent;
+      roundRect(x, 14, 14, CW - 28, CH - 28, 40); x.stroke();
+      x.lineWidth = 3; x.strokeStyle = 'rgba(255,255,255,0.35)';
+      roundRect(x, 32, 32, CW - 64, CH - 64, 30); x.stroke();
+
+      // 四角小爪印
+      drawPaw(x, 104, 116, 1.0, th.accent, 0.45);
+      drawPaw(x, CW - 104, 116, 1.0, th.accent, 0.45);
+      drawPaw(x, 104, CH - 116, 1.0, th.accent, 0.45);
+      drawPaw(x, CW - 104, CH - 116, 1.0, th.accent, 0.45);
+
+      x.textAlign = 'center'; x.textBaseline = 'alphabetic';
+
+      if (!showDesc) {
+        drawPaw(x, CW / 2, 330, 4.4, th.accent, 1);
+        x.fillStyle = th.accent; x.font = 'bold 56px sans-serif';
+        x.fillText('FocusPets', CW / 2, 540);
+        x.fillStyle = 'rgba(255,255,255,0.78)'; x.font = '34px sans-serif';
+        x.fillText('宠 物 图 鉴', CW / 2, 604);
+        x.fillStyle = 'rgba(255,255,255,0.42)'; x.font = '26px sans-serif';
+        x.fillText('轻点卡片查看简介', CW / 2, 812);
+      } else {
+        x.fillStyle = th.accent; x.font = 'bold 48px sans-serif';
+        x.fillText(data.name, CW / 2, 200);
+        x.strokeStyle = 'rgba(255,255,255,0.3)'; x.lineWidth = 2;
+        x.beginPath(); x.moveTo(CW / 2 - 130, 246); x.lineTo(CW / 2 + 130, 246); x.stroke();
+        x.fillStyle = 'rgba(255,255,255,0.94)'; x.font = '36px sans-serif';
+        var desc = (data.desc && String(data.desc).length) ? data.desc : '专注的好伙伴';
+        wrapText(x, desc, CW / 2, 340, CW - 170, 58);
+        x.fillStyle = 'rgba(255,255,255,0.42)'; x.font = '26px sans-serif';
+        x.fillText('再点一下收起', CW / 2, 812);
+      }
+    }
+
+    function refreshBack() {
+      if (!backCanvas) return;
+      if (!currentData) return;
+      var th = THEMES[currentData.rarity] || THEMES.COMMON;
+      drawBack(backCanvas, currentData, th, descShown);
+      if (backTex) backTex.needsUpdate = true;
+    }
+
+    // ---------- 闪光贴图（斜向柔光带，用于 sheen 扫光） ----------
+    function makeStreakTex() {
+      var c = document.createElement('canvas'); c.width = 512; c.height = 512;
+      var x = c.getContext('2d');
+      var g = x.createLinearGradient(0, 0, 512, 0);
+      g.addColorStop(0.00, 'rgba(255,255,255,0)');
+      g.addColorStop(0.42, 'rgba(255,255,255,0)');
+      g.addColorStop(0.50, 'rgba(255,255,255,0.85)');
+      g.addColorStop(0.58, 'rgba(255,255,255,0)');
+      g.addColorStop(1.00, 'rgba(255,255,255,0)');
+      x.fillStyle = g; x.fillRect(0, 0, 512, 512);
+      var t = new THREE.CanvasTexture(c);
+      t.wrapS = THREE.RepeatWrapping; t.needsUpdate = true;
+      return t;
+    }
+
+    // ---------- 金属环境反射（程序生成，无需 HDR 文件） ----------
+    function makeEnv(renderer) {
+      try {
+        var ec = document.createElement('canvas'); ec.width = 64; ec.height = 64;
+        var ex = ec.getContext('2d');
+        var g = ex.createLinearGradient(0, 0, 0, 64);
+        g.addColorStop(0, '#8a8a9c'); g.addColorStop(0.5, '#33333f'); g.addColorStop(1, '#0b0b12');
+        ex.fillStyle = g; ex.fillRect(0, 0, 64, 64);
+        var eq = new THREE.CanvasTexture(ec);
+        eq.mapping = THREE.EquirectangularReflectionMapping;
+        var pm = new THREE.PMREMGenerator(renderer);
+        var tex = pm.fromEquirectangular(eq).texture;
+        eq.dispose(); pm.dispose();
+        return tex;
+      } catch (e) { return null; }
+    }
+
+    function init() {
+      var cv = document.getElementById('c');
+      renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
+      renderer.setPixelRatio(dpr);
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;   // 关键：压缩高光，修过曝
+      renderer.toneMappingExposure = 1.0;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+      camera.position.set(0, 0, CARD_H * 1.75);
+
+      var env = makeEnv(renderer);
+      if (env) scene.environment = env;
+
+      // 克制布光：半球 + 主光 + 轮廓光（不用高强环境光，避免发白）
+      scene.add(new THREE.HemisphereLight(0xffffff, 0x2a2440, 0.55));
+      var key = new THREE.DirectionalLight(0xfff2d6, 1.0);
+      key.position.set(3, 5, 6); key.castShadow = true;
+      key.shadow.mapSize.set(1024, 1024);
+      key.shadow.camera.near = 1; key.shadow.camera.far = 30;
+      key.shadow.camera.left = -6; key.shadow.camera.right = 6;
+      key.shadow.camera.top = 6; key.shadow.camera.bottom = -6;
+      key.shadow.bias = -0.0005;
+      scene.add(key);
+      var rim = new THREE.DirectionalLight(0x8ab0ff, 0.45);
+      rim.position.set(-5, 2, -4); scene.add(rim);
+
+      var ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40),
+        new THREE.ShadowMaterial({ opacity: 0.3 }));
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.y = -2.7; ground.receiveShadow = true;
+      scene.add(ground);
+
+      group = new THREE.Group();
+      scene.add(group);
+
+      attachInput(cv);
+      window.addEventListener('resize', resize);
+      document.getElementById('close').addEventListener('click', function () {
+        if (window.Android) Android.closeCard();
+      });
+      resize();
+      animate();
+    }
+
+    function resize() {
+      var cv = document.getElementById('c');
+      W = cv.clientWidth; H = cv.clientHeight;
+      if (!W || !H) return;
+      renderer.setSize(W, H, false);
+      camera.aspect = W / H; camera.updateProjectionMatrix();
+    }
+
+    // 卡背是否正对镜头（yaw 的 cos < 0 时为背面）
+    function facingBack() { return Math.cos(cur.y) < 0; }
+
+    function onTap() {
+      if (facingBack()) {
+        descShown = !descShown;      // 背面：展开 / 收起简介
+        refreshBack();
+      } else {
+        zoomed = !zoomed;            // 正面：放大 / 还原
+      }
+    }
+
+    // ---------- 交互：拖动自由旋转（y 无上限，可转很多圈）+ 惯性 + 空闲自转 ----------
+    function attachInput(cv) {
+      cv.addEventListener('pointerdown', function (e) {
+        dragging = true; idle = false; moved = false;
+        lastX = e.clientX; lastY = e.clientY;
+        downX = e.clientX; downY = e.clientY; downT = Date.now();
+        vel.x = 0; vel.y = 0;
+        try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+        cv.style.cursor = 'grabbing';
+      });
+      cv.addEventListener('pointermove', function (e) {
+        if (!dragging) return;
+        var dx = e.clientX - lastX, dy = e.clientY - lastY;
+        lastX = e.clientX; lastY = e.clientY;
+        if (Math.abs(e.clientX - downX) > 8 || Math.abs(e.clientY - downY) > 8) moved = true;
+        target.y += dx * 0.012;                 // 水平拖动 = 绕 Y 自由转（无上限）
+        target.x += dy * 0.012;                 // 垂直拖动 = 俯仰
+        target.x = clamp(target.x, -1.2, 1.2);
+        vel.y = dx * 0.012; vel.x = dy * 0.012;
+      });
+      function end() {
+        if (!dragging) return;
+        dragging = false; idle = true; cv.style.cursor = 'grab';
+        if (!moved && (Date.now() - downT) < 350) onTap();
+      }
+      cv.addEventListener('pointerup', end);
+      cv.addEventListener('pointercancel', end);
+    }
+
+    function clearCard() {
+      if (cardMesh) {
+        group.remove(cardMesh);
+        cardMesh.geometry.dispose();
+        cardMesh.material.forEach(function (m) { if (m.map) m.map.dispose(); m.dispose(); });
+        cardMesh = null;
+      }
+      if (sheenMesh) { group.remove(sheenMesh); sheenMesh.geometry.dispose(); sheenMesh.material.dispose(); sheenMesh = null; }
+      if (sparkles) { group.remove(sparkles); sparkles.geometry.dispose(); if (sparkleMat) sparkleMat.dispose(); sparkles = null; }
+      frontTex = null; backTex = null; backMat = null; backCanvas = null;
+    }
+
+    function buildSparkles(th) {
+      if (!th.sparkle) return;
+      var n = th.sparkle, pos = new Float32Array(n * 3), ph = new Float32Array(n);
+      for (var i = 0; i < n; i++) {
+        pos[i * 3] = (Math.random() - 0.5) * CARD_W * 0.9;
+        pos[i * 3 + 1] = (Math.random() - 0.5) * CARD_H * 0.9;
+        pos[i * 3 + 2] = CARD_D / 2 + 0.03 + Math.random() * 0.05;
+        ph[i] = Math.random();
+      }
+      var geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      geo.setAttribute('phase', new THREE.BufferAttribute(ph, 1));
+      sparkleMat = new THREE.ShaderMaterial({
+        uniforms: {
+          uTime: { value: 0 },
+          uSize: { value: th.sparkleSize * dpr },
+          uColor: { value: new THREE.Color(th.sparkleColor) }
+        },
+        vertexShader: [
+          'attribute float phase;',
+          'uniform float uTime; uniform float uSize;',
+          'varying float vTw;',
+          'void main(){',
+          '  vec4 mv = modelViewMatrix * vec4(position,1.0);',
+          '  float tw = 0.5 + 0.5 * sin(uTime * 6.2831 + phase * 6.2831);',
+          '  vTw = pow(tw, 3.0);',
+          '  gl_PointSize = uSize * (0.7 + 0.9 * vTw);',
+          '  gl_Position = projectionMatrix * mv;',
+          '}'
+        ].join('\n'),
+        fragmentShader: [
+          'uniform vec3 uColor; varying float vTw;',
+          'void main(){',
+          '  vec2 d = gl_PointCoord - vec2(0.5);',
+          '  float r = length(d);',
+          '  float a = smoothstep(0.5, 0.0, r);',
+          '  a = pow(a, 2.0) * vTw;',
+          '  gl_FragColor = vec4(uColor, a);',
+          '}'
+        ].join('\n'),
+        transparent: true, blending: THREE.AdditiveBlending, depthWrite: false
+      });
+      sparkles = new THREE.Points(geo, sparkleMat);
+      group.add(sparkles);
+    }
+
+    function buildCard(data, img) {
+      clearCard();
+      currentData = data;
+      descShown = false;
+      var th = THEMES[data.rarity] || THEMES.COMMON;
+
+      // 正面
+      var fcv = document.createElement('canvas'); fcv.width = CW; fcv.height = CH;
+      var fx = fcv.getContext('2d');
+      drawBase(fx, data, th);
+      drawName(fx, data);
+      placePet(fx, img, data);
+      frontTex = new THREE.CanvasTexture(fcv);
+      frontTex.anisotropy = 8; frontTex.encoding = THREE.sRGBEncoding; frontTex.needsUpdate = true;
+
+      // 背面（品牌卡背 + 简介）
+      backCanvas = document.createElement('canvas'); backCanvas.width = CW; backCanvas.height = CH;
+      drawBack(backCanvas, data, th, false);
+      backTex = new THREE.CanvasTexture(backCanvas);
+      backTex.anisotropy = 8; backTex.encoding = THREE.sRGBEncoding; backTex.needsUpdate = true;
+
+      var edgeMat = new THREE.MeshStandardMaterial({ color: 0x2b2535, metalness: 0.7, roughness: 0.35, envMapIntensity: 1.0 });
+      var frontMat = new THREE.MeshStandardMaterial({
+        map: frontTex, metalness: 0.12, roughness: 0.55, envMapIntensity: 0.55,
+        emissive: new THREE.Color(th.glow), emissiveIntensity: th.glowI
+      });
+      backMat = new THREE.MeshStandardMaterial({ map: backTex, metalness: 0.2, roughness: 0.6, envMapIntensity: 0.5 });
+
+      var geo = new THREE.BoxGeometry(CARD_W, CARD_H, CARD_D);
+      // BoxGeometry 面序: +x,-x,+y,-y,+z(正面),-z(背面)
+      cardMesh = new THREE.Mesh(geo, [edgeMat, edgeMat, edgeMat, edgeMat, frontMat, backMat]);
+      cardMesh.castShadow = true;
+      group.add(cardMesh);
+
+      if (th.sheen > 0) {
+        var streak = makeStreakTex();
+        sheenMesh = new THREE.Mesh(
+          new THREE.PlaneGeometry(CARD_W, CARD_H),
+          new THREE.MeshBasicMaterial({ map: streak, transparent: true, opacity: th.sheen,
+            blending: THREE.AdditiveBlending, depthWrite: false })
+        );
+        sheenMesh.position.z = CARD_D / 2 + 0.015;
+        group.add(sheenMesh);
+      }
+
+      buildSparkles(th);
+    }
+
+    function setupCard(data) {
+      gotData = true;
+      if (!renderer) return;
+      // 多图源回退：imageUrl（预览用真实立绘）→ imageDataUri（App 注入）→ 无图
+      var sources = [];
+      if (data.imageUrl) sources.push(data.imageUrl);
+      if (data.imageDataUri) sources.push(data.imageDataUri);
+      sources.push(null);
+      var idx = 0;
+      (function tryNext() {
+        var s = sources[idx++];
+        if (!s) { buildCard(data, null); return; }
+        var im = new Image();
+        if (!/^data:/.test(s)) im.crossOrigin = 'anonymous';
+        im.onload = function () { buildCard(data, im); };
+        im.onerror = function () { tryNext(); };
+        im.src = s;
+      })();
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      var t = (performance.now() - startTime) / 1000;
+      if (!dragging) {
+        if (Math.abs(vel.x) > 0.0002 || Math.abs(vel.y) > 0.0002) {
+          target.y += vel.y; target.x += vel.x;
+          target.x = clamp(target.x, -1.2, 1.2);
+          vel.x *= 0.94; vel.y *= 0.94;
+        } else if (idle && !descShown) {
+          target.y += 0.0045;                    // 空闲缓慢自转（展开简介时停转，便于阅读）
+        }
+      }
+      cur.x += (target.x - cur.x) * 0.12;
+      cur.y += (target.y - cur.y) * 0.12;
+      group.rotation.x = cur.x;
+      group.rotation.y = cur.y;
+      group.position.y = Math.sin(t * 1.1) * 0.08;          // 呼吸浮动
+      zoomT += ((zoomed ? 1.5 : 1.0) - zoomT) * 0.12;
+      group.scale.setScalar(zoomT);
+
+      if (sparkleMat) sparkleMat.uniforms.uTime.value = t;
+      if (sheenMesh && sheenMesh.material.map) {
+        sheenMesh.material.map.offset.x = (t * 0.28) % 1;   // 扫光循环
+      }
+      renderer.render(scene, camera);
+    }
+
+    window.setupCard = setupCard;
+
+    // ---------- 浏览器预览：?sample=1（可加 &rarity=RARE/LEGENDARY） ----------
+    function sampleImg() {
+      var s = 256, cv = document.createElement('canvas'); cv.width = s; cv.height = s;
+      var c = cv.getContext('2d');
+      c.font = '180px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText('🐱', s / 2, s / 2);
+      return cv.toDataURL();
+    }
+    function runSample(rarity) {
+      setupCard({
+        id: 1, name: '小猫咪', rarity: rarity, locked: false, unlockCost: 0,
+        desc: '可换装的小猫咪，默认灰色',
+        imageUrl: '../cat/pink_dress.png',   // 预览用真实立绘（assets/cat 下的粉猫穿裙）
+        imageDataUri: sampleImg()            // 立绘加载失败时退回 emoji
+      });
+    }
+
+    window.addEventListener('load', function () {
+      try {
+        if (!THREE) {
+          var h = document.getElementById('hint');
+          h.style.color = '#ff9a9a';
+          h.textContent = 'three.js 未加载（检查 card3d/three.min.js 是否可访问）';
+          return;
+        }
+        init();
+        if (q('sample') === '1') {
+          var bar = document.getElementById('samplebar');
+          bar.style.display = 'block';
+          document.getElementById('hint').style.bottom = '56px';
+          var rarity = (q('rarity') || 'LEGENDARY').toUpperCase();
+          Array.prototype.forEach.call(bar.querySelectorAll('button'), function (b) {
+            b.addEventListener('click', function () { runSample(b.getAttribute('data-r')); });
+          });
+          runSample(THEMES[rarity] ? rarity : 'LEGENDARY');
+        }
+        // 兜底：若 900ms 内没有任何数据（例如预览代理把 ?sample 参数丢了）→ 渲染默认卡，永不空白
+        setTimeout(function () { if (!gotData) runSample('LEGENDARY'); }, 900);
+      } catch (err) {
+        var eh = document.getElementById('hint');
+        if (eh) { eh.style.color = '#ff9a9a'; eh.textContent = '初始化失败: ' + err.message; }
+      }
+    });
+  })();
+  </script>
+</body>
+</html>

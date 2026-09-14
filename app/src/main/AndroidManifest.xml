@@ -25,6 +25,8 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.FocusPets"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:usesCleartextTraffic="true">
 
         <activity
@@ -73,6 +75,13 @@
             android:name=".ui.focus.FocusRecordsActivity"
             android:exported="false"
             android:theme="@style/Theme.FocusPets" />
+
+        <!-- 单只宠物 3D 卡牌页：全屏 immersive WebView 承载 three.js 卡牌（点击放大欣赏） -->
+        <activity
+            android:name=".ui.collection.PetCardActivity"
+            android:exported="false"
+            android:theme="@style/Theme.FocusPets"
+            android:launchMode="singleTop" />
 
         <!-- 专注计时前台服务：specialUse 类型 + 子类型说明 -->
         <service

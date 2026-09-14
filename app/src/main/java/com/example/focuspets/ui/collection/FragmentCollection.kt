@@ -1,5 +1,6 @@
 package com.example.focuspets.ui.collection
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -28,6 +29,8 @@ class FragmentCollection : Fragment() {
     /** 调试（仅 test 分支）：当前是否已全部解锁，决定满配按钮的行为 */
     private var allUnlocked = false
 
+    private lateinit var adapter: PetAdapter
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -43,20 +46,19 @@ class FragmentCollection : Fragment() {
         // 应用用户选中的背景色
         Backgrounds.apply(requireContext(), binding.root)
 
-        val petAdapter = PetAdapter(::handlePetClick)
-        binding.rvPokedex.apply {
-            layoutManager = GridLayoutManager(requireContext(), 3)   // 每行 3 列
-            adapter = petAdapter
-        }
+        // 图鉴网格：每只是清晰的平面卡牌缩略图，点进去才是单只 3D 卡牌
+        binding.rvPets.layoutManager = GridLayoutManager(requireContext(), 3)
+        adapter = PetAdapter { item -> handlePetClick(item) }
+        binding.rvPets.adapter = adapter
 
         viewModel.availablePoints.observe(viewLifecycleOwner) {
             binding.tvPoints.text = "可用积分 $it"
         }
         viewModel.uiState.observe(viewLifecycleOwner) { list ->
-            petAdapter.submitList(list)
             // 调试按钮：根据「是否已全部解锁」切换文案
             allUnlocked = list.isNotEmpty() && list.all { it.isUnlocked }
             binding.btnDebugUnlock.text = if (allUnlocked) "🛠 重置进度" else "🛠 一键满配"
+            adapter.submitList(list)
         }
 
         // 调试：满配 / 重置进度
@@ -81,11 +83,15 @@ class FragmentCollection : Fragment() {
         }
     }
 
-    /** 点击分发：已解锁 → 详情；够分 → 确认解锁；不够 → 差多少 */
+    /** 点击分发：已解锁 → 单只 3D 卡牌；够分 → 确认解锁；不够 → 差多少 */
     private fun handlePetClick(item: PetDisplay) {
         when {
-            item.isUnlocked -> PetDetailBottomSheet.newInstance(item.pet)
-                .show(childFragmentManager, PetDetailBottomSheet.TAG)
+            item.isUnlocked -> {
+                val intent = Intent(requireContext(), PetCardActivity::class.java)
+                intent.putExtra(PetCardActivity.EXTRA_PET, item.pet)
+                intent.putExtra(PetCardActivity.EXTRA_UNLOCKED, true)
+                startActivity(intent)
+            }
 
             item.enoughPoints -> MaterialAlertDialogBuilder(requireContext())
                 .setTitle("解锁「${item.pet.name}」？")
@@ -109,7 +115,8 @@ class FragmentCollection : Fragment() {
     }
 
     override fun onDestroyView() {
-        super.onDestroyView()
+        binding.rvPets.adapter = null
         _binding = null
+        super.onDestroyView()
     }
 }

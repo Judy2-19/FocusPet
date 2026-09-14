@@ -44,10 +44,12 @@
             app:cornerRadius="16dp" />
     </LinearLayout>
 
+    <!-- 图鉴列表：正常网格，每只是清晰的平面卡牌缩略图（点进去才是单只 3D 卡牌） -->
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_pokedex"
+        android:id="@+id/rv_pets"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="8dp"
-        android:clipToPadding="false" />
+        android:clipToPadding="false"
+        android:padding="12dp"
+        android:scrollbars="vertical" />
 </LinearLayout>
