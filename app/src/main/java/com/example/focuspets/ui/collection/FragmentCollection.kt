@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.example.focuspets.databinding.FragmentCollectionBinding
 import com.example.focuspets.db.AppDatabase
 import com.example.focuspets.db.PetRepository
+import com.example.focuspets.BuildConfig
 import com.example.focuspets.debug.DebugHelper
 import com.example.focuspets.model.Backgrounds
 import com.google.android.material.dialog.MaterialAlertDialogBuilder

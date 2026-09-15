@@ -32,6 +32,7 @@ import com.example.focuspets.R
 import com.example.focuspets.databinding.FragmentHomeBinding
 import com.example.focuspets.db.AppDatabase
 import com.example.focuspets.db.PetRepository
+import com.example.focuspets.BuildConfig
 import com.example.focuspets.debug.DebugHelper
 import com.example.focuspets.model.CatWardrobe
 import com.example.focuspets.model.DogWardrobe
