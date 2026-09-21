@@ -63,8 +63,8 @@ desktop.ini
 .memory/
 
 # ---------- 设计源图 / 抠图原始素材（体积大、非工程产物，不进仓库） ----------
-图片/
-tools/originals/
+# 图片/
+# tools/originals/
 
 # ---------- 生成预览 / 测试产物（不进仓库） ----------
 tools/preview_*.png
