@@ -1,8 +1,4 @@
-"""FocusPets：把「图片/初始-猫/皇冠」里新加的 3 张猫王冠图抠成透明 PNG 写入 assets/cat/。
-
-猫背景为米白 #FEF8EA (254,248,234)，沿用 v2 的边缘去污染消除米白描边 + 轻羽化。
-命名与 CatWardrobe.assetPathFor 对齐：cat/<颜色>_dress_<冠色>.png
-"""
+""" FocusPets: cut out the three new cat crown images from 图片/初始-猫/皇冠 into transparent PNGs under assets/cat/. The background is beige #FEF8EA (254,248,234); reuse v2 edge decontamination and light feathering. Match CatWardrobe.assetPathFor with cat/<color>_dress_<crown-color>.png."""
 from pathlib import Path
 
 import numpy as np
@@ -22,7 +18,7 @@ MAPPING = {
 
 
 def decontaminate(arr: np.ndarray) -> np.ndarray:
-    """洗掉半透明边缘里的背景色残留（去米白边）。观测=alpha*fg+(1-alpha)*bg。"""
+    """ Remove background contamination from translucent edges: observed=alpha*foreground+(1-alpha)*background."""
     rgb = arr[..., :3].astype(float)
     a = arr[..., 3].astype(float) / 255.0
     mask = (a > 0.03) & (a < 0.97)

@@ -1,4 +1,4 @@
-"""使用 rembg (U²Net) 对 assets/cat/*.jpg 做高质量 AI 抠图，输出透明 PNG。"""
+""" Use rembg (U²Net) for high-quality AI cutouts of assets/cat/*.jpg into transparent PNGs."""
 from pathlib import Path
 
 from PIL import Image, ImageFilter
@@ -24,10 +24,10 @@ def main():
     pngs = []
     for jpg in jpgs:
         png = ASSET_DIR / (jpg.stem + ".png")
-        # 若之前已有 png（如 flood-fill 结果），先覆盖
+        # Overwrite existing PNGs, including earlier flood-fill results.
         img = Image.open(jpg)
         out = remove(img)
-        # 轻羽化：对 alpha 做高斯模糊得到抗锯齿边缘，避免硬边在缩放后出现米色描边
+        # Gently Gaussian-blur alpha for antialiased edges, avoiding beige hard outlines after scaling.
         r, g, b, a = out.split()
         a = a.filter(ImageFilter.GaussianBlur(1.4))
         out = Image.merge("RGBA", (r, g, b, a))

@@ -1,14 +1,4 @@
-"""FocusPets 小狗抠图（短尾专用重生成）：从「图片/狗/短尾巴」抠出透明 PNG 到 assets/dog/。
-
-背景为浅色（白/米），用 rembg(u2netp 轻量模型) 去背景 + alpha 去污染（消除灰脚）+ 轻羽化。
-命名按 尾巴_颜色[_red_tie][_black_suit|red_dress][_academic_cap]：
-  - 领带颜色写清：当前只有红领带 -> red_tie（以后加蓝领带直接 red_tie / blue_tie 即可）
-  - 短尾穿黑西服 -> black_suit；长尾穿红礼裙 -> red_dress（outfit 颜色写清）
-  - 学士帽写清为 academic_cap
-同名文件按「文件名」去重，保留第一张，避免重复生成 _2/_3 垃圾；
-西服文件夹里已带帽的图（灰/白）与学士帽文件夹同名，会被正确去重为一张。
-只处理「短尾巴」，不动长尾巴（长尾巴已正确，命名同理为 red_tie / red_dress / academic_cap）。
-"""
+""" FocusPets short-tail dog cutouts: read 图片/狗/短尾巴 and output transparent PNGs under assets/dog/. Use lightweight rembg u2netp, alpha decontamination, and gentle feathering for pale backgrounds. Name files tail_color[_red_tie][_black_suit|red_dress][_academic_cap]. Explicit color tokens allow future variants: short tails use black_suit, long tails red_dress, caps academic_cap. Deduplicate by filename, retaining the first image, including suit/cap folder duplicates. Process only 短尾巴; preserve existing long-tail artwork."""
 from pathlib import Path
 import os
 import numpy as np
@@ -19,7 +9,7 @@ BASE = Path("C:/Users/13671/Desktop/MobileApp")
 IN = BASE / "图片" / "狗" / "短尾巴"
 OUT = BASE / "app" / "src" / "main" / "assets" / "dog"
 
-# 轻量模型，推理内存远小于默认 u2net（避免沙箱 OOM）
+# Use the lightweight model to reduce inference memory versus default u2net and avoid sandbox OOM.
 SESS = new_session("u2netp")
 
 COLORS = [("白", "white"), ("灰", "gray"), ("黑", "black"),
@@ -28,10 +18,10 @@ COLORS = [("白", "white"), ("灰", "gray"), ("黑", "black"),
 
 def name_for(jpg: Path) -> str:
     stem = jpg.stem
-    parent = jpg.parent.name          # 红领带 / 西服 / 学士帽 / 默认
-    text = f"{stem} {parent}"         # 关键词可能出现在父文件夹名里（如「红领带/黄.jpg」）
-    # 狗的颜色 = 文件名中「最早出现」的颜色词。注意：所有狗都穿「黑西服」，
-    # 「黑」字会出现在后面，不能当成狗色；真正狗色（粉/黄/黑/灰/白）在文件名最前面。
+    parent = jpg.parent.name          # Red tie / suit / graduation cap / default.
+    text = f"{stem} {parent}"         # Keywords may occur in parent folder names, e.g. 红领带/黄.jpg.
+    # Dog color is the earliest color word in the filename. All dogs wear black suits,
+    # so a later black token must not override the leading fur color (pink/yellow/black/gray/white).
     color = None
     best = None
     for k, v in COLORS:
@@ -54,12 +44,7 @@ def name_for(jpg: Path) -> str:
 
 
 def decontaminate(img: Image.Image) -> Image.Image:
-    """去除抠图后残留在半透明边缘的灰色背景(matte)。
-
-    rembg 输出的半透明像素 RGB 是「前景毛色 + 背景灰」按 alpha 混合的结果；
-    直接羽化会把这层灰晕染到脚爪等低对比区域。这里用估计出的背景色反推
-    真实毛色（alpha 去污染），再对 alpha 做轻微羽化得到干净软边。
-    """
+    """ Remove gray background matte from translucent edges. rembg RGB blends fur and background according to alpha; directly feathering spreads gray into low-contrast paws. Estimate the background, recover foreground RGB, then gently feather alpha for clean soft edges."""
     arr = np.asarray(img, dtype=np.float32)
     rgb = arr[:, :, :3]
     al = arr[:, :, 3] / 255.0
@@ -84,23 +69,23 @@ def main():
     for jpg in sorted(IN.rglob("*.jpg")):
         try:
             img = Image.open(jpg).convert("RGB")
-            # 送入 rembg 前先缩到最长边 ≤512，压住显存
+            # Resize the longest edge to at most 512 before rembg to limit memory usage.
             max_side = 512
             if max(img.size) > max_side:
                 scale = max_side / max(img.size)
                 img = img.resize((int(img.width * scale), int(img.height * scale)), Image.LANCZOS)
             out = remove(img, session=SESS).convert("RGBA")
-            # 去污染：rembg 的半透明边缘是「狗毛 + 灰色背景」的混合(matte)。
-            # 若直接对 alpha 做高斯模糊，灰色会被晕染到低对比的脚爪区域，形成「灰脚」。
-            # 这里先用估计出的背景色反推真实毛色，把灰边还原成狗本身的颜色，
-            # 再对 alpha 做轻微羽化得到干净软边。
+            # Decontaminate rembg edges, which mix dog fur with the gray background matte.
+            # Blurring alpha directly spreads gray into low-contrast paws.
+            # First recover true fur RGB using the estimated background,
+            # then gently feather alpha for clean soft edges.
             res = decontaminate(out)
 
             base = name_for(jpg)
             name = base
             i = 2
             while name in saved:
-                # 同名即视为同一组合（西服/学士帽文件夹里的同款图），保留第一张，跳过其余
+                # Identical filenames indicate the same outfit/cap combination; keep the first and skip duplicates.
                 print(f"SKIP dup {jpg.name} -> {name}.png")
                 break
             else:

@@ -6,12 +6,12 @@ import android.content.Intent
 import android.provider.Settings
 
 /**
- * 「使用情况访问」权限（PACKAGE_USAGE_STATS）检查与引导。
- * 该权限属于特殊权限，无法用 requestPermissions 申请，必须引导用户到系统设置页手动开启。
+ * Check and guide PACKAGE_USAGE_STATS Usage Access permission. It is special permission, not
+ * requestPermissions; users must enable it manually in system Settings.
  */
 object UsageStatsPermission {
 
-    /** 是否已授予「使用情况访问」权限 */
+    /** Whether Usage Access permission is granted. */
     fun hasPermission(context: Context): Boolean {
         val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as? AppOpsManager
             ?: return false
@@ -23,7 +23,7 @@ object UsageStatsPermission {
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
-    /** 打开系统「使用情况访问」设置页 */
+    /** Open the system Usage Access settings page. */
     fun openSettings(context: Context) {
         val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

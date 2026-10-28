@@ -2,11 +2,11 @@ package com.example.focuspets.cloud
 
 import com.example.focuspets.cloud.model.LeaderboardResponse
 
-/** 排行榜数据访问：封装对后端 /api/leaderboard 的查询，并缓存最后一次成功结果 */
+/** Query /api/leaderboard and cache the last successful response. */
 class LeaderboardRepository(private val api: CloudApi) {
     suspend fun getLeaderboard(limit: Int = 50): LeaderboardResponse {
         val resp = api.leaderboard(limit, CloudSyncManager.currentUid())
-        // 成功即缓存，供离线时回退显示
+        // Cache successful results for offline fallback.
         CloudSyncManager.cacheLeaderboard(resp)
         return resp
     }

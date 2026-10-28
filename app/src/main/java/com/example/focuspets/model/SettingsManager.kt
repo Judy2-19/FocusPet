@@ -8,9 +8,8 @@ import com.example.focuspets.util.isNightMode
 import com.example.focuspets.util.toNightSurface
 
 /**
- * 全局用户偏好（SharedPreferences）：
- * - 背景色：用户首次进入时选择，之后全局生效（番茄 ToDo 风格柔和色板）
- * - 是否已选过背景色：用于首次进入弹出色板
+ * Global SharedPreferences: a soft background palette selected on first entry and applied throughout
+ * the app, plus a flag controlling the first-run palette prompt.
  */
 object SettingsManager {
 
@@ -20,16 +19,16 @@ object SettingsManager {
     private const val KEY_ONBOARDING_SEEN = "onboarding_seen"
     private const val KEY_CURRENT_PET = "current_pet_id"
 
-    /** 番茄 ToDo 风格的柔和背景色板 */
+    /** Soft background palette inspired by Tomato ToDo. */
     val PALETTE = listOf(
-        "#FEF8EA", // 暖米（猫窝色，默认）
-        "#FFE9E3", // 蜜桃粉
-        "#E8F3FF", // 天空蓝
-        "#E9F8EF", // 薄荷绿
-        "#F3ECFF", // 薰衣草紫
-        "#FFF4D6", // 奶油黄
-        "#FDE8F0", // 樱花粉
-        "#EAF6F1"  // 青瓷绿
+        "#FEF8EA", // Warm beige, the default cat-home color.
+        "#FFE9E3", // Peach pink.
+        "#E8F3FF", // Sky blue.
+        "#E9F8EF", // Mint green.
+        "#F3ECFF", // Lavender.
+        "#FFF4D6", // Cream yellow.
+        "#FDE8F0", // Cherry blossom pink.
+        "#EAF6F1"  // Celadon green.
     )
 
     val DEFAULT_BG = "#FEF8EA"
@@ -52,7 +51,7 @@ object SettingsManager {
             .edit().putBoolean(KEY_BG_CHOSEN, true).apply()
     }
 
-    /** 新手引导是否已看过（看过则不再自动弹） */
+    /** Whether onboarding has been viewed; do not show it automatically again. */
     fun isOnboardingSeen(context: Context): Boolean =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getBoolean(KEY_ONBOARDING_SEEN, false)
@@ -62,13 +61,13 @@ object SettingsManager {
             .edit().putBoolean(KEY_ONBOARDING_SEEN, true).apply()
     }
 
-    /** 重置引导标记，让下次启动重新展示（设置页「重新查看新手引导」用） */
+    /** Reset the onboarding flag so Settings can show it again on next launch. */
     fun resetOnboarding(context: Context) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .edit().putBoolean(KEY_ONBOARDING_SEEN, false).apply()
     }
 
-    /** 当前首页展示的宠物 id（用于云端排行榜头像映射；默认 1 号） */
+    /** Home pet ID for the cloud leaderboard avatar; defaults to 1. */
     fun getCurrentPetId(context: Context): Int =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getInt(KEY_CURRENT_PET, 1)
@@ -78,29 +77,28 @@ object SettingsManager {
             .edit().putInt(KEY_CURRENT_PET, id).apply()
     }
 
-    // ---------------- 锁机模式：每日强制退出 ----------------
+    // ---------------- Lock mode: daily forced exit ----------------
 
     private const val KEY_LOCK_FORCE_EXIT_DATE = "lock_force_exit_date"
 
-    /** 最近一次使用「强制退出」的日期（yyyy-MM-dd），空串表示从未使用过 */
+    /** Last forced-exit date (yyyy-MM-dd); empty means never used. */
     fun getLockForceExitDate(context: Context): String =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getString(KEY_LOCK_FORCE_EXIT_DATE, "") ?: ""
 
-    /** 记录今天已使用过强制退出（每日限一次，次日自动恢复） */
+    /** Record today's forced exit; limited to once daily and available again tomorrow. */
     fun setLockForceExitDate(context: Context, date: String) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .edit().putString(KEY_LOCK_FORCE_EXIT_DATE, date).apply()
     }
 
-    // ---------------- 锁机模式：系统屏幕固定开关 ----------------
+    // ---------------- Lock mode: system screen-pinning switch ----------------
 
     private const val KEY_SCREEN_PIN = "screen_pin_enabled"
 
     /**
-     * 锁机时是否使用系统「屏幕固定」（startLockTask）。默认开启。
-     * 关闭后锁机不调用 startLockTask，因此不会弹出系统「应用已固定」提示，
-     * 代价是锁机变为普通全屏（用户可按 Home 退出）。
+     * Whether to use startLockTask screen pinning; enabled by default. Disabling it avoids the system
+     * pinning prompt but leaves a normal full-screen Activity that users can exit with Home.
      */
     fun isScreenPinEnabled(context: Context): Boolean =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -111,14 +109,13 @@ object SettingsManager {
             .edit().putBoolean(KEY_SCREEN_PIN, enabled).apply()
     }
 
-    // ---------------- 锁机模式：白名单应用（软监控放行）----------------
+    // ---------------- Lock mode: allowlisted apps with soft monitoring ----------------
 
     private const val KEY_LOCK_WHITELIST = "lock_whitelist_apps"
 
     /**
-     * 锁机白名单应用包名集合。锁机开始时若此集合非空，
-     * 则改用「软监控」模式（不再调用 startLockTask 硬锁死），
-     * 允许白名单内的 app 在锁机期间正常使用；打开白名单外的 app 会被自动拉回锁机页。
+     * Allowlisted package names. A nonempty set enables soft monitoring instead of startLockTask, allowing
+     * listed apps and returning to the lock screen when other apps open.
      */
     fun getLockWhitelist(context: Context): Set<String> =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -129,22 +126,22 @@ object SettingsManager {
             .edit().putStringSet(KEY_LOCK_WHITELIST, packages).apply()
     }
 
-    /** 是否启用白名单软监控（集合非空即启用） */
+    /** Enable allowlist soft monitoring whenever the set is nonempty. */
     fun isLockWhitelistEnabled(context: Context): Boolean =
         getLockWhitelist(context).isNotEmpty()
 
-    // ---------------- 结束提醒：铃声 / 震动 / 自定义音频 ----------------
+    // ---------------- Completion alerts: sound, vibration, or custom audio ----------------
 
     private const val KEY_ALERT_MODE = "alert_mode"
     private const val KEY_ALERT_RINGTONE = "alert_ringtone_uri"
 
-    /** 专注 / 锁机完成时的提醒方式（二者择其一） */
-    const val ALERT_NONE = "none"           // 不提醒
-    const val ALERT_VIBRATE = "vibrate"     // 仅震动
-    const val ALERT_SOUND_DEFAULT = "sound_default"   // 系统默认提示音
-    const val ALERT_SOUND_CUSTOM = "sound_custom"     // 用户自定义音频
+    /** Alert choice for focus/lock completion. */
+    const val ALERT_NONE = "none"           // No alert.
+    const val ALERT_VIBRATE = "vibrate"     // Vibration only.
+    const val ALERT_SOUND_DEFAULT = "sound_default"   // System default notification sound.
+    const val ALERT_SOUND_CUSTOM = "sound_custom"     // User-selected audio.
 
-    /** 默认用「仅震动」，避免突然响铃打扰 */
+    /** Default to vibration only to avoid disruptive sounds. */
     fun getAlertMode(context: Context): String =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getString(KEY_ALERT_MODE, ALERT_VIBRATE) ?: ALERT_VIBRATE
@@ -154,7 +151,7 @@ object SettingsManager {
             .edit().putString(KEY_ALERT_MODE, mode).apply()
     }
 
-    /** 用户上传的自定义提醒音频 URI（持久授权），仅 ALERT_SOUND_CUSTOM 时生效 */
+    /** Persistently granted custom audio URI, used only for ALERT_SOUND_CUSTOM. */
     fun getAlertRingtoneUri(context: Context): String? =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getString(KEY_ALERT_RINGTONE, null)
@@ -164,11 +161,11 @@ object SettingsManager {
             .edit().putString(KEY_ALERT_RINGTONE, uri).apply()
     }
 
-    // ---------------- 主题模式（浅色 / 深色 / 跟随系统）----------------
+    // ---------------- Theme: light, dark, or system ----------------
 
     private const val KEY_THEME_MODE = "theme_mode"
 
-    /** 主题模式：system=跟随系统，light=浅色，dark=深色 */
+    /** Theme values: system follows the system, light forces light, dark forces dark. */
     const val THEME_SYSTEM = "system"
     const val THEME_LIGHT = "light"
     const val THEME_DARK = "dark"
@@ -182,7 +179,7 @@ object SettingsManager {
             .edit().putString(KEY_THEME_MODE, mode).apply()
     }
 
-    /** 把保存的主题模式字符串映射成 AppCompatDelegate 的夜间模式常量 */
+    /** Map the saved theme string to an AppCompatDelegate night-mode constant. */
     fun themeModeToNightMode(mode: String): Int = when (mode) {
         THEME_LIGHT -> AppCompatDelegate.MODE_NIGHT_NO
         THEME_DARK -> AppCompatDelegate.MODE_NIGHT_YES
@@ -190,20 +187,20 @@ object SettingsManager {
     }
 }
 
-/** 背景色应用的工具方法 */
+/** Background color helpers. */
 object Backgrounds {
 
-    /** 把用户选中的背景色应用到某个根视图上（深色模式下压暗为深色表层） */
+    /** Apply the selected color to a root view, darkening it into a dark surface in night mode. */
     fun apply(context: Context, view: View) {
         try {
             val base = Color.parseColor(SettingsManager.getBgColor(context))
             view.setBackgroundColor(if (context.isNightMode()) base.toNightSurface() else base)
         } catch (_: Exception) {
-            // 颜色解析失败则保持原样
+            // Leave unchanged if color parsing fails.
         }
     }
 
-    /** 取当前背景色的 int 值（供 Activity 窗口等使用，深色模式返回压暗后的深色） */
+    /** Get the background color as an int for Activity windows, darkened in night mode. */
     fun colorInt(context: Context): Int = try {
         val base = Color.parseColor(SettingsManager.getBgColor(context))
         if (context.isNightMode()) base.toNightSurface() else base

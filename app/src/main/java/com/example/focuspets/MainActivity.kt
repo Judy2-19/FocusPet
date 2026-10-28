@@ -30,7 +30,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
-    /** 专注完成广播：检测到新解锁徽章时弹出成就海报（仅应用内广播） */
+    /** App-internal focus-completion receiver: display achievement posters for newly unlocked badges. */
     private val badgeReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (intent.action == FocusService.BROADCAST_FINISHED) {
@@ -42,8 +42,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 若上次崩溃留下堆栈文件，优先弹窗展示（方便无 Logcat 时把异常贴给开发者），
-        // 并直接结束——避免继续往下走又触发同样的崩溃导致看不到堆栈。
+        // Display the saved crash trace first, allowing diagnosis without Logcat.
+        // Do not immediately run normal initialization, which could crash again and hide the trace.
         FocusPetsApp.consumeLastCrash(this)?.let { trace ->
             AlertDialog.Builder(this)
                 .setTitle("上次崩溃信息（请截图发我）")
@@ -54,7 +54,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // 首次启动（含清数据后重装）：先走新手引导，引导结束会自己回到这里
+        // Open onboarding on first launch; complete it before returning to the app.
         if (!SettingsManager.isOnboardingSeen(this)) {
             startActivity(Intent(this, OnboardingActivity::class.java))
             finish()
@@ -64,19 +64,19 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // test 分支：首次启动自动满配 + 积分补到 100 万（仅一次）
-        // 守卫：仅 Debug 构建 + IS_TEST_BUILD=true。
-        //   - main 默认 IS_TEST_BUILD=false → 不调调试注入，与 release 一致
-        //   - test 分支开发者打包：./gradlew assembleDebug -PisTestBuild=true
-        //   - BuildConfig.DEBUG 在 release 自动 false → 第二道防线
+        // Test branch: unlock everything and top up to one million points once on first launch.
+        // Both a Debug build and IS_TEST_BUILD=true are required.
+        // main defaults to IS_TEST_BUILD=false, so it injects no test data, matching release behavior.
+        // For test builds: ./gradlew assembleDebug -PisTestBuild=true
+        // BuildConfig.DEBUG is automatically false in release builds as a second safeguard.
         if (BuildConfig.DEBUG && BuildConfig.IS_TEST_BUILD) {
             DebugHelper.ensureTestSetup(this)
         }
 
-        // 统一窗口背景为用户选中的背景色（各 Fragment 根布局也会各自应用）
+        // Apply the selected background color to the window; fragment roots also apply it.
         val bg = Backgrounds.colorInt(this)
         window.decorView.setBackgroundColor(bg)
-        // 状态栏 / 导航栏跟随选中背景色，消除顶部紫色边框；浅底用深色状态栏图标
+        // Match status/navigation bars to the selected background; use dark status icons on light backgrounds.
         window.statusBarColor = bg
         window.navigationBarColor = bg
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -88,7 +88,7 @@ class MainActivity : AppCompatActivity() {
             selectTab(item.itemId)
         }
 
-        // 专注完成后检测新解锁徽章，弹成就海报（仅应用内广播）
+        // Check for newly unlocked badges after focus completion and show posters via an internal broadcast.
         ContextCompat.registerReceiver(
             this, badgeReceiver,
             IntentFilter(FocusService.BROADCAST_FINISHED),
@@ -96,14 +96,14 @@ class MainActivity : AppCompatActivity() {
         )
 
         if (savedInstanceState == null) {
-            binding.bottomNav.selectedItemId = R.id.nav_home   // 首页：宠物互动
+            binding.bottomNav.selectedItemId = R.id.nav_home   // Home: pet interactions.
         }
     }
 
     private fun selectTab(itemId: Int): Boolean {
-        // 锁机模式是独立全屏 Activity（屏幕固定），不替换容器里的 Fragment
+        // Lock mode uses a separate full-screen Activity with screen pinning; do not replace the current fragment.
         if (itemId == R.id.nav_lock) {
-            // 专注进行中不允许进入锁机：避免两套计时叠加，也避免「点了能进但能退出」的歧义
+            // Disable bottom navigation during focus to prevent timer disruption and impossible-to-exit states.
             if (FocusService.isRunning) {
                 Toast.makeText(
                     this, "请先结束当前专注，再进入锁机模式", Toast.LENGTH_SHORT
@@ -125,14 +125,14 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
-    /** 统计页的「查看全球排行榜」入口：直接把排行榜 Fragment 放进容器 */
+    /** Open the leaderboard fragment from the statistics screen entry point. */
     fun showLeaderboard() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, LeaderboardFragment())
             .commit()
     }
 
-    /** 供专注完成后的庆祝弹窗 / 首页图鉴按钮调用：一键跳到图鉴页 */
+    /** Navigate to Collection from completion celebrations or the Home collection button. */
     fun navigateToCollection() {
         binding.bottomNav.selectedItemId = R.id.nav_collection
     }

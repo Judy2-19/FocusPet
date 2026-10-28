@@ -5,18 +5,17 @@ import android.content.res.Configuration
 import android.graphics.Color
 
 /**
- * 深色模式判断与配色工具。
- * 用户可选的背景色是浅色柔和色板，直接套到深色模式会破坏对比度，
- * 因此在夜间模式下把任意背景色压暗成深色表层，保留色相。
+ * Night-mode detection and color helpers. The selectable backgrounds are light pastels, so darken them
+ * into night surfaces while preserving hue to maintain contrast.
  */
 
-/** 当前是否处于系统深色模式 */
+/** Whether system dark mode is active. */
 fun Context.isNightMode(): Boolean {
     val uiMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
     return uiMode == Configuration.UI_MODE_NIGHT_YES
 }
 
-/** 把任意（多为浅色）背景色压暗为深色表层，ratio 越大越接近 darkBase */
+/** Darken a background into a night surface; larger ratio moves it closer to darkBase. */
 fun Int.toNightSurface(ratio: Float = 0.80f): Int {
     val darkBase = Color.parseColor("#15120F")
     return mixColor(darkBase, ratio)

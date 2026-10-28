@@ -34,11 +34,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * 专注记录页：
- * - 顶部按 日 / 周 / 月 / 年 切换，并支持上一/下一时段、回到今天。
- * - 中部用甜甜圈饼图展示「不同专注内容」在本时段的分钟数占比，下方配图例与百分比。
- * - 饼图可一键分享（经 FileProvider 暴露为图片，调起系统分享面板）。
- * - 底部「专注事件」列表详细展示每一次专注的内容、完成时间与时长。
+ * Focus records screen: day/week/month/year ranges, previous/next/today navigation, content-minute
+ * donut chart and percentage legend, FileProvider sharing, and detailed task/completion/duration
+ * records.
  */
 class FocusRecordsActivity : AppCompatActivity() {
 
@@ -57,16 +55,16 @@ class FocusRecordsActivity : AppCompatActivity() {
     private val legendAdapter = LegendAdapter()
     private val recordAdapter = RecordAdapter()
 
-    /** 饼图调色板（用户可在记录页点击图例改成其中任意一种）：粉/紫/黄/蓝/绿/橘/灰/棕 */
+    /** User-selectable pie palette: pink, purple, yellow, blue, green, orange, gray, brown. */
     private val palette = intArrayOf(
-        0xFFE91E63.toInt(), // 粉
-        0xFF9C27B0.toInt(), // 紫
-        0xFFFBC02D.toInt(), // 黄
-        0xFF2196F3.toInt(), // 蓝
-        0xFF4CAF50.toInt(), // 绿
-        0xFFFF9800.toInt(), // 橘
-        0xFF9E9E9E.toInt(), // 灰（未命名）
-        0xFF795548.toInt()  // 棕
+        0xFFE91E63.toInt(), // Pink.
+        0xFF9C27B0.toInt(), // Purple.
+        0xFFFBC02D.toInt(), // Yellow.
+        0xFF2196F3.toInt(), // Blue.
+        0xFF4CAF50.toInt(), // Green.
+        0xFFFF9800.toInt(), // Orange.
+        0xFF9E9E9E.toInt(), // Gray for unnamed content.
+        0xFF795548.toInt()  // Brown.
     )
 
     private enum class Period { DAY, WEEK, MONTH, YEAR }
@@ -74,23 +72,23 @@ class FocusRecordsActivity : AppCompatActivity() {
     private var periodType = Period.DAY
     private var anchorMs = System.currentTimeMillis()
 
-    // 供分享用的当前数据快照
+    // Current data snapshot for sharing.
     private var currentSlices: List<PieChartView.Slice> = emptyList()
     private var currentTotal = 0
     private var contentColorMap: Map<String, Int> = emptyMap()
 
-    // 最近一次聚合结果，供改色后局部刷新（避免重新查库）
+    // Latest aggregate for recoloring without querying the database again.
     private var lastCms: List<ContentMinutes> = emptyList()
     private var lastRecs: List<com.example.focuspets.db.entity.FocusRecordEntity> = emptyList()
 
-    /** 选色弹窗引用，便于选中后关闭 */
+    /** Color picker reference so it can close after selection. */
     private var colorPickerDialog: AlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // 系统负责 inflate + 把 ScrollView 挂到窗口（不会重复 addView，
-        // 规避 "The specified child already has a parent"）；再以真正的 ScrollView
-        // 根（@id/scroll_root）做 bind 包装，避免强转 ContentFrameLayout 为 ScrollView。
+        // Let the system inflate and attach the ScrollView, avoiding duplicate addView calls
+        // and the child-already-has-a-parent error. Bind using the actual ScrollView
+        // root @id/scroll_root rather than casting ContentFrameLayout to ScrollView.
         setContentView(R.layout.activity_focus_records)
         binding = ActivityFocusRecordsBinding.bind(findViewById(R.id.scroll_root))
         Backgrounds.apply(this, binding.root)
@@ -100,7 +98,7 @@ class FocusRecordsActivity : AppCompatActivity() {
         binding.rvRecords.layoutManager = LinearLayoutManager(this)
         binding.rvRecords.adapter = recordAdapter
 
-        // 点击图例 → 修改该内容的饼图颜色
+        // Tap a legend entry to change its content's pie color.
         legendAdapter.onItemClick = { item -> showColorPicker(item.label) }
 
         binding.btnBack.setOnClickListener { finish() }
@@ -129,7 +127,7 @@ class FocusRecordsActivity : AppCompatActivity() {
         reload()
     }
 
-    // ---------------- 日历 ----------------
+    // ---------------- Calendar ----------------
 
     private fun setupCalendar() {
         val now = Calendar.getInstance()
@@ -139,7 +137,7 @@ class FocusRecordsActivity : AppCompatActivity() {
         binding.calendar.setSelectedDay(now.get(Calendar.DAY_OF_MONTH))
 
         binding.calendar.setOnDayClickListener { y, m, d ->
-            // 点击某天 → 切到「日」视图并加载当天记录 + 饼图
+            // Tap a date to switch to daily view and load that day's records/chart.
             periodType = Period.DAY
             binding.togglePeriod.check(R.id.btn_p_day)
             val cal = Calendar.getInstance().apply {
@@ -160,7 +158,7 @@ class FocusRecordsActivity : AppCompatActivity() {
         }
     }
 
-    /** 上个月 / 下个月翻页，并刷新红点标记 */
+    /** Move to the previous/next month and refresh activity dots. */
     private fun shiftCalendar(delta: Int) {
         val cal = Calendar.getInstance().apply {
             set(Calendar.YEAR, binding.calendar.getYear())
@@ -182,7 +180,7 @@ class FocusRecordsActivity : AppCompatActivity() {
             "${cal.get(Calendar.YEAR)}年${cal.get(Calendar.MONTH) + 1}月"
     }
 
-    /** 拉取当前显示月份内有记录的日期，标记红点 */
+    /** Load active dates for the displayed month and mark them with dots. */
     private fun refreshCalendarMarks() {
         lifecycleScope.launchWhenCreated {
             val map = withContext(Dispatchers.IO) {
@@ -193,7 +191,7 @@ class FocusRecordsActivity : AppCompatActivity() {
                     )
                 }.getOrDefault(emptyMap())
             }
-            // 仅保留属于当前显示月份的「日」数字
+            // Keep only day numbers belonging to the displayed month.
             val marked = map.keys.mapNotNull { dateStr ->
                 dateStr.takeLast(2).toIntOrNull()
             }.toSet()
@@ -201,9 +199,9 @@ class FocusRecordsActivity : AppCompatActivity() {
         }
     }
 
-    // ---------------- 时段计算 ----------------
+    // ---------------- Period calculations ----------------
 
-    /** 根据当前 periodType + anchorMs 计算 [startMs, endMs) 与本时段标题 */
+    /** Compute [startMs, endMs) and the title from periodType and anchorMs. */
     private fun computeRange(): Triple<Long, Long, String> {
         val cal = Calendar.getInstance().apply { timeInMillis = anchorMs }
         return when (periodType) {
@@ -274,7 +272,7 @@ class FocusRecordsActivity : AppCompatActivity() {
         viewModel.load(start, end)
     }
 
-    // ---------------- 数据绑定 ----------------
+    // ---------------- Data binding ----------------
 
     private fun observe() {
         viewModel.slices.observe(this) { cms ->
@@ -294,18 +292,18 @@ class FocusRecordsActivity : AppCompatActivity() {
     }
 
     /**
-     * 依据最近一次聚合结果 + 用户已设/默认颜色，统一渲染饼图、图例与事件列表。
-     * 改色后只调本方法即可，无需重新查库。
+     * Render the chart, legend, and records from the last aggregate and saved/default colors. Call again
+     * after recoloring without another database query.
      */
     private fun renderData() {
         val cms = lastCms
         currentTotal = cms.sumOf { it.minutes }
 
-        // 1) 为每个内容确定颜色：已保存的优先，否则按调色板顺序分配并持久化
+        // 1. Prefer saved content colors; otherwise assign and persist the next palette color.
         val colorMap = mutableMapOf<String, Int>()
         val slices = cms.mapIndexed { i, c ->
             val key = if (c.content.isBlank()) "" else c.content
-            val color = if (key.isEmpty()) palette[6] // 灰 = 未命名
+            val color = if (key.isEmpty()) palette[6] // Gray means unnamed content.
             else ContentColorStore.getColor(this@FocusRecordsActivity, key)
                 ?: palette[i % palette.size].also {
                     ContentColorStore.setColor(this@FocusRecordsActivity, key, it)
@@ -317,7 +315,7 @@ class FocusRecordsActivity : AppCompatActivity() {
         contentColorMap = colorMap
         binding.pieChart.setData(slices, "总专注\n${formatMinutes(currentTotal)}")
 
-        // 2) 图例（点击可改色）
+        // 2. Legend entries support recoloring on tap.
         val legend = cms.mapIndexed { i, c ->
             val key = if (c.content.isBlank()) "" else c.content
             val color = colorMap[key] ?: palette[i % palette.size]
@@ -326,7 +324,7 @@ class FocusRecordsActivity : AppCompatActivity() {
         }
         legendAdapter.submit(legend)
 
-        // 3) 事件列表
+        // 3. Record list.
         val recs = lastRecs
         val items = recs.map { r ->
             val raw = if (r.content.isBlank()) "" else r.content
@@ -342,7 +340,7 @@ class FocusRecordsActivity : AppCompatActivity() {
         updateShareEnabled()
     }
 
-    /** 点击图例 → 弹出色板，选中后写入并刷新饼图/图例 */
+    /** Show the palette on legend tap; persist the selection and refresh chart/legend. */
     private fun showColorPicker(content: String) {
         if (content == "未命名") {
             Toast.makeText(this, "未命名内容不可改色", Toast.LENGTH_SHORT).show()
@@ -389,7 +387,7 @@ class FocusRecordsActivity : AppCompatActivity() {
         else -> "$min 分钟"
     }
 
-    // ---------------- 分享 ----------------
+    // ---------------- Sharing ----------------
 
     private fun sharePie() {
         if (currentSlices.isEmpty()) {
@@ -411,7 +409,7 @@ class FocusRecordsActivity : AppCompatActivity() {
         startActivity(Intent.createChooser(intent, "分享饼图"))
     }
 
-    /** 把饼图 + 图例合成一张分享海报（1080 宽），绘制逻辑与屏幕一致 */
+    /** Render a 1080-pixel-wide chart/legend poster using the same drawing logic as the screen. */
     private fun buildShareBitmap(): Bitmap {
         val w = 1080
         val pad = 64f

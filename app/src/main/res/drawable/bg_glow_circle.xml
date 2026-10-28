@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- GLOW 心情下的柔光光晕：中心暖金、向外渐隐（代替原先的硬描边大圈），
-     配合 alpha + scale 脉冲，营造「小猫周围有光晕」的氛围 -->
+<!-- Soft GLOW halo: warm gold center fading outward instead of a hard outline; alpha/scale pulses create a glow around the cat. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="oval">
     <gradient

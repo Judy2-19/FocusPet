@@ -23,23 +23,23 @@ CROWN_MAP = {
     "粉冠": "pink_crown",
 }
 
-# 目标文件映射：(来源相对路径, 目标文件名)
+# Target mappings: source relative path and destination filename.
 MAPPINGS = [
-    # 基础颜色
+    # Base colors.
     ("不同颜色的猫/灰.jpg", "gray.jpg"),
     ("不同颜色的猫/蓝.jpg", "blue.jpg"),
     ("不同颜色的猫/粉.jpg", "pink.jpg"),
     ("不同颜色的猫/黄.jpg", "yellow.jpg"),
     ("不同颜色的猫/白.jpg", "white.jpg"),
     ("不同颜色的猫/黑.jpg", "black.jpg"),
-    # 裙子
+    # Dresses.
     ("裙子/灰-红裙.jpg", "gray_dress.jpg"),
     ("裙子/蓝-红裙.jpg", "blue_dress.jpg"),
     ("裙子/粉-红裙.jpg", "pink_dress.jpg"),
     ("裙子/黄-红裙.jpg", "yellow_dress.jpg"),
     ("裙子/白-红裙.jpg", "white_dress.jpg"),
     ("裙子/黑-红裙.jpg", "black_dress.jpg"),
-    # 皇冠
+    # Crowns.
     ("皇冠/灰-红裙-蓝冠.jpg", "gray_dress_blue_crown.jpg"),
     ("皇冠/蓝-红裙-蓝冠.jpg", "blue_dress_blue_crown.jpg"),
     ("皇冠/蓝-红裙-粉冠.jpg", "blue_dress_pink_crown.jpg"),
@@ -53,14 +53,14 @@ MAPPINGS = [
 
 
 def sample_background_color(img: Image.Image) -> tuple:
-    """从四边外侧采样背景色（避开四角水印和中间主体），返回 RGB 平均值。"""
+    """ Sample the outer edges, avoiding corner watermarks and the central subject; return mean RGB."""
     w, h = img.size
-    strip = 18          # 距离边缘的采样条带
-    corner_skip = 160   # 四角不采样区域
+    strip = 18          # Sampling strip distance from the edge.
+    corner_skip = 160   # Corner exclusion region.
     pixels = []
 
     def add(px, py):
-        # 跳过四角
+        # Skip corners.
         in_corner = (
             (px < corner_skip and py < corner_skip) or
             (px > w - corner_skip and py > h - corner_skip) or
@@ -86,15 +86,15 @@ def sample_background_color(img: Image.Image) -> tuple:
 
 
 def cover_watermarks(img: Image.Image, bg: tuple) -> Image.Image:
-    """用背景色涂盖左上角和右下角的水印区域。"""
+    """ Cover top-left and bottom-right watermark areas with the background color."""
     w, h = img.size
-    # 右下角水印较长，需要更大覆盖区；左上角水印较小
+    # The longer bottom-right watermark needs a larger cover area than the top-left one.
     tl_w, tl_h = min(160, w // 8), min(60, h // 16)
     br_w, br_h = min(380, w // 3), min(110, h // 10)
     overlay = Image.new("RGB", img.size, bg)
-    # 左上角
+    # Top left.
     img.paste(overlay.crop((0, 0, tl_w, tl_h)), (0, 0))
-    # 右下角
+    # Bottom right.
     img.paste(overlay.crop((w - br_w, h - br_h, w, h)), (w - br_w, h - br_h))
     return img
 
@@ -115,24 +115,24 @@ def process_images():
 
 
 def generate_meow():
-    """生成一声短促、音量较小的喵喵 WAV（22050Hz 16-bit mono）。"""
+    """ Generate a short, quiet meow WAV: 22050 Hz, 16-bit mono."""
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     sample_rate = 22050
     duration = 0.42
     n_samples = int(sample_rate * duration)
-    amplitude = 0.18  # 小声
+    amplitude = 0.18  # Low volume.
 
     data = bytearray()
     for i in range(n_samples):
         t = i / sample_rate
-        # 频率从 700Hz 降到 350Hz，模拟喵叫声调下降
+        # Drop frequency from 700 Hz to 350 Hz to mimic a descending meow.
         freq = 700 * math.exp(-3.5 * t)
-        # 轻微颤音
+        # Subtle vibrato.
         vibrato = 1.0 + 0.06 * math.sin(2 * math.pi * 18 * t)
-        # 振幅包络：快速起音 + 衰减
+        # Amplitude envelope: fast attack and decay.
         env = math.exp(-4.0 * t) * (1 - math.exp(-30 * t))
         sample = amplitude * env * math.sin(2 * math.pi * freq * t * vibrato)
-        # 转为 16-bit
+        # Convert to 16-bit samples.
         val = int(max(-1, min(1, sample)) * 32767)
         data.extend(struct.pack("<h", val))
 

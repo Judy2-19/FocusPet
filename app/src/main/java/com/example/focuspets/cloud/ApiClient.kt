@@ -15,7 +15,7 @@ import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
-/** 与本地/局域网后端通信的 HTTP 接口，契约见 server/leaderboard_server.py */
+/** HTTP interface for the local/LAN backend; see server/leaderboard_server.py for the contract. */
 interface CloudApi {
 
     @POST("/api/auth/anon")

@@ -4,7 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-/** 离线写队列：本地有变更但暂未上报成功时入队（v4 新增） */
+/** Offline write queue for local changes not yet uploaded successfully; added in v4. */
 @Entity(tableName = "sync_queue")
 data class SyncQueueEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

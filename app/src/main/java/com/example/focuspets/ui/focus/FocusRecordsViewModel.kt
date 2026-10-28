@@ -11,12 +11,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /**
- * 专注记录页 ViewModel：根据传入的时间区间（日/周/月/年）从本地库聚合出
- * - records：区间内的全部专注事件（含内容），用于详情列表
- * - slices：各专注内容的分钟数聚合，用于饼图
- * - totalMinutes / sessionCount：本时段汇总
- *
- * 区间边界由 Activity 用 Calendar 计算后传入，ViewModel 只负责取数与聚合。
+ * Records ViewModel aggregates local data for the requested range: records including content, per-
+ * content minute slices, totalMinutes, and sessionCount. Activity calculates Calendar boundaries; the
+ * ViewModel only queries and aggregates.
  */
 class FocusRecordsViewModel(private val repo: PetRepository) : ViewModel() {
 

@@ -7,7 +7,7 @@ import androidx.room.Query
 import com.example.focuspets.db.entity.SyncMetaEntity
 import com.example.focuspets.db.entity.SyncQueueEntity
 
-/** 同步相关表访问（v4 新增） */
+/** Access synchronization tables introduced in v4. */
 @Dao
 interface SyncDao {
 

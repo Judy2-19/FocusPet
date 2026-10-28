@@ -1,9 +1,9 @@
 package com.example.focuspets.cloud.model
 
-/** 匿名注册响应 */
+/** Anonymous registration response. */
 data class AnonResponse(val uid: String, val displayName: String)
 
-/** 云端用户完整对象（GET 返回） */
+/** Complete cloud user object returned by GET. */
 data class CloudUser(
     val uid: String,
     val displayName: String,
@@ -14,33 +14,33 @@ data class CloudUser(
     val updatedAt: Long
 )
 
-/** 上报/合并时发送的负载（不含 uid / updatedAt） */
+/** Upload/merge payload, excluding uid and updatedAt. */
 data class CloudUserPayload(
     val displayName: String,
     val totalPoints: Int,
     val collection: List<Int>,
     val wardrobe: List<String>,
     val mood: String,
-    /** 当前展示的宠物 id（1~9，用于排行榜头像兜底） */
+    /** Displayed pet ID (1-9), used as the leaderboard avatar fallback. */
     val currentPetId: Int = 1,
-    /** 当前宠物立绘路径（assets 内；猫/狗带装扮，其余为空串） */
+    /** Current pet artwork path within assets; includes cat/dog outfits, otherwise empty. */
     val petAvatar: String = ""
 )
 
-/** 排行榜单项 */
+/** Leaderboard entry. */
 data class LeaderboardEntry(
     val rank: Int,
     val uid: String,
     val displayName: String,
     val totalPoints: Int,
-    /** 当前宠物立绘路径（assets 内，如 cat/pink_dress_blue_crown.png）；猫/狗有，其余为空 */
+    /** Current artwork path within assets, e.g. cat/pink_dress_blue_crown.png; empty for pets other than cats/dogs. */
     val petAvatar: String? = null,
-    /** 当前宠物 id（无立绘的宠物用 emoji 兜底，1~9） */
+    /** Current pet ID (1-9); pets without artwork use an emoji fallback. */
     val petId: Int? = null
 )
 
-/** 自己的名次信息 */
+/** Current user's rank information. */
 data class MeRank(val rank: Int?, val totalPoints: Int)
 
-/** 排行榜响应 */
+/** Leaderboard response. */
 data class LeaderboardResponse(val list: List<LeaderboardEntry>, val me: MeRank?)

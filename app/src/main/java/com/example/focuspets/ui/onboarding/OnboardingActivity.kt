@@ -16,18 +16,15 @@ import com.example.focuspets.model.Backgrounds
 import com.example.focuspets.model.SettingsManager
 
 /**
- * 新手引导（Onboarding）：首次安装启动后展示，三页 - 欢迎 / 怎么玩 / 选背景色。
- *
- * 触发时机：MainActivity 启动时检查 SettingsManager.isOnboardingSeen()，未看过则先来这里。
- * 完成（或跳过）后写入「已看过」+「已选过背景色」两个标记，再进入 MainActivity，
- * 因此首页不会再重复弹背景色选择，也不会重复弹引导。
- * 设置页提供「重新查看新手引导」入口，通过 resetOnboarding() 清标记后再次进入。
+ * Three-page first-run onboarding: welcome, instructions, and background color. MainActivity checks
+ * isOnboardingSeen first. Completion/skipping marks onboarding and color selection as done, preventing
+ * duplicate prompts. Settings can reset onboarding and reopen it.
  */
 class OnboardingActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityOnboardingBinding
 
-    /** 当前选中的背景色（默认取已保存的，首次则是默认暖米色） */
+    /** Selected background: saved value or default warm beige on first launch. */
     private var selectedColor: String = SettingsManager.DEFAULT_BG
 
     private val swatchViews = mutableListOf<ImageView>()
@@ -57,14 +54,14 @@ class OnboardingActivity : AppCompatActivity() {
         }
     }
 
-    // ---------------- 背景色 ----------------
+    // ---------------- Background color ----------------
 
-    /** 把当前背景色应用到窗口与根布局（深色模式下会自动压暗） */
+    /** Apply the current background to the window and root, automatically darkening it in night mode. */
     private fun applyBackground() {
         val color = Backgrounds.colorInt(this)
         window.decorView.setBackgroundColor(color)
         binding.onboardingRoot.setBackgroundColor(color)
-        // 状态栏 / 导航栏跟随用户选中的背景色，避免默认紫色边框；浅底用深色状态栏图标
+        // Match system bars to the selected background to avoid purple borders; use dark status icons on light surfaces.
         window.statusBarColor = color
         window.navigationBarColor = color
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -73,7 +70,7 @@ class OnboardingActivity : AppCompatActivity() {
         }
     }
 
-    /** 按色板动态生成色块（4 列网格） */
+    /** Build palette swatches dynamically in a four-column grid. */
     private fun buildColorGrid() {
         val size = dp(46)
         val gap = dp(10)
@@ -116,7 +113,7 @@ class OnboardingActivity : AppCompatActivity() {
             )
         }
 
-    // ---------------- 页码指示与按钮 ----------------
+    // ---------------- Page indicators and buttons ----------------
 
     private fun buildDots(count: Int) {
         for (i in 0 until count) {
@@ -143,11 +140,11 @@ class OnboardingActivity : AppCompatActivity() {
         binding.btnSkip.visibility = if (last) View.GONE else View.VISIBLE
     }
 
-    // ---------------- 收尾 ----------------
+    // ---------------- Completion ----------------
 
     /**
-     * 引导结束：写入「已看过引导」与「已选背景色」，然后进入主页。
-     * 写 bg_chosen 是为了让首页不再重复弹出背景色选择（两者都在首次启动发生）。
+     * Mark onboarding seen and background chosen, then open Home. Setting bg_chosen prevents the first-run
+     * background prompt from appearing again.
      */
     private fun finishOnboarding() {
         SettingsManager.setBgColor(this, selectedColor)
@@ -158,8 +155,8 @@ class OnboardingActivity : AppCompatActivity() {
     }
 
     /**
-     * 引导是首启闸门，返回无处可退 —— 视为完成引导直接进入主页。
-     * 这里自己消费掉返回事件（不调用 super），避免退出后下次启动又从引导开始。
+     * Onboarding is the first-run gate with no previous page. Consume Back as completion and open Home
+     * rather than calling super and showing onboarding again next launch.
      */
     @Suppress("MissingSuperCall", "DEPRECATION")
     override fun onBackPressed() {

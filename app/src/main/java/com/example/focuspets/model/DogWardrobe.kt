@@ -3,21 +3,14 @@ package com.example.focuspets.model
 import android.content.Context
 
 /**
- * 小狗「妆扮」系统的单一数据源（镜像 CatWardrobe）：
- * - 价格 / 目录常量
- * - 当前装备状态（SharedPreferences，纯 UI 偏好，不影响积分）
- * - 立绘资源路径解析（基于 assets/dog/ 实际生成的文件，自动兼容各颜色配齐程度不同的素材）
- *
- * 与小猫的区别：
- * 1) 多了一个「尾巴长度」维度（长尾 / 短尾），免费自选；
- * 2) 配饰链为 领带 → 西服/礼服 → 学士帽（长尾穿「礼服=dress」，短尾穿「西服=suit」）；
- * 3) 颜色把猫的「蓝」换成了「彩色」。
- *
- * 购买记录（影响积分的部分）在 Room 的 wardrobe_purchases 表里，这里只存"穿哪件"，通过 itemId 关联。
+ * Dog wardrobe source, mirroring CatWardrobe: prices/catalog, equipped preferences, and paths resolved
+ * from available assets/dog files. Tail length is free; accessories follow tie → outfit → graduation
+ * cap. Long tails use dresses, short tails use suits; multicolor replaces the cat's blue. Room stores
+ * purchases and spending; preferences store equipment linked by itemId.
  */
 object DogWardrobe {
 
-    /** 小狗在 pets 表中的固定 id */
+    /** Fixed dog ID in the pets table. */
     const val DOG_PET_ID = 2
 
     private const val PREFS = "dog_wardrobe"
@@ -27,8 +20,8 @@ object DogWardrobe {
     private const val KEY_OUTFIT = "equipped_outfit"
     private const val KEY_CAP = "equipped_cap"
 
-    // ---- 价格（参考小猫：裙 120、冠 180；狗的不更便宜也不过分贵）----
-    const val TAIL_COST = 0            // 尾巴免费自选
+    // ---- Prices: comparable to cat dress 120/crown 180; neither cheaper nor excessively expensive ----
+    const val TAIL_COST = 0            // Tail selection is free.
     const val COLOR_COST = 50
     const val TIE_COST = 120
     const val OUTFIT_COST = 150
@@ -40,7 +33,7 @@ object DogWardrobe {
     val TAILS = listOf("long", "short")
     val COLORS = listOf("gray", "white", "pink", "yellow", "black", "colorful")
 
-    // ---- itemId 约定（与 Room wardrobe_purchases.item_id 一致）----
+    // ---- itemId convention: matches Room wardrobe_purchases.item_id ----
     fun colorItemId(color: String) = "dog_color_$color"
     const val TIE_ITEM_ID = "dog_tie"
     const val OUTFIT_ITEM_ID = "dog_outfit"
@@ -62,17 +55,17 @@ object DogWardrobe {
         else -> tail
     }
 
-    // 配饰配色 token：文件名中明确写出颜色，便于以后扩展（如 blue_tie / 其他裙色）
-    private const val TIE_TOKEN = "red_tie"               // 红领带
-    private const val CAP_TOKEN = "academic_cap"          // 学院帽
-    private const val SHORT_OUTFIT_TOKEN = "black_suit"   // 短尾·黑西服
-    private const val LONG_OUTFIT_TOKEN = "red_dress"     // 长尾·红礼裙
+    // Accessory color tokens explicitly appear in filenames for future variants such as blue_tie or other dress colors.
+    private const val TIE_TOKEN = "red_tie"               // Red tie.
+    private const val CAP_TOKEN = "academic_cap"          // Graduation cap.
+    private const val SHORT_OUTFIT_TOKEN = "black_suit"   // Short tail, black suit.
+    private const val LONG_OUTFIT_TOKEN = "red_dress"     // Long tail, red dress.
 
-    /** 长尾穿礼服、短尾穿西服（返回带颜色的 token） */
+    /** Long tails wear dresses; short tails wear suits. Return a color-qualified token. */
     private fun outfitToken(tail: String) =
         if (tail == "long") LONG_OUTFIT_TOKEN else SHORT_OUTFIT_TOKEN
 
-    // ---- 装备状态读写 ----
+    // ---- Equipped-state access ----
 
     fun getEquippedTail(context: Context): String =
         prefs(context).getString(KEY_TAIL, DEFAULT_TAIL) ?: DEFAULT_TAIL
@@ -110,8 +103,8 @@ object DogWardrobe {
     }
 
     /**
-     * 换颜色 / 尾巴后，若某些已穿配饰在当前组合下没有对应立绘（素材未生成），
-     * 自动摘掉，避免"买了却看不见"的脏状态。
+     * After changing color or tail, remove equipped accessories missing artwork for that combination,
+     * avoiding invisible purchased outfits.
      */
     fun pruneInvalid(context: Context) {
         val tail = getEquippedTail(context)
@@ -124,7 +117,7 @@ object DogWardrobe {
         }
     }
 
-    // ---- 立绘资源（assets/dog/ 实际文件名集合，惰性缓存）----
+    // ---- Artwork: lazily cached filenames under assets/dog/ ----
 
     @Volatile
     private var assetSet: Set<String>? = null
@@ -142,8 +135,8 @@ object DogWardrobe {
     }
 
     /**
-     * 给定各维度，解析最终立绘路径；若精确组合不存在，逐级回退（摘帽 → 脱衣 → 摘领带），
-     * 最后回退到同尾巴灰狗 / 长尾灰狗，保证永远能加载到一张图。
+     * Resolve the final path, falling back by removing cap, outfit, then tie. Finally use a gray dog with
+     * the same tail or long tail so an image always loads.
      */
     fun assetPathFor(
         context: Context,
@@ -156,12 +149,12 @@ object DogWardrobe {
         val set = assetSet(context)
         val ot = outfitToken(tail)
         val base = listOf(tail, color)
-        // 若「纯服饰（不含帽）」没有独立立绘（只有"服饰+帽"同框素材），
-        // 则「穿西服/礼服」应自动带帽，避免出现"只有领带"的脏状态。
+        // If there is no standalone outfit image and only an outfit-with-cap asset exists,
+        // automatically include the cap when equipping the outfit to avoid falling back to a tie-only image.
         val pureOutfit = (base + listOf(TIE_TOKEN, ot)).joinToString("_") + ".png"
         val needsCapForSuit = outfit && pureOutfit !in set
         val useCap = cap || needsCapForSuit
-        // 从最完整到最精简逐级回退：摘帽 → 脱衣 → 摘领带 → 默认
+        // Fallback from most complete to simplest: remove cap, outfit, tie, then use the default.
         val candidates = listOf(
             buildList { addAll(base); if (tie) add(TIE_TOKEN); if (outfit) add(ot); if (useCap) add(CAP_TOKEN) },
             buildList { addAll(base); if (tie) add(TIE_TOKEN); if (outfit) add(ot) },
@@ -176,13 +169,13 @@ object DogWardrobe {
         return "dog/long_gray.png"
     }
 
-    /** 当前尾巴/颜色下，是否存在「纯西服/礼服（不含帽）」的独立立绘 */
+    /** Whether this tail/color has standalone outfit artwork without a cap. */
     fun hasIndependentSuit(context: Context, tail: String, color: String): Boolean {
         val ot = outfitToken(tail)
         return "${tail}_${color}_${TIE_TOKEN}_$ot.png" in assetSet(context)
     }
 
-    /** 当前装备组合对应的立绘路径 */
+    /** Artwork path for the current equipment combination. */
     fun assetPath(context: Context): String = assetPathFor(
         context,
         getEquippedTail(context),
@@ -193,8 +186,9 @@ object DogWardrobe {
     )
 
     /**
-     * 在当前尾巴 / 颜色下，穿上「西服/礼服」是否会真正改变立绘（用于 UI 启用 / 禁用）。
-     * 例如彩色狗、粉色短尾没有对应服饰立绘，会回退成"只有领带"，于是视为不可用。
+     * Whether equipping an outfit actually changes the image for this tail/color, for UI enablement.
+     * Multicolor and pink short-tail variants without outfit art fall back to tie-only and are
+     * unavailable.
      */
     fun outfitChangesImage(context: Context, tail: String, color: String): Boolean {
         val withOutfit = assetPathFor(context, tail, color, tie = true, outfit = true, cap = false)
@@ -202,7 +196,7 @@ object DogWardrobe {
         return withOutfit != without
     }
 
-    /** 在当前尾巴 / 颜色下，戴上「学士帽」是否会真正改变立绘 */
+    /** Whether equipping a graduation cap changes the image for this tail/color. */
     fun capChangesImage(context: Context, tail: String, color: String): Boolean {
         val withCap = assetPathFor(context, tail, color, tie = true, outfit = true, cap = true)
         val without = assetPathFor(context, tail, color, tie = true, outfit = true, cap = false)
@@ -213,9 +207,8 @@ object DogWardrobe {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
     /**
-     * 重置进度时清空「穿在身上」的装扮状态（SharedPreferences 整体清空，回到默认
-     * 长尾 / 灰色 / 无配饰）。与 Room 的购买记录（wardrobe_purchases）一起复位，
-     * 否则会出现"已重置但宠物还穿着已不存在的装扮"的脏状态。
+     * Reset equipped preferences to long tail, gray, and no accessories alongside Room purchase records,
+     * preventing stale outfits after progress reset.
      */
     fun clearEquipped(context: Context) {
         prefs(context).edit().clear().apply()

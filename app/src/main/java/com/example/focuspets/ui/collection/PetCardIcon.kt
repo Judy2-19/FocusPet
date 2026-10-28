@@ -18,27 +18,20 @@ import kotlin.math.max
 import kotlin.math.roundToInt
 
 /**
- * 宠物卡牌图标生成器。
- *
- * 图标规则（按用户要求）：
- * - 猫(1) / 狗(2)：
- *     · 已解锁 → 当前装扮立绘（CatWardrobe.assetPath / DogWardrobe.assetPath，如「粉色小猫穿裙子」）；
- *     · 未解锁 → 初始颜色基础立绘（猫=cat/gray.png，狗=dog/long_gray.png）并置灰；
- * - 3~9 号：emoji 渲染成图，未解锁置灰。
- *
- * ⚠️ 关键：猫咪立绘最大 ~1.5MB、狗 ~1MB，base64 后约 2MB，而
- * `WebView.evaluateJavascript` 走 Binder（上限约 1MB）会直接失败 → 卡片拿不到立绘。
- * 所以注入 WebView 前必须**降采样 + 压缩**，把 data URI 压到安全线内。
+ * Pet card icons: unlocked cats/dogs use equipped artwork; locked ones use grayscale cat/gray.png or
+ * dog/long_gray.png. IDs 3-9 render emoji, grayscale when locked. Artwork may exceed the roughly 1 MB
+ * Binder limit after base64 encoding, so downsample and compress data URIs before
+ * WebView.evaluateJavascript injection.
  */
 object PetCardIcon {
 
-    /** 注入 WebView 的 PNG 字节上限（base64 ≈ 1.37×；留足 Binder 余量） */
+    /** PNG byte limit for WebView injection; base64 adds roughly 1.37x, leaving Binder headroom. */
     private const val MAX_PNG_BYTES = 200 * 1024
 
-    /** 解码时就地采样，最大边不超过该值（够网格缩略图 + 卡片贴图用） */
+    /** Maximum decoded image edge, sufficient for grid thumbnails and card textures. */
     private const val DECODE_MAX_DIM = 768
 
-    /** 生成单只宠物的卡牌 JSON（供 card.html 的 setupCard 使用） */
+    /** Build a single pet's JSON for setupCard in card.html. */
     fun singlePayload(context: Context, pet: PetEntity, unlocked: Boolean): String {
         val (kind, uri) = buildIcon(context, pet, unlocked)
         val sb = StringBuilder()
@@ -55,15 +48,15 @@ object PetCardIcon {
         return sb.toString()
     }
 
-    /** 生成图鉴网格用的 Bitmap（清晰缩略图，size 像素） */
+    /** Create a clear size-pixel Bitmap for the collection grid. */
     fun bitmap(context: Context, pet: PetEntity, unlocked: Boolean, size: Int = 256): Bitmap? {
         val src = rawBitmap(context, pet, unlocked) ?: return null
         return scaleToMax(src, size)
     }
 
-    // ---- 内部 ----
+    // ---- Internals ----
 
-    /** (kind, 注入 WebView 的小体积 data URI) */
+    /** Pair of kind and compact data URI for WebView injection. */
     private fun buildIcon(context: Context, pet: PetEntity, unlocked: Boolean): Pair<String, String?> {
         val kind = when (pet.id) {
             CatWardrobe.CAT_PET_ID, DogWardrobe.DOG_PET_ID -> "sprite"
@@ -72,7 +65,7 @@ object PetCardIcon {
         return kind to webDataUri(context, pet, unlocked)
     }
 
-    /** 原始立绘（猫/狗）或 emoji 位图（3~9），已按需置灰；已降采样解码 */
+    /** Downsampled cat/dog artwork or emoji bitmap for IDs 3-9, optionally grayscale. */
     private fun rawBitmap(context: Context, pet: PetEntity, unlocked: Boolean): Bitmap? =
         when (pet.id) {
             CatWardrobe.CAT_PET_ID -> {
@@ -86,7 +79,7 @@ object PetCardIcon {
             else -> emojiBitmap(PetCatalog.emoji(pet.id), desaturate = !unlocked)
         }
 
-    /** 把立绘压成小体积 data URI（自适应缩小，确保 base64 不超 Binder 限制） */
+    /** Adaptively shrink artwork into a data URI that fits the Binder limit after base64 encoding. */
     private fun webDataUri(context: Context, pet: PetEntity, unlocked: Boolean): String? {
         val src = rawBitmap(context, pet, unlocked) ?: return null
         var maxDim = 512
@@ -102,7 +95,7 @@ object PetCardIcon {
         }
     }
 
-    /** 分采样解码（inSampleSize），避免把 1.5MB 大图整幅读进内存 */
+    /** Decode with inSampleSize instead of loading the full 1.5 MB image into memory. */
     private fun decodeAsset(context: Context, assetPath: String, desaturate: Boolean): Bitmap? {
         val bmp = try {
             val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
@@ -121,7 +114,7 @@ object PetCardIcon {
         return if (desaturate) grayscale(bmp) else bmp
     }
 
-    /** 等比缩放到最大边 = maxDim（已足够小则原样返回） */
+    /** Preserve aspect ratio and cap the longest edge at maxDim; return unchanged if already small. */
     private fun scaleToMax(src: Bitmap, maxDim: Int): Bitmap {
         val longest = max(src.width, src.height)
         if (longest <= maxDim) return src
@@ -158,7 +151,7 @@ object PetCardIcon {
         return dst
     }
 
-    /** 去掉「（暂未实装立绘）」这类开发备注，只留给玩家看的简介 */
+    /** Remove development notes about missing artwork, leaving only the player-facing description. */
     private fun cleanDesc(s: String): String =
         s.replace(Regex("（[^）]*(暂未实装|未实装|暂无立绘|待实装)[^）]*）"), "")
             .replace(Regex("\\([^)]*(暂未实装|未实装|暂无立绘|待实装)[^)]*\\)"), "")

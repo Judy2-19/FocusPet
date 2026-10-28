@@ -9,40 +9,40 @@ import com.example.focuspets.db.entity.FocusRecordEntity
 @Dao
 interface FocusRecordDao {
 
-    /** 插入一条专注记录（番茄钟完成时调用） */
+    /** Insert a session record when a timer completes. */
     @Insert
     suspend fun insert(record: FocusRecordEntity): Long
 
-    /** 累计总积分（所有专注记录 points 之和，空表返回 0） */
+    /** Sum points across all records; return 0 for an empty table. */
     @Query("SELECT COALESCE(SUM(points), 0) FROM focus_records")
     suspend fun getTotalPoints(): Int
 
-    /** 累计专注总时长（分钟），用于「累计专注时间」等真实时长统计（不含测试注入的纯积分） */
+    /** Sum actual focus duration in minutes, excluding point-only test grants. */
     @Query("SELECT COALESCE(SUM(duration_minutes), 0) FROM focus_records")
     suspend fun getTotalDuration(): Int
 
-    /** 某一天的专注总分钟数，日统计页用 */
+    /** Focus minutes on a date for daily statistics. */
     @Query(
         "SELECT COALESCE(SUM(duration_minutes), 0) FROM focus_records WHERE focus_date = :date"
     )
     suspend fun getMinutesOnDate(date: String): Int
 
-    /** 清空全部专注记录（重置进度用） */
+    /** Clear all session records when resetting progress. */
     @Query("DELETE FROM focus_records")
     suspend fun deleteAll()
 
-    /** 专注总次数（每条记录 = 一次完成的番茄钟） */
+    /** Completed session count: one record per completed timer. */
     @Query("SELECT COUNT(*) FROM focus_records")
     suspend fun getSessionCount(): Int
 
-    /** 每个有记录的日期的专注总分钟数，用于连续打卡 / 近 7 天图表 */
+    /** Daily focus minutes for streaks and seven-day charts. */
     @Query(
         "SELECT focus_date AS date, COALESCE(SUM(duration_minutes), 0) AS minutes " +
             "FROM focus_records GROUP BY focus_date"
     )
     suspend fun getDailyMinutes(): List<DayMinutes>
 
-    /** 指定日期区间（含两端，格式 yyyy-MM-dd）内，每天的专注总分钟数，用于日历红点标记 */
+    /** Daily minutes in an inclusive yyyy-MM-dd range for calendar dots. */
     @Query(
         "SELECT focus_date AS date, COALESCE(SUM(duration_minutes), 0) AS minutes " +
             "FROM focus_records WHERE focus_date BETWEEN :startDate AND :endDate " +
@@ -53,29 +53,30 @@ interface FocusRecordDao {
         endDate: String
     ): List<DayMinutes>
 
-    /** 调试（仅 test 分支）：删除测试注入的积分记录，方便清掉大额积分 */
+    /** Debug/test branch: delete injected point grants when clearing large test balances. */
     @Query("DELETE FROM focus_records WHERE focus_date = :marker")
     suspend fun deleteTestGrants(marker: String)
 
-    /** 删除指定专注内容的全部记录（用户手动清理「最近用过」历史用） */
+    /** Delete all records with the specified content when clearing recent history. */
     @Query("DELETE FROM focus_records WHERE content = :content AND content != ''")
     suspend fun deleteByContent(content: String): Int
 
-    /** 全部专注记录（轻量投影），用于时段热力图按 created_at 分桶到「星期 × 小时」 */
+    /** Lightweight records for weekday-by-hour heatmap bucketing using created_at. */
     @Query("SELECT focus_date, duration_minutes, created_at FROM focus_records")
     suspend fun getAllRecordsRaw(): List<RecordRaw>
 
-    /** 某时间区间内的全部专注记录（含内容），按完成时间倒序，记录页列表用 */
+    /** Records including content in an interval, newest completion first, for the records list. */
     @Query(
         "SELECT * FROM focus_records WHERE created_at BETWEEN :startMs AND :endMs " +
             "ORDER BY created_at DESC"
     )
     suspend fun getRecordsBetween(startMs: Long, endMs: Long): List<FocusRecordEntity>
 
-    /** 某时间区间内，各专注内容所占的「专注值（points）」聚合，饼图用。
-     *  注意：这里用 points 而非 duration_minutes——测试分支会把时长置 0 只发积分，
-     *  用 duration 会令内容全部归零、饼图空白；同时排除 test-grant 注入记录，
-     *  避免「测试积分」这一条（duration=0、points=100 万）独占整张图。 */
+    /**
+     * Aggregate points by content for the pie chart. Use points rather than duration_minutes because test
+     * builds may grant points with zero duration; duration would yield an empty chart. Exclude test-grant
+     * records so a million-point grant cannot dominate the chart.
+     */
     @Query(
         "SELECT COALESCE(content, '') AS content, COALESCE(SUM(points), 0) AS minutes " +
             "FROM focus_records WHERE created_at BETWEEN :startMs AND :endMs " +
@@ -84,14 +85,14 @@ interface FocusRecordDao {
     )
     suspend fun getContentMinutesBetween(startMs: Long, endMs: Long): List<ContentMinutes>
 
-    /** 使用频率最高的专注内容（用于「复用历史」建议），最多 limit 条 */
+    /** Return at most limit frequently used content values for reuse suggestions. */
     @Query(
         "SELECT content FROM focus_records WHERE content IS NOT NULL AND content != '' " +
             "GROUP BY content ORDER BY COUNT(*) DESC, MAX(created_at) DESC LIMIT :limit"
     )
     suspend fun getFrequentContents(limit: Int): List<String>
 
-    /** 最近一次使用的专注内容（用于下次默认填充） */
+    /** Most recently used content for the next default. */
     @Query(
         "SELECT content FROM focus_records WHERE content IS NOT NULL AND content != '' " +
             "ORDER BY created_at DESC LIMIT 1"
@@ -99,19 +100,19 @@ interface FocusRecordDao {
     suspend fun getLatestContent(): String?
 }
 
-/** 某内容在时段内的专注分钟数（DAO 内部聚合结果） */
+/** DAO aggregation result: focus minutes for a content value within an interval. */
 data class ContentMinutes(
     @ColumnInfo(name = "content") val content: String,
     @ColumnInfo(name = "minutes") val minutes: Int
 )
 
-/** 某天专注分钟数（DAO 内部聚合结果） */
+/** DAO aggregation result: focus minutes on a date. */
 data class DayMinutes(
     @ColumnInfo(name = "date") val date: String,
     @ColumnInfo(name = "minutes") val minutes: Int
 )
 
-/** 专注记录轻量投影：日期 + 分钟 + 写入时间戳（= 完成时刻，用于时段分桶） */
+/** Lightweight session projection: date, minutes, and insertion/completion timestamp for time bucketing. */
 data class RecordRaw(
     @ColumnInfo(name = "focus_date") val focusDate: String,
     @ColumnInfo(name = "duration_minutes") val minutes: Int,

@@ -13,10 +13,8 @@ import com.example.focuspets.model.PetCareState
 import com.example.focuspets.model.PetMood
 
 /**
- * 主界面 UI 状态：
- * - selectedPet：当前选中宠物（默认第一只已解锁的，点击/滑动切换）
- * - nextLockedPet：图鉴中解锁积分最低的未解锁宠物（进度条目标）
- * - mood：宠物心情（SICK / NORMAL / GLOW）
+ * Home UI state: selectedPet defaults to the first unlocked pet and changes on tap/swipe;
+ * nextLockedPet is the cheapest locked pet for progress; mood is SICK/NORMAL/GLOW.
  */
 data class HomeUiState(
     val selectedPet: PetEntity,
@@ -30,27 +28,26 @@ data class HomeUiState(
 
 class HomeViewModel(private val repository: PetRepository) : ViewModel() {
 
-    /** 当前选中的宠物下标（基于「已解锁列表」，0 = 默认第一只） */
+    /** Selected index within unlocked pets; zero is the initial pet. */
     private val selectedIndex = MutableLiveData(0)
 
-    /** 跨进程重启后待恢复的首页宠物 id（由 SettingsManager 持久化；-1 表示无需恢复） */
+    /** Home pet ID pending restoration after process restart, persisted in SettingsManager; -1 means none. */
     private var pendingPetId = -1
 
-    /** 指定下次 emit 时恢复到某个宠物（用于「退出后再进入保持同一只宠物」） */
+    /** Restore a specified pet on the next emit to preserve selection across restarts. */
     fun selectPetById(id: Int) {
         pendingPetId = id
     }
 
-    /** 宠物心情（专注成功/失败后由 Fragment 调 refreshMood 刷新） */
+    /** Mood refreshed by the Fragment after focus success/failure. */
     private val mood = MutableLiveData(PetMood.NORMAL)
 
-    /** 最新已解锁数量，切换宠物取模用 */
+    /** Latest unlocked count for wrapping pet selection. */
     private var unlockedCount = 1
 
     /**
-     * 四个数据源合并成一个 UiState：
-     * 图鉴解锁状态 + 可用积分（Room LiveData，数据库一变自动刷新）
-     * + 用户选择下标 + 宠物心情
+     * Combine four sources into UiState: Room catalog unlock state and available points, selected index,
+     * and pet mood.
      */
     val uiState: LiveData<HomeUiState> = MediatorLiveData<HomeUiState>().apply {
         var pets: List<PetWithState>? = null
@@ -61,19 +58,19 @@ class HomeViewModel(private val repository: PetRepository) : ViewModel() {
             val unlocked = p.filter { it.isUnlocked }.map { it.pet }
             if (unlocked.isEmpty()) return
             unlockedCount = unlocked.size
-            // 跨进程重启后恢复上次首页选中的宠物（SettingsManager 持久化）
+            // Restore the last Home pet after process restart using SettingsManager.
             if (pendingPetId >= 0) {
                 var idx = unlocked.indexOfFirst { it.id == pendingPetId }
                 if (idx < 0) idx = 0
                 pendingPetId = -1
                 if (idx != selectedIndex.value ?: 0) {
                     selectedIndex.value = idx
-                    return          // 下标变化会重新触发 emit，用新下标渲染
+                    return          // Changing the index emits again to render the new selection.
                 }
             }
             val index = (selectedIndex.value ?: 0).coerceIn(0, unlocked.size - 1)
 
-            // 进度条目标：解锁积分最低的未解锁宠物（列表已按 unlock_cost 升序）
+            // Progress targets the cheapest locked pet; the list is sorted by unlock_cost ascending.
             val nextLocked = p.firstOrNull { !it.isUnlocked }?.pet
 
             value = HomeUiState(
@@ -94,19 +91,19 @@ class HomeViewModel(private val repository: PetRepository) : ViewModel() {
         addSource(mood) { emit() }
     }
 
-    /** 点击宠物 / 左滑：切换到下一只已解锁宠物（循环） */
+    /** Tap or swipe left to cycle to the next unlocked pet. */
     fun selectNext() {
         val count = unlockedCount.coerceAtLeast(1)
         selectedIndex.value = ((selectedIndex.value ?: 0) + 1).mod(count)
     }
 
-    /** 右滑：切换到上一只 */
+    /** Swipe right for the previous pet. */
     fun selectPrev() {
         val count = unlockedCount.coerceAtLeast(1)
         selectedIndex.value = (((selectedIndex.value ?: 0) - 1) + count).mod(count)
     }
 
-    /** 专注完成/失败/回到页面时刷新心情 */
+    /** Refresh mood after completion/failure or returning to the page. */
     fun refreshMood(context: Context) {
         mood.value = PetCareState.getMood(context)
     }

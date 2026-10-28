@@ -7,14 +7,14 @@ import androidx.room.PrimaryKey
 import com.example.focuspets.db.Rarity
 import kotlinx.parcelize.Parcelize
 
-/** 宠物图鉴表：9 条预置数据，只读不增删 */
+/** Read-only pet catalog with nine preset entries. */
 @Parcelize
 @Entity(tableName = "pets")
 data class PetEntity(
-    @PrimaryKey val id: Int,                                // 1~9，固定编号
-    val name: String,                                       // 名称
-    val emoji: String,                                     // emoji 图标
-    val rarity: Rarity,                                    // 稀有度
-    @ColumnInfo(name = "unlock_cost") val unlockCost: Int,  // 解锁所需积分
-    val description: String                                // 描述文案
+    @PrimaryKey val id: Int,                                // Fixed IDs 1-9.
+    val name: String,                                       // Name.
+    val emoji: String,                                     // Emoji icon.
+    val rarity: Rarity,                                    // Rarity.
+    @ColumnInfo(name = "unlock_cost") val unlockCost: Int,  // Points required to unlock.
+    val description: String                                // Description text.
 ) : Parcelable

@@ -10,18 +10,18 @@ import com.example.focuspets.db.entity.PetEntity
 @Dao
 interface PetDao {
 
-    /** 查询所有图鉴（按解锁价格升序：普通 → 传说） */
+    /** Query the catalog by increasing unlock cost, from common to legendary. */
     @Query("SELECT * FROM pets ORDER BY unlock_cost ASC")
     suspend fun getAllPets(): List<PetEntity>
 
     @Query("SELECT * FROM pets WHERE id = :id")
     suspend fun getPetById(id: Int): PetEntity?
 
-    /** 预置数据写入（重复插入忽略，防止重复 seed） */
+    /** Insert seed data, ignoring duplicates to prevent repeated seeding. */
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAll(pets: List<PetEntity>)
 
-    /** 图鉴页数据源：宠物 + 解锁状态，数据库一变 LiveData 自动刷新 */
+    /** Collection data source: pet plus unlock state; LiveData updates when the database changes. */
     @Query(
         """
         SELECT pets.*,
@@ -33,7 +33,7 @@ interface PetDao {
     )
     fun getPetsWithState(): LiveData<List<PetWithState>>
 
-    /** 积分已达标但尚未解锁的宠物（专注完成后的庆祝提示用） */
+    /** Affordable pets still locked, for completion celebrations. */
     @Query(
         """
         SELECT pets.* FROM pets

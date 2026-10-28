@@ -1,19 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-FocusPets 本地/局域网后端：匿名账号 + 状态同步 + 排行榜。
-零依赖，仅用 Python 标准库 + sqlite3。
-
-运行:
-    python leaderboard_server.py [port]        # 默认 8080
-    python leaderboard_server.py 8080
-
-Android 连接:
-    模拟器        -> http://10.0.2.2:<port>/
-    真机 USB 调试  -> 先执行 `adb reverse tcp:<port> tcp:<port>`，App 填 http://127.0.0.1:<port>/
-                      （adb reverse 把手机本机回环转发到电脑，避开 WiFi 网段隔离，最稳）
-    真机同 WiFi   -> http://<开发机局域网IP>:<port>/  （需手机与电脑在同一网段）
-"""
+""" FocusPets local/LAN backend: anonymous accounts, state synchronization, and leaderboard. Uses only the Python standard library and sqlite3. Run python leaderboard_server.py [port], default 8080. Android emulator: http://10.0.2.2:<port>/. USB hardware: first run adb reverse tcp:<port> tcp:<port>, then use http://127.0.0.1:<port>/ to avoid Wi-Fi subnet isolation. Hardware on Wi-Fi: use the development machine's LAN IP; both devices must share a subnet."""
 import json
 import sqlite3
 import uuid
@@ -52,7 +39,7 @@ def init_db() -> None:
         )
         """
     )
-    # 老库可能缺这两个字段，补列（幂等）
+    # Add these two columns idempotently if an older database lacks them.
     for col, ddl in (
         ("current_pet", "ALTER TABLE users ADD COLUMN current_pet INTEGER DEFAULT 1"),
         ("pet_avatar", "ALTER TABLE users ADD COLUMN pet_avatar TEXT DEFAULT ''"),
@@ -82,7 +69,7 @@ def row_to_user(row) -> dict:
 class Handler(BaseHTTPRequestHandler):
     server_version = "FocusPetsBackend/1.0"
 
-    # ---- 工具 ----
+    # ---- Utilities ----
     def _send(self, code: int, obj) -> None:
         payload = json.dumps(obj, ensure_ascii=False).encode("utf-8")
         self.send_response(code)
@@ -106,7 +93,7 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         sys.stderr.write("[backend] " + (fmt % args) + "\n")
 
-    # ---- 路由 ----
+    # ---- Routes ----
     def do_OPTIONS(self):
         self._send(204, {})
 

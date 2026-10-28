@@ -25,114 +25,114 @@ class PetRepository(private val db: AppDatabase) {
     fun getAvailablePoints(): LiveData<Int> = db.userCollectionDao().getAvailablePoints()
 
     /**
-     * 解锁宠物：事务内做三重校验，防止并发/重复点击导致超扣。
-     * 「扣积分」不需要 UPDATE 任何表——插入收藏记录后，
-     * 可用积分 = 总专注分钟 - 已解锁 unlock_cost 之和，自然减少。
+     * Unlock within a transaction with checks against concurrent/repeated clicks and overspending. No
+     * UPDATE is needed to deduct points: inserting the collection entry reduces the derived balance (total
+     * focus minutes minus unlocked pet costs).
      */
     suspend fun unlockPet(pet: PetEntity): Boolean = db.withTransaction {
         val unlockedIds = db.userCollectionDao().getUnlockedPetIds()
-        if (pet.id in unlockedIds) return@withTransaction false          // 已解锁
+        if (pet.id in unlockedIds) return@withTransaction false          // Already unlocked.
         if (db.userCollectionDao().getAvailablePointsOnce() < pet.unlockCost) {
-            return@withTransaction false                                 // 积分不够
+            return@withTransaction false                                 // Insufficient points.
         }
         db.userCollectionDao().unlockPet(UserCollectionEntity(petId = pet.id))
-        CloudSyncManager.notifyChanged()   // 解锁后增量同步到云端
+        CloudSyncManager.notifyChanged()   // Push incremental cloud state after unlocking.
         true
     }
 
-    /** 专注完成结算后：查询「积分已达标但尚未解锁」的宠物，用于庆祝弹窗 */
+    /** After session settlement, find affordable locked pets for the celebration dialog. */
     suspend fun getAffordableLockedPets(): List<PetEntity> {
         val points = db.userCollectionDao().getAvailablePointsOnce()
         return db.petDao().getAffordableLockedPets(points)
     }
 
-    /** 已购买的猫咪妆扮 id 列表（LiveData） */
+    /** Purchased cat outfit IDs as LiveData. */
     fun getWardrobeOwnedIds(): LiveData<List<String>> = db.wardrobeDao().getOwnedItemIds()
 
     /**
-     * 购买猫咪妆扮：事务内校验积分并写入购买记录。
-     * 可用积分已包含 wardrobe_purchases 总消费，所以直接比较即可。
+     * Purchase a cat outfit by checking points and inserting within a transaction. The derived balance
+     * already subtracts wardrobe_purchases spending.
      */
     suspend fun buyWardrobeItem(itemId: String, itemType: String, cost: Int): Boolean =
         db.withTransaction {
             if (db.userCollectionDao().getAvailablePointsOnce() < cost) return@withTransaction false
             val ok = db.wardrobeDao()
                 .insert(WardrobePurchaseEntity(itemId, itemType, cost)) > 0
-            if (ok) CloudSyncManager.notifyChanged()   // 购买妆扮后增量同步到云端
+            if (ok) CloudSyncManager.notifyChanged()   // Push incremental cloud state after wardrobe purchases.
             ok
         }
 
-    // ---------------- 专注统计 ----------------
+    // ---------------- Focus statistics ----------------
 
-    /** 今日专注分钟数 */
+    /** Today's focus minutes. */
     fun getTodayMinutes(): LiveData<Int> = liveData(Dispatchers.IO) {
         emit(db.focusRecordDao().getMinutesOnDate(todayStr()))
     }
 
-    /** 累计专注分钟数（真实专注时长，不含测试注入的纯积分） */
+    /** Total actual focus minutes, excluding point-only test grants. */
     fun getTotalMinutes(): LiveData<Int> = liveData(Dispatchers.IO) {
         emit(db.focusRecordDao().getTotalDuration())
     }
 
-    /** 专注总次数 */
+    /** Total completed session count. */
     fun getSessionCount(): LiveData<Int> = liveData(Dispatchers.IO) {
         emit(db.focusRecordDao().getSessionCount())
     }
 
-    // ---------------- 专注记录页（内容维度） ----------------
+    // ---------------- Focus records by content ----------------
 
-    /** 时间区间内的全部专注记录（含内容），记录页列表用 */
+    /** Records including content in a time interval, for the records list. */
     suspend fun getRecordsBetween(startMs: Long, endMs: Long): List<FocusRecordEntity> =
         db.focusRecordDao().getRecordsBetween(startMs, endMs)
 
-    /** 时间区间内各专注内容的分钟数聚合，饼图用 */
+    /** Aggregate minutes per content in an interval for the pie chart. */
     suspend fun getContentMinutesBetween(startMs: Long, endMs: Long): List<ContentMinutes> =
         db.focusRecordDao().getContentMinutesBetween(startMs, endMs)
 
-    /** 高频专注内容（复用建议） */
+    /** Frequently used content for reuse suggestions. */
     suspend fun getFrequentContents(limit: Int): List<String> =
         db.focusRecordDao().getFrequentContents(limit)
 
-    /** 最近一次使用的专注内容（下次默认填充） */
+    /** Most recent content for the next session's default. */
     suspend fun getLatestContent(): String? = db.focusRecordDao().getLatestContent()
 
-    /** 删除指定专注内容的全部记录（用户手动清理「最近用过」历史） */
+    /** Delete all records with the specified content when clearing recent history. */
     suspend fun deleteRecordsByContent(content: String): Int =
         db.focusRecordDao().deleteByContent(content)
 
-    /** 连续打卡天数（今天没专注也不算断签，从昨天往前数） */
+    /** Consecutive active days; no session today does not break the streak, which may count backward from yesterday. */
     fun getStreak(): LiveData<Int> = liveData(Dispatchers.IO) {
         emit(computeStreak())
     }
 
-    /** 近 7 天专注分钟数（含今天），用于柱状图 */
+    /** Focus minutes for the last seven days, including today, for the bar chart. */
     fun getLast7Days(): LiveData<List<DayBar>> = liveData(Dispatchers.IO) {
         emit(buildLast7())
     }
 
-    /** 专注时段热力图数据：7(周一..周日) × 24(时) 的分钟数矩阵，按完成时刻分桶 */
+    /** Heatmap: a 7 (Monday-Sunday) by 24 (hour) minute matrix bucketed by completion time. */
     fun getHeatmap(): LiveData<Array<IntArray>> = liveData(Dispatchers.IO) {
         val records = db.focusRecordDao().getAllRecordsRaw()
         val matrix = Array(7) { IntArray(24) }
         val cal = Calendar.getInstance()
         for (r in records) {
             cal.timeInMillis = r.createdAt
-            val dow = (cal.get(Calendar.DAY_OF_WEEK) + 6) % 7 // 0=周一 .. 6=周日
+            val dow = (cal.get(Calendar.DAY_OF_WEEK) + 6) % 7 // 0=Monday through 6=Sunday.
             val hour = cal.get(Calendar.HOUR_OF_DAY)          // 0..23
             matrix[dow][hour] += r.minutes
         }
         emit(matrix)
     }
 
-    /** 连续打卡成就徽章列表（LiveData，供统计页实时展示） */
+    /** Achievement badges as LiveData for reactive statistics display. */
     fun getAchievements(): LiveData<List<AchievementBadge>> = liveData(Dispatchers.IO) {
         emit(computeAchievements())
     }
 
-    /** 同步快照版本：供「成就达成弹海报」检测使用，不走 LiveData */
+    /** Non-LiveData snapshot for achievement poster detection. */
     suspend fun getAchievementsSnapshot(): List<AchievementBadge> = computeAchievements()
 
-    /** 依据当前连续天数 / 总专注次数计算成就徽章列表 */
+    /** Compute badges from the current streak and total session count. */
     private suspend fun computeAchievements(): List<AchievementBadge> {
         val streak = computeStreak()
         val sessions = db.focusRecordDao().getSessionCount()
@@ -154,7 +154,7 @@ class PetRepository(private val db: AppDatabase) {
         }
     }
 
-    // ---- 统计计算辅助（日期用 Calendar 兼容 minSdk 24） ----
+    // ---- Statistics helpers: Calendar supports minSdk 24 ----
 
     private fun todayStr(): String =
         SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Calendar.getInstance().time)
@@ -164,7 +164,7 @@ class PetRepository(private val db: AppDatabase) {
         if (dates.isEmpty()) return 0
         val cal = Calendar.getInstance()
         val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        // 今天尚未专注不算断签：从今天或昨天开始往前数
+        // No session today does not break the streak: count backward from today or yesterday.
         if (sdf.format(cal.time) !in dates) cal.add(Calendar.DAY_OF_MONTH, -1)
         var streak = 0
         while (sdf.format(cal.time) in dates) {
@@ -189,7 +189,7 @@ class PetRepository(private val db: AppDatabase) {
         }
     }
 
-    /** 指定月份（yyyy-MM 格式）内有专注记录的日期 → 当天分钟数的映射，供日历红点标记 */
+    /** Map active dates to minutes within a yyyy-MM month for calendar dots. */
     suspend fun getDailyMinutesInMonth(
         year: Int,
         month: Int   // Calendar.JANUARY=0 .. DECEMBER=11
@@ -219,10 +219,10 @@ class PetRepository(private val db: AppDatabase) {
     }
 }
 
-/** 近 7 天柱状图的一项：星期标签 + 当天专注分钟数 */
+/** Seven-day bar chart entry: weekday label and daily minutes. */
 data class DayBar(val label: String, val minutes: Int)
 
-/** 成就徽章定义（仓库内部使用）：target 为解锁阈值，progress 为当前进度 */
+/** Internal badge definition: target is the unlock threshold; progress is the current value. */
 private data class BadgeDef(
     val id: String,
     val emoji: String,

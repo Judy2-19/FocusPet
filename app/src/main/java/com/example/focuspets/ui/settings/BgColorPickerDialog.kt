@@ -14,15 +14,15 @@ import com.example.focuspets.model.Backgrounds
 import com.example.focuspets.model.SettingsManager
 
 /**
- * 首次进入时弹出，让用户从柔和色板里挑一个背景色（番茄 ToDo 风格）。
- * 选完即持久化并在首页应用；也可「稍后再说」用默认色。
+ * First-entry soft background palette picker. Persist and apply the selected color, or defer using the
+ * default.
  */
 class BgColorPickerDialog : DialogFragment() {
 
     private var _binding: DialogBgColorBinding? = null
     private val binding get() = _binding!!
 
-    /** 选完/应用后回调（用于立即刷新当前页面背景） */
+    /** Callback after selection/application to refresh the page background immediately. */
     var onApplied: (() -> Unit)? = null
 
     override fun onCreateView(
@@ -38,7 +38,7 @@ class BgColorPickerDialog : DialogFragment() {
         buildSwatches()
 
         binding.btnLater.setOnClickListener {
-            // 用默认色，仅标记「已选过」，避免每次进首页都弹
+            // Keep the default and mark color chosen to avoid prompting on every Home entry.
             SettingsManager.setBgColor(requireContext(), SettingsManager.DEFAULT_BG)
             SettingsManager.setBgChosen(requireContext())
             onApplied?.invoke()
@@ -47,7 +47,7 @@ class BgColorPickerDialog : DialogFragment() {
     }
 
     private fun buildSwatches() {
-        // 与 SettingsManager.PALETTE 顺序一一对应的中文色名，供屏幕阅读器朗读
+        // Chinese color names matching SettingsManager.PALETTE order for screen readers.
         val labels = listOf(
             "暖米色", "蜜桃粉", "天空蓝", "薄荷绿",
             "薰衣草紫", "奶油黄", "樱花粉", "青瓷绿"

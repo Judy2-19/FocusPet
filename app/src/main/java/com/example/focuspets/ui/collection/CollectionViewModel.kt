@@ -11,7 +11,7 @@ import com.example.focuspets.db.dao.PetWithState
 import com.example.focuspets.db.entity.PetEntity
 import kotlinx.coroutines.launch
 
-/** 列表项的展示模型：把「是否解锁 + 当前积分」合并进每张卡片 */
+/** Card presentation model combining unlock state and current points. */
 data class PetDisplay(
     val pet: PetEntity,
     val isUnlocked: Boolean,
@@ -23,14 +23,14 @@ data class PetDisplay(
 
 class CollectionViewModel(private val repository: PetRepository) : ViewModel() {
 
-    /** 顶部积分展示 */
+    /** Points displayed at the top. */
     val availablePoints: LiveData<Int> = repository.getAvailablePoints()
 
-    /** 图鉴列表（宠物状态 × 积分 两个数据源合并） */
+    /** Collection list combining pet state and points sources. */
     private val _uiState = MediatorLiveData<List<PetDisplay>>()
     val uiState: LiveData<List<PetDisplay>> = _uiState
 
-    /** 解锁成功事件（弹 Toast 庆祝用） */
+    /** Unlock success event for a celebratory Toast. */
     private val _unlockEvent = MutableLiveData<PetEntity?>()
     val unlockEvent: LiveData<PetEntity?> = _unlockEvent
 

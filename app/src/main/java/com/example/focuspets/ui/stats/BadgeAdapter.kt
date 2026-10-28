@@ -8,7 +8,7 @@ import com.example.focuspets.badge.BadgeCelebration
 import com.example.focuspets.databinding.ItemBadgeBinding
 import com.example.focuspets.model.AchievementBadge
 
-/** 连续打卡成就徽章的网格适配器（3 列） */
+/** Three-column grid adapter for streak achievement badges. */
 class BadgeAdapter : RecyclerView.Adapter<BadgeAdapter.BadgeVH>() {
 
     private var items = emptyList<AchievementBadge>()
@@ -52,7 +52,7 @@ class BadgeAdapter : RecyclerView.Adapter<BadgeAdapter.BadgeVH>() {
                 b.tvProgress.setTextColor(0xFF9E9E9E.toInt())
             }
 
-            // 已解锁的徽章：点击即可随时重新生成海报并分享
+            // Tap an unlocked badge to regenerate and share its poster at any time.
             b.root.setOnClickListener {
                 if (item.unlocked) BadgeCelebration.showPosterForBadge(b.root.context, item)
             }

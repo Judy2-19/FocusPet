@@ -1,14 +1,4 @@
-"""FocusPets 小猫抠图精修 v2。
-
-相比上一版（rembg 默认 u2net、无 alpha_matting）的改进：
-1. 全部 21 张开启 alpha_matting（fg=240/bg=10/erase=10），边缘更利落、去掉软边色块；
-2. 对黄色系（yellow*）额外做「仅剥离边界处的背景色像素」迭代清理：
-   - 背景色已知为 #FEF8EA (254,248,234)，与黄毛在蓝色通道差异极大（黄毛 B≈53，背景 B≈234），
-     因此用颜色距离判定，不会误删黄毛；
-   - 只移除「既接近背景色、又处在前景轮廓最外圈」的像素（迭代剥边），
-     白裙内部被猫身包围、并非边界，不会被误删。
-输出透明 PNG 覆盖 assets/cat/，并生成预览与边缘色块指标。
-"""
+""" FocusPets cat cutout refinement v2. Enable alpha_matting for all 21 images (fg=240/bg=10/erase=10) for cleaner edges. For yellow variants, iteratively remove only outer-contour pixels close to known BG #FEF8EA (254,248,234). Yellow fur has a very different blue channel (about 53 vs 234), and enclosed white dress regions are not boundary pixels. Overwrite assets/cat transparent PNGs and generate previews/edge-residue metrics."""
 from pathlib import Path
 
 import numpy as np
@@ -27,11 +17,7 @@ def dist_to_bg(rgb: np.ndarray) -> np.ndarray:
 
 
 def decontaminate(arr: np.ndarray) -> np.ndarray:
-    """洗掉半透明边缘像素里的背景色残留（核心去描边手段）。
-
-    观测色 = alpha*前景 + (1-alpha)*背景  =>  前景 = (观测 - (1-alpha)*背景) / alpha
-    对 0<alpha<1 的像素还原真实前景色，避免合成到任意背景色上时出现米白描边。
-    """
+    """ Remove background RGB contamination from translucent edges. observed=alpha*foreground+(1-alpha)*background, so foreground=(observed-(1-alpha)*background)/alpha. Recover true RGB for 0<alpha<1 to avoid beige outlines on arbitrary backgrounds."""
     rgb = arr[..., :3].astype(float)
     a = arr[..., 3].astype(float) / 255.0
     mask = (a > 0.03) & (a < 0.97)
@@ -47,10 +33,10 @@ def decontaminate(arr: np.ndarray) -> np.ndarray:
 
 
 def refine_yellow(arr: np.ndarray) -> np.ndarray:
-    """迭代剥掉黄色图轮廓最外圈的背景色像素（不伤黄毛 / 白裙内部）。"""
+    """ Iteratively peel background-colored pixels from yellow-image outer contours, preserving yellow fur and internal white dress regions."""
     rgb = arr[..., :3].astype(float)
     d = dist_to_bg(rgb)
-    bgcolored = d < 55          # 接近背景色（黄毛 d≈183，远不会被选中）
+    bgcolored = d < 55          # Close to BG; yellow fur has distance about 183 and will not be selected.
     alpha = arr[..., 3].copy()
     fg = alpha > 10
     for _ in range(25):
@@ -69,7 +55,7 @@ def refine_yellow(arr: np.ndarray) -> np.ndarray:
 
 
 def edge_fringe_pct(arr: np.ndarray) -> float:
-    """统计猫轮廓边缘带里接近背景色的残留像素比例（越低越好）。"""
+    """ Measure the proportion of near-background residual pixels in the contour edge band; lower is better."""
     alpha = arr[..., 3]
     rgb = arr[..., :3].astype(float)
     d = dist_to_bg(rgb)
@@ -96,11 +82,11 @@ def main():
         img = Image.open(jpg).convert("RGB")
         out = remove(img).convert("RGBA")
         arr = np.array(out)
-        # 全局边缘去污染：消除半透明处的背景色描边（黄/白猫都受益）
+        # Global edge decontamination removes translucent background outlines for yellow/white cats.
         arr = decontaminate(arr)
         if jpg.stem.startswith("yellow"):
             arr = refine_yellow(arr)
-        # 轻羽化：抗锯齿，避免缩放后出现硬边描边
+        # Gentle antialias feathering prevents hard outlines after scaling.
         res = Image.fromarray(arr, "RGBA")
         a = res.split()[3].filter(ImageFilter.GaussianBlur(0.8))
         res.putalpha(a)
@@ -110,7 +96,7 @@ def main():
         report.append((jpg.stem, edge_fringe_pct(arr)))
         print(f"OK {jpg.name} -> {png.name}  边缘色块={report[-1][1]:.1f}%")
 
-    # 预览
+    # Preview.
     cols = 7
     cell = 170
     rows = (len(pngs) + cols - 1) // cols

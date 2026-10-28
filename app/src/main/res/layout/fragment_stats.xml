@@ -27,7 +27,7 @@
             android:textColor="@color/text_hint"
             android:textSize="12sp" />
 
-        <!-- 全球排行榜入口（底部导航最多 5 项，故排行榜放在此处） -->
+        <!-- Global leaderboard entry; bottom navigation supports at most five items. -->
         <LinearLayout
             android:id="@+id/btn_leaderboard"
             android:layout_width="match_parent"
@@ -49,7 +49,7 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- 四项指标卡片：今日 / 累计 / 次数 / 连续打卡 -->
+        <!-- Four metric cards: today, total, session count, streak. -->
         <GridLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -166,7 +166,7 @@
             </LinearLayout>
         </GridLayout>
 
-        <!-- 专注时段热力图 -->
+        <!-- Focus time heatmap. -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -238,7 +238,7 @@
                 android:textSize="11sp" />
         </LinearLayout>
 
-        <!-- 连续打卡成就徽章 -->
+        <!-- Streak achievement badges. -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -255,7 +255,7 @@
             android:layout_marginTop="12dp"
             android:nestedScrollingEnabled="false" />
 
-        <!-- 近 7 天柱状图 -->
+        <!-- Seven-day bar chart. -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

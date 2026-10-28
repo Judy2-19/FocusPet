@@ -4,7 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-/** 同步状态表：存 pending 标记、lastSyncAt 等键值对（v4 新增） */
+/** Synchronization metadata key/value table for pending, lastSyncAt, etc.; added in v4. */
 @Entity(tableName = "sync_meta")
 data class SyncMetaEntity(
     @PrimaryKey @ColumnInfo(name = "key") val key: String,

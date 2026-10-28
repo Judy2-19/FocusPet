@@ -1,16 +1,4 @@
-"""
-把 assets/cat/*.jpg 的小猫背景抠成透明 PNG。
-
-方法：对每个文件
-1) 从四边采样背景色（BG）。
-2) 从图片四边做「洪泛填充」：只清除与 BG 颜色接近且能连通到边框的像素，
-   这样不会误删与背景撞色但属于主体的内部像素（例如白猫 #FFF 与米白背景 #FEF8EA 很接近）。
-3) 边缘羽化：连通区域内、离 BG 越近的像素 alpha 越低，得到柔和的抗锯齿边缘。
-4) 输出同名 .png（RGBA）。
-
-依赖：Pillow（managed venv）
-运行：tools 目录下用 managed python 执行
-"""
+""" Convert assets/cat/*.jpg to transparent PNGs. Sample background RGB from edges, then flood-fill only similar pixels connected to the image boundary, preserving internal subject regions such as white fur close to beige. Feather boundary-connected pixels according to background distance and output same-name RGBA PNGs. Requires Pillow; run with managed Python from tools."""
 import math
 from pathlib import Path
 
@@ -19,13 +7,13 @@ from PIL import Image
 BASE = Path("C:/Users/13671/Desktop/MobileApp")
 ASSET_DIR = BASE / "app" / "src" / "main" / "assets" / "cat"
 
-TOL = 16       # 洪泛阈值：与 BG 颜色距离 <= 该值的「连通到边框」像素判为背景
-FEATHER = 32   # 羽化上界：连通区域内 alpha 在 [TOL, FEATHER] 之间由 0 升到 255
+TOL = 16       # Flood threshold: boundary-connected pixels within this color distance of BG are background.
+FEATHER = 32   # Feather upper bound: alpha increases from 0 to 255 between TOL and FEATHER in the connected region.
 MAGENTA = (255, 0, 255)
 
 
 def sample_background_color(img: Image.Image) -> tuple:
-    """从四边（避开四角）采样背景色，返回平均 RGB。"""
+    """ Sample mean background RGB from all four edges, excluding corners."""
     w, h = img.size
     strip = 18
     corner_skip = 160
@@ -71,7 +59,7 @@ def cutout(src: Path, dst: Path):
     px = img.load()
     bg = sample_background_color(img)
 
-    # 1) 洪泛填充：从四边种子出发，收集与 BG 接近且连通到边框的像素
+    # 1. Flood-fill similar-to-BG pixels connected to edge seeds.
     mask = [bytearray(w) for _ in range(h)]
     stack = []
     for x in range(w):
@@ -94,7 +82,7 @@ def cutout(src: Path, dst: Path):
             stack.append((x, y + 1))
             stack.append((x, y - 1))
 
-    # 2) 羽化 alpha：连通区域内越接近 BG 越透明
+    # 2. Feather alpha: connected pixels closer to BG become more transparent.
     for y in range(h):
         for x in range(w):
             if mask[y][x]:

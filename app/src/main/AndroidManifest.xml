@@ -2,19 +2,19 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- 前台服务通知（API 33+ 需要运行时申请） -->
+    <!-- Foreground service notifications require runtime permission on API 33+. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <!-- 网络状态监听（ConnectivityManager.registerNetworkCallback 需要，普通权限无需运行时申请） -->
+    <!-- Network state: ordinary permission required by ConnectivityManager.registerNetworkCallback; no runtime request. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!-- 云端同步 / 排行榜网络请求需要，普通权限无需运行时申请 -->
+    <!-- Internet access for cloud sync and leaderboards; no runtime request required. -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- 前台服务基础权限 -->
+    <!-- Foreground service permission. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <!-- 结束提醒：震动（普通权限，无需运行时申请） -->
+    <!-- Vibration for completion alerts; ordinary permission with no runtime request. -->
     <uses-permission android:name="android.permission.VIBRATE" />
-    <!-- API 34+：非媒体/定位等标准类型的前台服务需声明 specialUse -->
+    <!-- API 34+: use specialUse for foreground services outside standard media/location categories. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-    <!-- 锁机白名单软监控：检测前台应用需「使用情况访问」特殊权限（运行期引导用户在系统设置授权） -->
+    <!-- Foreground app detection for the lock allowlist requires special Usage Access permission, granted in Settings. -->
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
@@ -38,31 +38,31 @@
             </intent-filter>
         </activity>
 
-        <!-- 崩溃展示页：全局异常处理器拉起，把堆栈显示在屏幕上（不涉及数据库/云端） -->
+        <!-- Crash screen launched by the global exception handler; displays the stack trace without database or cloud dependencies. -->
         <activity
             android:name=".CrashActivity"
             android:exported="false"
             android:theme="@android:style/Theme.DeviceDefault.Light.NoActionBar" />
 
-        <!-- 新手引导：首次启动由 MainActivity 判断后拉起，完成后回到主页 -->
+        <!-- First-run guide: MainActivity checks whether onboarding is complete before opening Home. -->
         <activity
             android:name=".ui.onboarding.OnboardingActivity"
             android:exported="false"
             android:launchMode="singleTop" />
 
-        <!-- 设置：昵称 / 注销 / 重置进度 / 重新查看引导 -->
+        <!-- Settings: sign out, delete account, reset progress, and reopen onboarding. -->
         <activity
             android:name=".ui.settings.SettingsActivity"
             android:exported="false"
             android:launchMode="singleTop" />
 
-        <!-- 锁机专注：独立全屏、屏幕固定；singleTask 避免重复入栈 -->
+        <!-- Full-screen focus lock with screen pinning; singleTask avoids duplicate stack entries. -->
         <activity
             android:name=".ui.lock.LockActivity"
             android:exported="false"
             android:launchMode="singleTask" />
 
-        <!-- 锁机白名单管理：列出本机可启动应用，勾选锁机期间允许使用的 app -->
+        <!-- Lock allowlist: select installed apps that remain available during locking. -->
         <activity
             android:name=".ui.lock.LockWhitelistActivity"
             android:exported="false"
@@ -70,20 +70,20 @@
             android:parentActivityName=".ui.lock.LockActivity"
             android:theme="@style/Theme.FocusPets" />
 
-        <!-- 专注记录页：日/周/月/年筛选 + 详情列表 + 内容占比饼图（可分享） -->
+        <!-- Focus records: day/week/month/year filters, record list, and shareable content pie chart. -->
         <activity
             android:name=".ui.focus.FocusRecordsActivity"
             android:exported="false"
             android:theme="@style/Theme.FocusPets" />
 
-        <!-- 单只宠物 3D 卡牌页：全屏 immersive WebView 承载 three.js 卡牌（点击放大欣赏） -->
+        <!-- Full-screen pet card: immersive WebView rendered with three.js, supporting rotation, zoom, and flipping. -->
         <activity
             android:name=".ui.collection.PetCardActivity"
             android:exported="false"
             android:theme="@style/Theme.FocusPets"
             android:launchMode="singleTop" />
 
-        <!-- 专注计时前台服务：specialUse 类型 + 子类型说明 -->
+        <!-- Focus timer foreground service with specialUse type and subtype description. -->
         <service
             android:name=".service.FocusService"
             android:exported="false"
@@ -93,7 +93,7 @@
                 android:value="focus_countdown_timer" />
         </service>
 
-        <!-- 成就海报分享：把 cache/posters 下的海报图以 content:// 暴露给分享目标 -->
+        <!-- Expose achievement poster images under cache/posters through content:// for sharing. -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

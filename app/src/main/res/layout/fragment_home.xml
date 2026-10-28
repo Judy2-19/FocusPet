@@ -6,7 +6,7 @@
     android:orientation="vertical"
     android:background="@color/page_background">
 
-    <!-- 顶栏：标题 + 图鉴入口 -->
+    <!-- Top bar: title and Collection entry. -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -42,7 +42,7 @@
             app:cornerRadius="20dp" />
     </LinearLayout>
 
-    <!-- 宠物舞台：点击 / 左右滑动切换（GLOW 时显示金色光环） -->
+    <!-- Pet stage: tap/swipe to switch pets; show a gold halo in GLOW mood. -->
     <FrameLayout
         android:id="@+id/pet_touch_area"
         android:layout_width="match_parent"
@@ -62,7 +62,7 @@
             android:visibility="gone"
             android:importantForAccessibility="no" />
 
-        <!-- 小猫咪立绘（1 号宠物专用，按装备动态加载 assets 图） -->
+        <!-- Cat artwork for pet 1, dynamically loaded from assets based on equipment. -->
         <ImageView
             android:id="@+id/iv_pet_cat"
             android:layout_width="280dp"
@@ -81,7 +81,7 @@
             android:textSize="130sp"
             android:importantForAccessibility="no" />
 
-        <!-- 生病状态的额头温度计贴纸 -->
+        <!-- Forehead thermometer sticker for sick mood. -->
         <TextView
             android:id="@+id/tv_pet_sick"
             android:layout_width="wrap_content"
@@ -94,7 +94,7 @@
             android:visibility="gone"
             android:importantForAccessibility="no" />
 
-        <!-- 喵叫气泡 -->
+        <!-- Meow speech bubble. -->
         <TextView
             android:id="@+id/tv_meow_bubble"
             android:layout_width="wrap_content"
@@ -112,7 +112,7 @@
             android:importantForAccessibility="no" />
     </FrameLayout>
 
-    <!-- 底部信息区 -->
+    <!-- Bottom information area. -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -142,7 +142,7 @@
             android:textColor="#FFFFFF"
             android:textSize="12sp" />
 
-        <!-- 距下一只可解锁宠物的积分进度 -->
+        <!-- Point progress toward the next affordable locked pet. -->
         <com.google.android.material.progressindicator.LinearProgressIndicator
             android:id="@+id/progress_next"
             android:layout_width="match_parent"
@@ -180,7 +180,7 @@
             android:textColor="@color/text_hint"
             android:textSize="11sp" />
 
-        <!-- 装扮小猫咪（仅 1 号宠物时显示） -->
+        <!-- Cat wardrobe shown only for pet 1. -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_wardrobe"
             style="?attr/materialButtonOutlinedStyle"
@@ -191,7 +191,7 @@
             android:visibility="gone"
             app:cornerRadius="16dp" />
 
-        <!-- 换背景色（番茄 ToDo 风格色板） -->
+        <!-- Change background using the soft palette. -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_bg"
             style="?attr/materialButtonOutlinedStyle"
@@ -201,7 +201,7 @@
             android:text="🎨 换背景"
             app:cornerRadius="16dp" />
 
-        <!-- 调试按钮：循环切换宠物心情三态（仅 test 分支用） -->
+        <!-- Debug mood-cycle button for test builds only. -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_debug_mood"
             style="?attr/materialButtonOutlinedStyle"

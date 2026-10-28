@@ -57,7 +57,7 @@ class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
-    /** 当前展示中的宠物视图（立绘 or emoji），动画统一作用在它身上 */
+    /** Current pet view, artwork or emoji; all pet animations target it. */
     private val activePetView: View
         get() = if (showingArt) binding.ivPetCat else binding.tvPetEmoji
 
@@ -66,31 +66,31 @@ class HomeFragment : Fragment() {
         HomeViewModelFactory(PetRepository(db))
     }
 
-    // 动画引用（离开页面时取消，防止内存泄漏）
+    // Animation references are cancelled on leaving the page to prevent leaks.
     private var breathingAnimator: AnimatorSet? = null
     private var glowPulseAnimator: ObjectAnimator? = null
     private var glowScaleAnimator: AnimatorSet? = null
-    /** 当前呼吸动画模式：normal / glow / sick，仅在模式变化时重启，避免每次 render 抖动 */
+    /** Breathing mode: normal/glow/sick. Restart only on mode changes to avoid render jitter. */
     private var breathMode = "normal"
-    /** 当前是否处于生病态：生病时禁用蹦跳等活体行为，并呈现蔫样 */
+    /** Sick state disables lively actions such as jumping and uses a subdued appearance. */
     private var isSick = false
 
-    // 小猫咪活体行为：喵叫 / 侧壁跳跃 / 凑近嗅探
+    // Cat actions: meow, wall jumps, and sniffing toward the screen.
     private var soundPool: SoundPool? = null
     private var meowSoundId = 0
     private var barkSoundId = 0
     private val behaviorHandler = Handler(Looper.getMainLooper())
     private var behaviorRunnable: Runnable? = null
-    /** 当前展示的宠物是否走立绘 ImageView（小猫 / 小狗为 true，其余 emoji） */
+    /** Whether the current pet uses an artwork ImageView: cat/dog do, others use emoji. */
     private var showingArt = false
-    /** 当前是否小猫咪（决定换装入口与活体行为） */
+    /** Whether the pet is a cat, controlling wardrobe access and behaviors. */
     private var isCat = false
-    /** 上次加载的立绘路径（小猫/小狗共用，防止猫↔狗切换后不刷新） */
+    /** Last artwork path shared by cat/dog so switching between them refreshes correctly. */
     private var lastArtPath: String? = null
-    /** 已上报到云端的当前宠物 id（变化时才触发同步，避免每次 render 都打网络） */
+    /** Last pet ID uploaded; sync only on changes instead of every render. */
     private var lastSyncedPetId = -1
 
-    /** 专注结果广播：完成/失败后刷新宠物心情（收到 GLOW/ SICK 转换的触发源） */
+    /** Completion/failure broadcasts refresh mood and trigger GLOW/SICK transitions. */
     private val moodReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (intent.action == FocusService.BROADCAST_FINISHED ||
@@ -111,23 +111,23 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 应用用户选中的背景色（首页始终铺满用户色）
+        // Fill Home with the selected background color.
         Backgrounds.apply(requireContext(), binding.root)
 
-        // 顶栏标题：把"我的伙伴"中的"我"替换为用户昵称（排行榜昵称）
+        // Use the leaderboard nickname in the companion title instead of the first-person placeholder.
         binding.tvTitle.text = "${CloudSyncManager.currentName()}的伙伴"
 
-        // 首次进入还没选过背景色 → 弹出色板选择（番茄 ToDo 风格）
+        // Show the soft background palette on first entry if no color has been selected.
         if (!SettingsManager.isBgChosen(requireContext())) {
             showBgPicker()
         }
 
-        // 右上角图鉴入口
+        // Top-right Collection entry.
         binding.btnPokedex.setOnClickListener {
             (activity as? MainActivity)?.navigateToCollection()
         }
 
-        // 右上角设置入口（账号 / 注销 / 重置进度 / 重新查看引导）
+        // Top-right Settings entry: account, deletion, progress reset, and onboarding.
         binding.btnSettings.setOnClickListener {
             startActivity(Intent(requireContext(), SettingsActivity::class.java))
         }
@@ -135,13 +135,13 @@ class HomeFragment : Fragment() {
         setupPetGestures()
         startBreathing()
 
-        // 装扮入口：打开换装面板（小猫/小狗各开对应面板）；妆扮变更后重新加载立绘
+        // Open the matching cat/dog wardrobe and reload artwork after outfit changes.
         binding.btnWardrobe.setOnClickListener {
             if (isCat) CatWardrobeBottomSheet().show(parentFragmentManager, "cat_wardrobe")
             else DogWardrobeBottomSheet().show(parentFragmentManager, "dog_wardrobe")
         }
 
-        // 换背景：随时重新选择全局背景色
+        // Allow changing the global background at any time.
         binding.btnBg.setOnClickListener { showBgPicker() }
         parentFragmentManager.setFragmentResultListener(
             WARDROBE_CHANGED_KEY, viewLifecycleOwner
@@ -149,11 +149,11 @@ class HomeFragment : Fragment() {
 
         initMeowSound()
 
-        // 调试心情切换：仅 test 构建（-PisTestBuild=true）可见，避免 main 误触调试入口
+        // Mood debug controls are visible only with -PisTestBuild=true to avoid accidental use on main.
         val showDebugMood = BuildConfig.DEBUG && BuildConfig.IS_TEST_BUILD
         binding.btnDebugMood.visibility = if (showDebugMood) View.VISIBLE else View.GONE
         if (showDebugMood) {
-            // 循环切换心情三态，验证 SICK / NORMAL / GLOW 渲染
+            // Cycle SICK/NORMAL/GLOW to verify rendering.
             fun moodLabel(m: PetMood) = when (m) {
                 PetMood.SICK -> "生病"
                 PetMood.GLOW -> "发光"
@@ -167,13 +167,13 @@ class HomeFragment : Fragment() {
             }
         }
 
-        // 退出 App 后再进入时，恢复上次首页选中的宠物（猫/狗及其装扮已各自持久化）
+        // Restore the last Home pet on reopening; cat/dog outfits persist independently.
         viewModel.selectPetById(SettingsManager.getCurrentPetId(requireContext()))
 
         viewModel.uiState.observe(viewLifecycleOwner) { render(it) }
     }
 
-    /** 弹出背景色选择（首次进入 or 手动点击「换背景」） */
+    /** Show the background picker on first entry or manual background changes. */
     private fun showBgPicker() {
         if (_binding == null) return
         val dialog = BgColorPickerDialog()
@@ -200,9 +200,9 @@ class HomeFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        // 从图鉴/专注页切回来时同步一次心情
+        // Refresh mood when returning from Collection or Focus.
         viewModel.refreshMood(requireContext())
-        if (showingArt) {   // 立绘可能在别处改过，回来刷新一次
+        if (showingArt) {   // Refresh artwork in case it changed elsewhere.
             if (isCat) loadCatImage() else loadDogImage()
         }
         scheduleNextBehavior()
@@ -213,7 +213,7 @@ class HomeFragment : Fragment() {
         stopBehaviors()
     }
 
-    // ---------------- 点击 / 左右滑动切换宠物 ----------------
+    // ---------------- Tap/swipe to switch pets ----------------
 
     private fun setupPetGestures() {
         val detector = GestureDetector(
@@ -221,8 +221,8 @@ class HomeFragment : Fragment() {
             object : GestureDetector.SimpleOnGestureListener() {
 
                 override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-                    viewModel.selectNext()   // 点击 → 下一只
-                    if (!isSick) playJump()  // 生病时不蹦跳
+                    viewModel.selectNext()   // Tap selects the next pet.
+                    if (!isSick) playJump()  // Do not jump when sick.
                     return true
                 }
 
@@ -230,26 +230,26 @@ class HomeFragment : Fragment() {
                     e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float
                 ): Boolean {
                     return if (abs(velocityX) > abs(velocityY)) {
-                        if (velocityX < 0) viewModel.selectNext()   // 左滑 → 下一只
-                        else viewModel.selectPrev()                 // 右滑 → 上一只
-                        if (!isSick) playJump()                     // 生病时不蹦跳
+                        if (velocityX < 0) viewModel.selectNext()   // Swipe left selects the next pet.
+                        else viewModel.selectPrev()                 // Swipe right selects the previous pet.
+                        if (!isSick) playJump()                     // Do not jump when sick.
                         true
                     } else false
                 }
             }
         )
         binding.petTouchArea.setOnTouchListener { _, event ->
-            // 必须返回 true 持续消费事件，否则 gesture detector 可能收不到完整手势
+            // Return true to keep consuming events so the gesture detector receives the full gesture.
             detector.onTouchEvent(event)
             true
         }
     }
 
-    // ---------------- 属性动画 ----------------
+    // ---------------- Property animations ----------------
 
-    /** 呼吸动画：scale 1.0 ↔ amp 无限往返；幅度/速度由参数控制（普通/发光/生病三态不同） */
+    /** Breathing loops scale between 1.0 and amp; amplitude/speed vary for normal, glowing, and sick states. */
     private fun startBreathing(amp: Float = 1.06f, dur: Long = 1200L) {
-        // repeatMode / repeatCount 是 ObjectAnimator 的属性，不能写在 AnimatorSet 上
+        // repeatMode/repeatCount belong to ObjectAnimator, not AnimatorSet.
         val target = activePetView
         breathingAnimator?.cancel()
         val scaleX = ObjectAnimator.ofFloat(target, View.SCALE_X, 1f, amp).apply {
@@ -270,7 +270,7 @@ class HomeFragment : Fragment() {
         }
     }
 
-    /** 视图目标切换（猫↔狗）后，用当前呼吸模式重启，避免回到默认 normal */
+    /** When switching cat/dog view targets, restart the current breathing mode instead of defaulting to normal. */
     private fun restartBreathing() {
         when (breathMode) {
             "glow" -> startBreathing(1.10f, 600L)
@@ -279,7 +279,7 @@ class HomeFragment : Fragment() {
         }
     }
 
-    /** 按心情切换呼吸模式，仅在模式变化时重启动画，避免每次 render 抖动 */
+    /** Change breathing only when mood changes to avoid jitter on every render. */
     private fun updateBreathing(mood: PetMood) {
         val mode = when (mood) {
             PetMood.GLOW -> "glow"
@@ -295,7 +295,7 @@ class HomeFragment : Fragment() {
         }
     }
 
-    /** 切换宠物时的跳跃动画 */
+    /** Jump animation when switching pets. */
     private fun playJump() {
         ObjectAnimator.ofFloat(activePetView, View.TRANSLATION_Y, 0f, -56f, 0f).apply {
             duration = 420
@@ -304,14 +304,14 @@ class HomeFragment : Fragment() {
         }
     }
 
-    // ---------------- 小猫咪活体行为 ----------------
+    // ---------------- Cat behaviors ----------------
 
-    /** 按当前装备从 assets 加载立绘（IO 线程解码，避免卡主线程） */
+    /** Load equipped artwork from assets and decode on IO to avoid blocking the main thread. */
     private fun loadCatImage() {
-        // 先取 applicationContext，避免协程执行时 Fragment 已解绑导致 requireContext() 抛异常
+        // Capture applicationContext before launching; requireContext may throw if the fragment detaches.
         val appContext = context?.applicationContext ?: return
         val path = CatWardrobe.assetPath(appContext)
-        // 立绘没变就不重复解码（心情/积分变化也会触发 render）
+        // Avoid decoding unchanged artwork on point/mood-triggered renders.
         if (path == lastArtPath) return
         lastArtPath = path
         viewLifecycleOwner.lifecycleScope.launch {
@@ -327,7 +327,7 @@ class HomeFragment : Fragment() {
         }
     }
 
-    /** 加载小狗默认本体立绘（与 loadCatImage 共用 lastArtPath，防止猫↔狗切换后不刷新） */
+    /** Load dog artwork using the shared lastArtPath so cat/dog switches refresh correctly. */
     private fun loadDogImage() {
         val appContext = context?.applicationContext ?: return
         val path = DogWardrobe.assetPath(appContext)
@@ -360,9 +360,9 @@ class HomeFragment : Fragment() {
         barkSoundId = soundPool?.load(requireContext(), R.raw.bark, 1) ?: 0
     }
 
-    /** 随机调度下一次行为：小猫喵叫/侧壁跳/嗅探；小狗汪汪叫/侧壁跳 */
+    /** Schedule random actions: cat meow/wall-jump/sniff; dog bark/wall-jump. */
     private fun scheduleNextBehavior() {
-        if (isSick) {       // 生病态：不排程任何活体行为，保持蔫样安静
+        if (isSick) {       // Do not schedule lively actions while sick; remain quiet and subdued.
             behaviorRunnable = null
             return
         }
@@ -375,7 +375,7 @@ class HomeFragment : Fragment() {
                         1 -> playEdgeJump()
                         else -> playSniff()
                     }
-                } else { // 小狗
+                } else { // Dog.
                     when ((0..1).random()) {
                         0 -> playWoof()
                         else -> playEdgeJump()
@@ -392,7 +392,7 @@ class HomeFragment : Fragment() {
         behaviorRunnable = null
     }
 
-    /** 喵喵叫：播放音效（音量小）+ 冒出「喵~」气泡 */
+    /** Play a quiet meow and show a meow bubble. */
     private fun playMeow() {
         soundPool?.play(meowSoundId, 0.25f, 0.25f, 1, 0, 1f)
         binding.tvMeowBubble.text = "喵~"
@@ -404,7 +404,7 @@ class HomeFragment : Fragment() {
         }, 1100)
     }
 
-    /** 汪汪叫：播放狗叫音效（音量小）+ 冒出「汪~」气泡（复用同一气泡视图） */
+    /** Play a quiet bark and reuse the speech bubble for barking. */
     private fun playWoof() {
         soundPool?.play(barkSoundId, 0.25f, 0.25f, 1, 0, 1f)
         binding.tvMeowBubble.text = "汪~"
@@ -416,14 +416,14 @@ class HomeFragment : Fragment() {
         }, 1100)
     }
 
-    /** 在屏幕两侧壁之间跳来跳去：左右各跳一次再回中间 */
+    /** Jump to both screen walls, then return to the center. */
     private fun playEdgeJump() {
         val target = activePetView
         val distance = resources.displayMetrics.widthPixels * 0.30f
         val dir = if ((0..1).random() == 0) -1f else 1f
         AnimatorSet().apply {
             playSequentially(
-                // 跳到一侧
+                // Jump to one side.
                 AnimatorSet().apply {
                     playTogether(
                         ObjectAnimator.ofFloat(target, View.TRANSLATION_X, 0f, distance * dir),
@@ -431,7 +431,7 @@ class HomeFragment : Fragment() {
                     )
                     duration = 520
                 },
-                // 再跳到另一侧
+                // Jump to the opposite side.
                 AnimatorSet().apply {
                     playTogether(
                         ObjectAnimator.ofFloat(
@@ -441,7 +441,7 @@ class HomeFragment : Fragment() {
                     )
                     duration = 620
                 },
-                // 回到中间
+                // Return to center.
                 AnimatorSet().apply {
                     playTogether(
                         ObjectAnimator.ofFloat(target, View.TRANSLATION_X, distance * -dir, 0f),
@@ -455,10 +455,10 @@ class HomeFragment : Fragment() {
         }
     }
 
-    /** 凑近屏幕嗅嗅：放大 + 左右轻晃，结束后恢复并重启呼吸 */
+    /** Sniff toward the screen: enlarge and gently sway, then restore and restart breathing. */
     private fun playSniff() {
         val target = activePetView
-        breathingAnimator?.cancel()   // 呼吸动画也在改 scale，先让位避免冲突
+        breathingAnimator?.cancel()   // Pause breathing because it also changes scale and would conflict.
         AnimatorSet().apply {
             playTogether(
                 ObjectAnimator.ofFloat(target, View.SCALE_X, 1f, 1.22f),
@@ -482,7 +482,7 @@ class HomeFragment : Fragment() {
         }, 1000)
     }
 
-    /** GLOW 状态：柔光光晕呼吸（alpha + scale 脉冲），营造「周围有光晕」的活泼氛围 */
+    /** GLOW uses soft halo alpha/scale pulses for a lively glowing appearance. */
     private fun startGlowPulse() {
         if (glowPulseAnimator?.isRunning != true) {
             glowPulseAnimator = ObjectAnimator.ofFloat(binding.vGlow, View.ALPHA, 0.5f, 1f).apply {
@@ -517,13 +517,13 @@ class HomeFragment : Fragment() {
         glowPulseAnimator = null
         glowScaleAnimator?.cancel()
         glowScaleAnimator = null
-        // 复位光晕视图，避免离开 GLOW 后留下缩放/透明度残留
+        // Reset halo scale/alpha when leaving GLOW to avoid stale transforms.
         binding.vGlow.scaleX = 1f
         binding.vGlow.scaleY = 1f
         binding.vGlow.alpha = 1f
     }
 
-    /** GLOW 光晕颜色：随当前宠物皮肤颜色变化；黄色皮肤保留原金色光圈 */
+    /** Match GLOW halo to pet skin color; yellow keeps the original gold. */
     private fun applyGlowColor(context: Context) {
         val color = if (isCat) CatWardrobe.getEquippedColor(context)
                     else DogWardrobe.getEquippedColor(context)
@@ -541,33 +541,33 @@ class HomeFragment : Fragment() {
         binding.vGlow.background = d
     }
 
-    /** 宠物皮肤颜色 → 光晕主色（黄色保留金色，其余各取一抹对应色） */
+    /** Map skin colors to halo colors; yellow uses gold and others use matching hues. */
     private fun glowTintColor(color: String): Int = when (color) {
-        "yellow" -> 0xFFD54F.toInt()      // 金（原色保留）
-        "gray"   -> 0x90A4AE.toInt()      // 灰蓝
-        "blue"   -> 0x42A5F5.toInt()      // 蓝
-        "pink"   -> 0xF48FB1.toInt()      // 粉
-        "white"  -> 0xCFD8DC.toInt()      // 银白
-        "black"  -> 0xBA68C8.toInt()      // 紫
-        "colorful" -> 0x66BB6A.toInt()    // 绿（彩色狗）
-        else     -> 0xFFD54F.toInt()      // 兜底金
+        "yellow" -> 0xFFD54F.toInt()      // Gold, preserving the original color.
+        "gray"   -> 0x90A4AE.toInt()      // Gray blue.
+        "blue"   -> 0x42A5F5.toInt()      // Blue.
+        "pink"   -> 0xF48FB1.toInt()      // Pink.
+        "white"  -> 0xCFD8DC.toInt()      // Silver white.
+        "black"  -> 0xBA68C8.toInt()      // Purple.
+        "colorful" -> 0x66BB6A.toInt()    // Green for the multicolor dog.
+        else     -> 0xFFD54F.toInt()      // Gold fallback.
     }
 
-    // ---------------- 渲染 ----------------
+    // ---------------- Rendering ----------------
 
     private fun render(state: HomeUiState) {
         val context = requireContext()
 
-        // 宠物渲染：1 号小猫咪 / 2 号小狗 走 assets 立绘，其余宠物用 emoji
+        // Cats (1) and dogs (2) use asset artwork; other pets use emoji.
         val petIsCat = state.selectedPet.id == CatWardrobe.CAT_PET_ID
         val petIsDog = state.selectedPet.id == DogWardrobe.DOG_PET_ID
         val showing = petIsCat || petIsDog
         if (showing != showingArt) {
             showingArt = showing
-            restartBreathing()      // 动画目标视图换了，用当前呼吸模式重启
+            restartBreathing()      // The animation target changed; restart the current breathing mode.
         }
-        // 宠物身份(cat/dog)必须每次渲染都同步：猫↔狗都走立绘视图(showing 不变)，
-        // 若只在 showing 变化时更新 isCat，会导致"文案显示小狗、点击却开猫面板"的错乱。
+        // Refresh cat/dog identity on every render: both use artwork, so showing does not change.
+        // Updating isCat only when showing changes could display a dog but open the cat wardrobe.
         isCat = petIsCat
         if (showing) {
             binding.ivPetCat.visibility = View.VISIBLE
@@ -582,12 +582,12 @@ class HomeFragment : Fragment() {
             binding.tvPetEmoji.text = state.selectedPet.emoji
         }
 
-        // 收集进度
+        // Collection progress.
         binding.tvPetName.text = state.selectedPet.name
         binding.tvCollectionStatus.text = "已收集 ${state.unlockedCount} / 9"
 
-        // 把"当前首页宠物"记下来（云端排行榜头像用）。切到不同宠物时才触发一次同步，
-        // 让云端拿到最新立绘路径；首次展示也会在这里上报。
+        // Persist the current Home pet for the cloud leaderboard avatar. Sync only when the pet changes,
+        // including the first display, so the cloud receives the latest artwork path.
         val curPet = state.selectedPet.id
         SettingsManager.setCurrentPetId(context, curPet)
         if (curPet != lastSyncedPetId) {
@@ -595,7 +595,7 @@ class HomeFragment : Fragment() {
             CloudSyncManager.notifyChanged()
         }
 
-        // 积分进度条：绑定「图鉴最低解锁积分的未解锁宠物」
+        // Point progress targets the lowest-cost locked pet in the catalog.
         if (state.nextLockedPet == null) {
             binding.progressNext.setProgressCompat(100, true)
             binding.tvProgressHint.text = "🎉 图鉴已全部收集完成！"
@@ -605,7 +605,7 @@ class HomeFragment : Fragment() {
                 "距解锁 ${state.nextLockedPet.emoji} ${state.nextLockedPet.name} 还差 ${state.remainingPoints} 积分"
         }
 
-        // 心情三态渲染
+        // Render the three mood states.
         when (state.mood) {
             PetMood.SICK -> {
                 binding.tvMoodTag.text = "🤒 生病中…完成一次专注恢复"
@@ -614,9 +614,9 @@ class HomeFragment : Fragment() {
                 )
                 binding.tvPetSick.visibility = View.VISIBLE
                 binding.vGlow.visibility = View.GONE
-                activePetView.alpha = 0.55f      // 无精打采
-                activePetView.rotation = 8f      // 微微歪头，显得没精神
-                if (!isSick) {                   // 进入生病：停掉蹦跳等活体行为
+                activePetView.alpha = 0.55f      // Subdued appearance.
+                activePetView.rotation = 8f      // Tilt the head slightly to look unwell.
+                if (!isSick) {                   // Entering sick state: stop jumps and other lively actions.
                     isSick = true
                     stopBehaviors()
                 }
@@ -632,12 +632,12 @@ class HomeFragment : Fragment() {
                 binding.tvPetSick.visibility = View.GONE
                 binding.vGlow.visibility = View.VISIBLE
                 activePetView.alpha = 1f
-                if (isSick) {                    // 退出生病：复位歪头、恢复活体行为
+                if (isSick) {                    // Leaving sick state: reset head tilt and resume behaviors.
                     isSick = false
                     activePetView.rotation = 0f
                     scheduleNextBehavior()
                 }
-                applyGlowColor(context)          // 光晕颜色随宠物颜色变化
+                applyGlowColor(context)          // Match halo color to pet color.
                 startGlowPulse()
                 updateBreathing(PetMood.GLOW)
             }
@@ -650,7 +650,7 @@ class HomeFragment : Fragment() {
                 binding.tvPetSick.visibility = View.GONE
                 binding.vGlow.visibility = View.GONE
                 activePetView.alpha = 1f
-                if (isSick) {                    // 退出生病：复位歪头、恢复活体行为
+                if (isSick) {                    // Leaving sick state: reset head tilt and resume behaviors.
                     isSick = false
                     activePetView.rotation = 0f
                     scheduleNextBehavior()
@@ -660,7 +660,7 @@ class HomeFragment : Fragment() {
             }
         }
 
-        // 无障碍：动态朗读当前宠物与心情，供 TalkBack 播报；切换宠物时同步更新
+        // Accessibility: update TalkBack descriptions for the current pet and mood when switching.
         val moodText = when (state.mood) {
             PetMood.SICK -> "，当前生病中"
             PetMood.GLOW -> "，当前容光焕发"
@@ -677,7 +677,7 @@ class HomeFragment : Fragment() {
         stopBehaviors()
         soundPool?.release()
         soundPool = null
-        lastArtPath = null   // 视图重建后需重新解码立绘
+        lastArtPath = null   // Decode artwork again after view recreation.
         _binding = null
     }
 }

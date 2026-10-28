@@ -1,19 +1,19 @@
 <resources>
     <style name="Theme.FocusPets" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- 整 App 窗口背景统一为小猫图片底色（暖米白），避免猫图与纯白页面产生突兀的色块边界 -->
+        <!-- Use the cat artwork's warm off-white background throughout the app to avoid harsh image/page boundaries. -->
         <item name="android:windowBackground">@color/page_background</item>
         <item name="android:colorBackground">@color/page_background</item>
-        <!-- 覆盖 Material3 默认紫色：主色用番茄 ToDo 风琥珀强调色，按钮/强调元素不再发紫 -->
+        <!-- Replace Material3's purple with a Tomato ToDo-inspired amber accent for buttons and highlights. -->
         <item name="colorPrimary">@color/cat_accent</item>
         <item name="colorPrimaryContainer">@color/cat_accent</item>
         <item name="colorOnPrimary">#FFFFFF</item>
-        <!-- 状态栏 / 导航栏与页面同色，消除「顶部紫色边框」；浅底用深色状态栏图标 -->
+        <!-- Match system bars to the page to remove purple borders; use dark status icons on light surfaces. -->
         <item name="android:statusBarColor">@color/page_background</item>
         <item name="android:navigationBarColor">@color/page_background</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>
 
-    <!-- 新手引导「怎么玩」的步骤行：文字色用 text_primary（已有 values-night 覆盖，深浅模式都可读） -->
+    <!-- Onboarding instruction rows use text_primary, which has night overrides for readability in both themes. -->
     <style name="OnboardingStep">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
@@ -22,9 +22,7 @@
         <item name="android:textSize">15sp</item>
     </style>
 
-    <!-- 设置页基础样式
-         注意：统一用 marginStart/End、paddingStart/End，
-         不用 *Horizontal / *Vertical（那些是 API 26+ 属性，minSdk 24 会失效）。 -->
+    <!-- Settings base styles: use marginStart/End and paddingStart/End rather than Horizontal/Vertical attributes, which require API 26 and do not work with minSdk 24. -->
 
     <style name="SettingsSectionTitle">
         <item name="android:layout_width">wrap_content</item>

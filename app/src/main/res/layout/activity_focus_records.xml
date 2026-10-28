@@ -13,7 +13,7 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- 顶部栏：返回 + 标题 -->
+        <!-- Top bar: Back and title. -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -44,7 +44,7 @@
                 android:layout_height="1dp" />
         </LinearLayout>
 
-        <!-- 日历：有专注记录的日期数字下方显示红点，点击查看当天事件 -->
+        <!-- Calendar: red dots below active dates; tap to view that day's records. -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -120,7 +120,7 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- 时段选择卡片 -->
+        <!-- Period selection card. -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -236,7 +236,7 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- 汇总 -->
+        <!-- Summary. -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -314,7 +314,7 @@
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
-        <!-- 饼图卡片 -->
+        <!-- Pie chart card. -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -362,7 +362,7 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- 专注事件列表 -->
+        <!-- Focus record list. -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

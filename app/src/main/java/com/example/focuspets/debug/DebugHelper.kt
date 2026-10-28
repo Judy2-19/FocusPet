@@ -15,20 +15,14 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 /**
- * 测试分支（test）专用调试工具。
- *
- * 用途：开发阶段直接把图鉴调到「满配」+ 大额积分，方便浏览全部 9 只宠物、
- * 验证稀有度渲染、心情三态、进度条与妆扮商城，而不必真去专注攒积分。
- *
- * 积分原理：可用积分 = 总专注分钟 − 已解锁宠物 cost − 妆扮消费。
- * 所以「发积分」就是往 focus_records 插一条超大 duration_minutes 的记录，
- * 并用特殊 focus_date 打标记，方便一键清掉。
- *
- * ⚠️ 本文件及所有 debug 调用仅存在于 test 分支，不进 main。
+ * Debug tools intended for the test branch: unlock all nine pets and grant a large balance to inspect
+ * rarity, moods, progress, and wardrobe purchases without earning points manually. The original
+ * balance model derives points from focus duration minus pet and outfit costs; marked grant records
+ * can be cleared. Intended to stay out of normal main behavior.
  */
 object DebugHelper {
 
-    // 调试操作在后台写库，必须用异常处理器兜底，否则任一 Room 查询异常都会杀进程
+    // Guard background debug database writes with an exception handler so Room query failures do not kill the process.
     private val scope = CoroutineScope(
         SupervisorJob() + Dispatchers.IO + CoroutineExceptionHandler { _, t ->
             Log.e("DebugHelper", "debug op failed (non-fatal): ${t.message}", t)
@@ -36,19 +30,19 @@ object DebugHelper {
     )
 
     private const val PREFS = "debug_prefs"
-    // 换过 key：旧版已把 full_unlock_done 置为 true，用新 key 才能让「补 100 万积分」重新执行一次
+    // Use a new key because older versions already set full_unlock_done; this allows the million-point top-up to run once again.
     private const val KEY_SETUP_DONE = "test_setup_v2"
 
-    /** 测试目标积分：100 万 */
+    /** Target test balance: one million points. */
     const val TEST_POINTS = 1_000_000
 
-    /** 测试注入记录的日期标记，用于精准清除 */
+    /** Date marker used to identify and delete injected test records precisely. */
     private const val TEST_GRANT_MARKER = "test-grant"
 
     /**
-     * 测试版首次启动：一次性解锁全部宠物 + 发放测试积分。
-     * 积分通过 points 列单独注入（duration=0），不会污染「累计专注时间」统计。
-     * 需要更多积分时仍可在图鉴页手动点「补 100 万积分」。
+     * On the test build's first launch, unlock all pets and grant test points once. Inject points with
+     * duration=0 so actual focus statistics stay unchanged. Additional top-ups remain available from
+     * Collection.
      */
     fun ensureTestSetup(context: Context) {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -61,24 +55,23 @@ object DebugHelper {
         }
     }
 
-    /** 解锁全部 9 只宠物（幂等） */
+    /** Unlock all nine pets idempotently. */
     fun unlockAll(context: Context) {
         scope.launch { unlockAllSync(context) }
     }
 
-    /** 重置进度：仅保留首只赠送宠物，并清掉测试注入的积分 */
+    /** Reset progress to the initial gift pet and remove injected points. */
     fun resetToInitial(context: Context) {
         scope.launch { resetToInitialSync(context) }
     }
 
-    /** 把可用积分补到 100 万（只补差额，可重复点） */
+    /** Top up available points to one million; grant only the difference, allowing repeated taps. */
     fun grantPoints(context: Context) {
         scope.launch { topUpPointsSync(context) }
     }
 
     /**
-     * 循环切换宠物心情三态：NORMAL → SICK → GLOW → NORMAL。
-     * 返回切换后的状态，便于调试按钮回显。
+     * Cycle NORMAL → SICK → GLOW → NORMAL and return the new state for debug button feedback.
      */
     fun cycleMood(context: Context): PetMood {
         val next = when (PetCareState.getMood(context)) {
@@ -90,7 +83,7 @@ object DebugHelper {
         return next
     }
 
-    // ---------------- 内部实现 ----------------
+    // ---------------- Internal implementation ----------------
 
     private suspend fun unlockAllSync(context: Context) {
         val db = AppDatabase.getInstance(context.applicationContext)
@@ -106,8 +99,8 @@ object DebugHelper {
     }
 
     /**
-     * 补积分到 TEST_POINTS：先读当前可用积分，只补差额。
-     * 用 points 列单独注入、duration 固定为 0，这样「累计专注时间」不会被刷成假数据。
+     * Read the available balance and grant only the difference up to TEST_POINTS. Inject through points
+     * with duration=0 to avoid falsifying total focus time.
      */
     private suspend fun topUpPointsSync(context: Context) {
         val db = AppDatabase.getInstance(context.applicationContext)

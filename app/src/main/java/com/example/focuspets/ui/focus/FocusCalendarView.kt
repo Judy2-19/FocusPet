@@ -12,14 +12,9 @@ import com.example.focuspets.R
 import java.util.Calendar
 
 /**
- * 简易月历视图（无第三方依赖，纯布局拼装）：
- * - 顶部星期表头（日一二三四五六），下方 6×7 网格。
- * - 有专注记录的日期，在数字下方显示红点。
- * - 点击某天触发 onDayClickListener（year/month/day，month 为 Calendar.JANUARY=0..）。
- * - 当前选中的日期文字加粗高亮。
- *
- * 用法：showMonth(y,m) 切换月份；setMarkedDays(daySet) 标记有记录的日期；
- * setSelectedDay(day) 高亮选中；setOnDayClickListener 接收点击。
+ * Dependency-free monthly calendar: Sunday-Saturday header, 6x7 grid, red dots for active dates, and
+ * bold selected date. Clicks report year/month/day with zero-based Calendar months. Use showMonth,
+ * setMarkedDays, setSelectedDay, and setOnDayClickListener.
  */
 class FocusCalendarView @JvmOverloads constructor(
     context: Context,

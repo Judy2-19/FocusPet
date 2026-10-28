@@ -5,9 +5,8 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 /**
- * 小猫咪妆扮购买记录。
- * 用 Room 表而非 SharedPreferences，是因为购买会消耗积分，
- * 必须与 focus_records / user_collection 一起参与「可用积分」的派生计算。
+ * Cat wardrobe purchase records. Use Room rather than SharedPreferences because purchases spend points
+ * and must participate in the balance calculation alongside focus_records and user_collection.
  */
 @Entity(tableName = "wardrobe_purchases")
 data class WardrobePurchaseEntity(

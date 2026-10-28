@@ -9,15 +9,9 @@ import android.util.AttributeSet
 import android.view.View
 
 /**
- * 轻量甜甜圈饼图：按各 slice 的 value 占比绘制扇形，中心挖空。
- *
- * 设计要点：
- * - 无第三方图表库，纯 Canvas 绘制。
- * - drawPie 是 companion 静态方法，分享海报的高清 Bitmap 复用同一套绘制逻辑，
- *   保证「屏幕上看到的」和「分享出去的」完全一致。
- * - 各扇形之间留白色分隔线，单个内容占比时也是一个清晰的环。
- * - 「总专注时长」显示在饼图右下角（cornerText，两行：标签 + 数值），
- *   中心留空，使各内容扇形的占比更直观。
+ * Lightweight Canvas donut chart with proportional slices and a central hole. Static drawPie shares
+ * rendering with high-resolution posters. White dividers separate slices, including a single-slice
+ * ring. Two-line total-duration text sits at the lower right, leaving the center empty.
  */
 class PieChartView @JvmOverloads constructor(
     context: Context,
@@ -27,9 +21,9 @@ class PieChartView @JvmOverloads constructor(
 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private var slices: List<Slice> = emptyList()
-    private var cornerText: String = ""        // 两行文本用 \n 分隔：第一行标签、第二行数值
+    private var cornerText: String = ""        // Two lines separated by \n: label first, value second.
 
-    /** 单个扇形：label 仅用于外部图例，绘制本身只用 value 与 color */
+    /** Slice label is for the external legend; drawing uses only value and color. */
     data class Slice(val label: String, val value: Int, val color: Int)
 
     fun setData(slices: List<Slice>, cornerText: String = "") {
@@ -50,10 +44,9 @@ class PieChartView @JvmOverloads constructor(
 
     companion object {
         /**
-         * 绘制甜甜圈饼图（纯静态，可在任意 Canvas 上调用，便于生成分享海报）。
-         * @param hole 中心挖空比例（0~1，相对半径）
-         * @param holeColor 中心挖空填充色（通常取卡片背景色）
-         * @param cornerText 饼图右下角的文字（两行用 \n 分隔；第一行为浅色标签，第二行为深色数值）
+         * Draw a donut chart on any Canvas, including shared posters. hole is the radius-relative cutout ratio
+         * (0-1); holeColor usually matches the card background; cornerText has two newline-separated lines,
+         * light label then dark value.
          */
         fun drawPie(
             canvas: Canvas,
@@ -78,21 +71,21 @@ class PieChartView @JvmOverloads constructor(
 
             val total = slices.sumOf { it.value }.toFloat().coerceAtLeast(1f)
             val rect = RectF(cx - r, cy - r, cx + r, cy + r)
-            val separator = r * 0.022f         // 白色分隔线宽度（细，避免盖过彩色扇形）
+            val separator = r * 0.022f         // Thin white dividers avoid covering colored slices.
             var start = -90f
             for (s in slices) {
                 val sweep = (s.value / total) * 360f
                 p.color = s.color
-                // useCenter = true 画扇形；略微重叠一像素避免缝隙
+                // useCenter=true draws sectors; overlap slightly to avoid pixel gaps.
                 canvas.drawArc(rect, start, sweep + 0.5f, true, p)
                 start += sweep
             }
 
-            // 中心挖空 → 甜甜圈
+            // Cut out the center to form a donut.
             p.color = holeColor
             canvas.drawCircle(cx, cy, r * hole, p)
 
-            // 白色分隔线：在每个扇形边界再画一小段半径线，强化分区感
+            // Draw short radial lines at slice boundaries for clearer separation.
             start = -90f
             p.color = holeColor
             p.strokeWidth = separator
@@ -109,7 +102,7 @@ class PieChartView @JvmOverloads constructor(
             }
             p.style = Paint.Style.FILL
 
-            // 右下角文字（总专注时长）：标签（浅灰）+ 数值（深色加粗）
+            // Lower-right total duration: light-gray label and bold dark value.
             if (cornerText.isNotEmpty()) {
                 val parts = cornerText.split("\n", limit = 2)
                 val label = if (parts.size == 2) parts[0] else ""
@@ -121,7 +114,7 @@ class PieChartView @JvmOverloads constructor(
                 val bottom = cy + r - 4f
 
                 p.textAlign = Paint.Align.RIGHT
-                // 数值
+                // Value.
                 p.isFakeBoldText = true
                 p.color = Color.parseColor("#212121")
                 var vSize = valueSize
@@ -132,7 +125,7 @@ class PieChartView @JvmOverloads constructor(
                 }
                 val vFm = p.fontMetrics
                 canvas.drawText(value, right, bottom, p)
-                // 标签（数值上方）
+                // Label above the value.
                 p.isFakeBoldText = false
                 p.color = Color.parseColor("#757575")
                 p.textSize = labelSize

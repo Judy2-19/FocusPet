@@ -12,7 +12,7 @@
         android:gravity="center_horizontal"
         android:padding="24dp">
 
-        <!-- 顶部栏：标题（左）+ 专注记录入口（右上角） -->
+        <!-- Top bar: title on the left, records entry on the right. -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -40,7 +40,7 @@
                 android:paddingEnd="14dp" />
         </LinearLayout>
 
-        <!-- 本次专注内容：记录 + 复用历史 -->
+        <!-- Session content: record it or reuse history. -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -99,7 +99,7 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- 宠物饥饿提醒（专注失败时显示） -->
+        <!-- Hungry-pet warning displayed after focus failure. -->
         <TextView
             android:id="@+id/tv_hunger_warning"
             android:layout_width="wrap_content"
@@ -110,7 +110,7 @@
             android:textSize="13sp"
             android:visibility="gone" />
 
-        <!-- 剩余时间 -->
+        <!-- Remaining time. -->
         <TextView
             android:id="@+id/tv_remaining"
             android:layout_width="wrap_content"
@@ -131,7 +131,7 @@
             android:textColor="@color/text_hint"
             android:textSize="14sp" />
 
-        <!-- 进度条：已专注时长占比（自定义：橘色已走 + 白色未走 + 黑色竖线分割） -->
+        <!-- Elapsed proportion: orange elapsed, white remaining, and a black divider. -->
         <com.example.focuspets.ui.focus.FocusProgressBar
             android:id="@+id/progress_focus"
             android:layout_width="match_parent"
@@ -139,7 +139,7 @@
             android:layout_marginTop="32dp"
             android:contentDescription="专注进度" />
 
-        <!-- 时长选择：15 / 25 / 45 分钟 -->
+        <!-- Duration choices: 15, 25, or 45 minutes. -->
         <com.google.android.material.button.MaterialButtonToggleGroup
             android:id="@+id/toggle_duration"
             android:layout_width="wrap_content"
@@ -171,7 +171,7 @@
                 android:text="45 分钟" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
-        <!-- 自定义时长 -->
+        <!-- Custom duration. -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -212,7 +212,7 @@
                 android:textSize="13sp" />
         </LinearLayout>
 
-        <!-- 常用预设：点击一键套用「内容 + 时长」 -->
+        <!-- Reusable presets apply content and duration with one tap. -->
         <TextView
             android:id="@+id/tv_preset_hint"
             android:layout_width="wrap_content"
@@ -231,7 +231,7 @@
             app:chipSpacingHorizontal="8dp"
             app:chipSpacingVertical="6dp" />
 
-        <!-- 开始 / 放弃 -->
+        <!-- Start / Cancel. -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_start"
             android:layout_width="match_parent"

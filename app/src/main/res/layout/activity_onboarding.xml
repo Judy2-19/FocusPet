@@ -7,7 +7,7 @@
     android:orientation="vertical"
     android:paddingBottom="12dp">
 
-    <!-- 三页引导：欢迎 / 怎么玩 / 选背景色 -->
+    <!-- Three onboarding pages: welcome, instructions, background. -->
     <ViewFlipper
         android:id="@+id/flipper"
         android:layout_width="match_parent"
@@ -16,7 +16,7 @@
         android:inAnimation="@android:anim/fade_in"
         android:outAnimation="@android:anim/fade_out">
 
-        <!-- 第 1 页：欢迎 -->
+        <!-- Page 1: welcome. -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -61,7 +61,7 @@
                 android:textSize="14sp" />
         </LinearLayout>
 
-        <!-- 第 2 页：怎么玩 -->
+        <!-- Page 2: instructions. -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -105,7 +105,7 @@
                 android:text="🏆 在「排行」里和朋友比比专注时长" />
         </LinearLayout>
 
-        <!-- 第 3 页：选背景色 -->
+        <!-- Page 3: choose background. -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -137,7 +137,7 @@
                 android:textColor="@color/text_hint"
                 android:textSize="13sp" />
 
-            <!-- 色板：由代码按 SettingsManager.PALETTE 动态填充 -->
+            <!-- Palette populated dynamically from SettingsManager.PALETTE. -->
             <GridLayout
                 android:id="@+id/color_grid"
                 android:layout_width="wrap_content"
@@ -148,7 +148,7 @@
         </LinearLayout>
     </ViewFlipper>
 
-    <!-- 底部：跳过 / 圆点 / 下一步 -->
+    <!-- Bottom: Skip, page dots, Next. -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

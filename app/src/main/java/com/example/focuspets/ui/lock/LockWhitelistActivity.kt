@@ -17,7 +17,7 @@ import com.example.focuspets.R
 import com.example.focuspets.databinding.ActivityLockWhitelistBinding
 import com.example.focuspets.model.SettingsManager
 
-/** 单条可勾选应用 */
+/** A selectable application entry. */
 data class AppItem(
     val packageName: String,
     val appName: String,
@@ -26,8 +26,8 @@ data class AppItem(
 )
 
 /**
- * 锁机白名单管理：列出本机所有「可启动」的应用（有 Launcher 入口），
- * 用户勾选锁机期间允许使用的 app，保存进 SettingsManager。
+ * Lock allowlist manager: list installed launchable apps with Launcher entries, then save selected
+ * allowed packages in SettingsManager.
  */
 class LockWhitelistActivity : AppCompatActivity() {
 
@@ -60,8 +60,8 @@ class LockWhitelistActivity : AppCompatActivity() {
         val seen = mutableSetOf<String>()
         for (ri in resolve) {
             val pkg = ri.activityInfo.packageName
-            if (pkg == packageName) continue            // 排除本应用（锁机页本身永远放行）
-            if (!seen.add(pkg)) continue               // 同一包多入口去重
+            if (pkg == packageName) continue            // Exclude this app because the lock screen itself is always allowed.
+            if (!seen.add(pkg)) continue               // Deduplicate multiple launcher entries from one package.
             val appInfo = ri.activityInfo.applicationInfo
             val name = pm.getApplicationLabel(appInfo).toString()
             val icon = pm.getApplicationIcon(appInfo)
@@ -94,7 +94,7 @@ class LockWhitelistActivity : AppCompatActivity() {
             holder.checkbox.setOnCheckedChangeListener { _, isChecked ->
                 item.checked = isChecked
             }
-            // 点击整行切换勾选（CheckBox 自身设为不可点，避免双击冲突）
+            // Toggle selection by tapping the row; disable direct CheckBox clicks to avoid duplicate handling.
             holder.itemView.setOnClickListener {
                 val newState = !holder.checkbox.isChecked
                 holder.checkbox.isChecked = newState

@@ -33,12 +33,10 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * 锁机专注（仿番茄 ToDo 学霸模式）：
- * - 全屏沉浸 + 锁机（两种模式见 beginLock 注释）
- * - 复用 FocusService 计时，接收其广播刷新计时器 / 进度
- * - 锁机期间置 FocusService.lockActive=true，让底层专注页的「切后台 5 秒失败」逻辑失效
- * - 放弃需二次确认；完成弹出遮罩，点「解锁离开」才解除并退出
- * - 白名单应用：锁机界面可进入「白名单应用」页勾选，锁机期间允许这些 app 正常使用（软监控模式）
+ * Full-screen pinned focus mode inspired by Tomato ToDo. Reuses FocusService and broadcasts for
+ * timer/progress. lockActive suppresses the underlying page's background-failure check. Cancellation
+ * requires confirmation; completion waits for Unlock and Leave. Allowlisted apps remain available
+ * through soft monitoring.
  */
 class LockActivity : AppCompatActivity() {
 
@@ -46,13 +44,13 @@ class LockActivity : AppCompatActivity() {
     private var selectedMinutes = 25
     private var totalMillisAtStart = 0L
     private var pinned = false
-    /** 是否正在「合法退出」流程中（每日强制退出 / 完成解锁 / 失败退出）。true 时不再重新固定 */
+    /** Whether an authorized exit is underway: daily forced exit, completion, or failure. Do not repin while true. */
     private var exiting = false
 
     private val dateFmt = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
     private fun todayStr(): String = dateFmt.format(Date())
 
-    /** 今日是否还有「强制退出」机会（每天一次，次日自动恢复） */
+    /** Whether today's once-daily forced exit remains available; resets the next day. */
     private fun forceExitAvailable(): Boolean =
         SettingsManager.getLockForceExitDate(this) != todayStr()
 
@@ -79,13 +77,13 @@ class LockActivity : AppCompatActivity() {
         binding = ActivityLockBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // 重置锁定状态（该 Activity 以 singleTask 复用，避免上一会话的标记残留）
+        // Reset locking flags because singleTask reuses this Activity across sessions.
         exiting = false
         pinned = false
 
         Backgrounds.apply(this, binding.lockRoot)
 
-        // 接管会话：屏蔽底层专注页的「切后台失败」判定
+        // Take ownership of the session and suppress the underlying focus page's background-failure check.
         FocusService.lockActive = true
 
         setupDuration()
@@ -98,9 +96,9 @@ class LockActivity : AppCompatActivity() {
             applyCustom(); true
         }
         binding.btnUnlock.setOnClickListener { unlockAndFinish() }
-        // 每日一次强制退出（锁机进行中可用，不删）
+        // Keep the once-daily forced exit available during locking.
         binding.btnForceExit.setOnClickListener { confirmForceExit() }
-        // 空闲态：随时可退出（此时尚未真正锁机）
+        // Idle state can exit freely before locking actually starts.
         binding.btnExit.setOnClickListener { finish() }
 
         loadCurrentPetImage()
@@ -124,12 +122,12 @@ class LockActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         unregisterReceiver(timerReceiver)
-        // 锁机进行中：若屏幕仍亮着（说明是用户在划 Home / 做解除固定的手势），
-        // 就把锁机页重新拉回前台；屏幕熄灭时不拉起，避免息屏后反复唤醒。
+        // While locking, if the screen is still on, the user may be using Home or an unpin gesture;
+        // bring the lock screen back. Do not relaunch while the screen is off to avoid repeated wakeups.
         if (!exiting && FocusService.isRunning) {
             val pm = getSystemService(Context.POWER_SERVICE) as? PowerManager
             if (pm == null || pm.isInteractive) {
-                pinned = false // 离开前台即视为已解除固定，下次 onResume 会重新固定
+                pinned = false // Leaving the foreground means pinning may be gone; repin on the next onResume.
                 try {
                     val i = Intent(this, LockActivity::class.java)
                     i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
@@ -141,8 +139,8 @@ class LockActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // 锁机进行中：若尚未被系统屏幕固定（例如用户刚才用系统手势解除了固定），
-        // 重新调用 startLockTask 把手机再次锁死；屏幕固定开关关闭时则只靠 onStop 拉回兜底。
+        // During locking, if the user has unpinned through a system gesture,
+        // call startLockTask again. With pinning disabled, rely on the onStop fallback.
         if (!exiting && FocusService.isRunning && SettingsManager.isScreenPinEnabled(this) && !pinned) {
             try { startLockTask(); pinned = true } catch (_: Exception) { }
         }
@@ -154,20 +152,20 @@ class LockActivity : AppCompatActivity() {
         try { if (pinned) stopLockTask() } catch (_: Exception) { }
     }
 
-    // 返回键处理：
-    // - 空闲态（尚未真正锁机）：直接退出
-    // - 真锁机中（专注进行中）：不可退出，忽略返回键，直到专注完成点「解锁离开」
+    // Back handling:
+    // Idle before locking: exit immediately.
+    // Active lock session: ignore Back until completion and Unlock and Leave.
     private val backCallback = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
             if (!FocusService.isRunning) {
                 finish()
                 return
             }
-            // 锁机专注进行中：强制不可退出（白名单软监控仍会把切走的应用拉回）
+            // Prevent exiting during locked focus; soft monitoring also returns from disallowed apps.
         }
     }
 
-    // ---------------- 沉浸 / 锁屏 ----------------
+    // ---------------- Immersive mode / locking ----------------
 
     private fun enterImmersive() {
         WindowCompat.getInsetsController(window, window.decorView).apply {
@@ -177,14 +175,14 @@ class LockActivity : AppCompatActivity() {
         }
     }
 
-    /** 主动、合法地解除锁定（每日强制退出 / 完成解锁 / 失败退出时调用） */
+    /** Deliberately release the lock for daily forced exit, successful completion, or failure. */
     private fun releaseLock() {
         exiting = true
         try { stopLockTask() } catch (_: Exception) { }
         pinned = false
     }
 
-    // ---------------- 时长 ----------------
+    // ---------------- Duration ----------------
 
     private fun setupDuration() {
         binding.toggleDuration.addOnButtonCheckedListener { _, checkedId, isChecked ->
@@ -212,11 +210,11 @@ class LockActivity : AppCompatActivity() {
         binding.toggleDuration.clearChecked()
     }
 
-    // ---------------- 控制 ----------------
+    // ---------------- Controls ----------------
 
     private fun tryStart() {
         if (FocusService.isRunning) return
-        // 二次确认：点「开始锁机」才真正锁定；点「不用了」什么都不做（不启动倒计时）
+        // Confirm before starting: Start Lock actually locks; dismissing does not start the countdown.
         MaterialAlertDialogBuilder(this)
             .setTitle("开始锁机专注？")
             .setMessage(
@@ -232,12 +230,10 @@ class LockActivity : AppCompatActivity() {
     }
 
     /**
-     * 用户确认开始，按白名单情况选择锁机模式：
-     * - 白名单非空 → 软监控模式：不调用 startLockTask（不再硬锁死手机），而是在 FocusService
-     *   中开启「前台应用监控」，放行白名单内的 app，打开白名单外的 app 会被自动拉回锁机页。
-     *   软监控需要「使用情况访问」权限，未授权则引导授权、不启动。
-     * - 白名单为空 → 硬锁模式：仍走系统屏幕固定（学霸模式），把手机锁在当前页面。
-     * 两种模式都会立即进入锁机界面并启动倒计时。
+     * After confirmation, choose by allowlist: a nonempty list enables FocusService soft monitoring
+     * without startLockTask, allowing listed apps and returning from others. Usage Access must be granted
+     * first. An empty list uses hard screen pinning. Both modes enter the lock screen and start the
+     * countdown immediately.
      */
     private fun beginLock() {
         if (FocusService.isRunning) return
@@ -247,14 +243,14 @@ class LockActivity : AppCompatActivity() {
         val useMonitor = whitelist.isNotEmpty()
 
         if (useMonitor) {
-            // 软监控必须有权限，否则无法判断前台应用 → 引导授权后由用户重新点开始
+            // Soft monitoring requires Usage Access; guide the user to grant it, then let them start again.
             if (!UsageStatsPermission.hasPermission(this)) {
                 promptUsagePermission()
                 return
             }
             pinned = false
         } else {
-            // 硬锁模式：番茄 ToDo 学霸模式同款，把手机锁在当前页面（真锁机，无常规退出）。
+            // Hard lock uses system screen pinning to keep the device on this page without normal exit.
             try {
                 if (SettingsManager.isScreenPinEnabled(this)) {
                     startLockTask()
@@ -270,19 +266,19 @@ class LockActivity : AppCompatActivity() {
         val intent = Intent(this, FocusService::class.java).apply {
             action = FocusService.ACTION_START
             putExtra(FocusService.EXTRA_MINUTES, selectedMinutes)
-            // 锁机事件内容默认为「锁机」，专注记录里归属到该内容
+            // Locked sessions use the default lock-mode content label in session records.
             putExtra(FocusService.EXTRA_CONTENT, "锁机")
-            // 是否开启白名单软监控
+            // Whether allowlist soft monitoring is enabled.
             putExtra(FocusService.EXTRA_LOCK_MONITOR, useMonitor)
         }
         ContextCompat.startForegroundService(this, intent)
         totalMillisAtStart = selectedMinutes * 60_000L
         renderRunning(null)
-        // 进入锁机瞬间才隐藏系统栏（沉浸），避免误入时无法一次返回退出
+        // Hide system bars only when locking starts so accidental entry can still exit with one Back press.
         enterImmersive()
     }
 
-    /** 引导用户授予「使用情况访问」权限（特殊权限，需到系统设置手动开启） */
+    /** Guide the user to grant special Usage Access permission manually in Settings. */
     private fun promptUsagePermission() {
         MaterialAlertDialogBuilder(this)
             .setTitle("需要「使用情况访问」权限")
@@ -292,7 +288,7 @@ class LockActivity : AppCompatActivity() {
             .show()
     }
 
-    // ---------------- 每日一次强制退出 ----------------
+    // ---------------- Once-daily forced exit ----------------
 
     private fun confirmForceExit() {
         if (!forceExitAvailable()) return
@@ -305,9 +301,9 @@ class LockActivity : AppCompatActivity() {
     }
 
     private fun doForceExit() {
-        // 记录今天已用掉强制退出机会（次日自动恢复）
+        // Record today's forced exit; it becomes available again tomorrow.
         SettingsManager.setLockForceExitDate(this, todayStr())
-        // 停止底层专注计时（服务内部会顺带停止监控）
+        // Stop the underlying focus timer; the service also stops monitoring.
         startService(
             Intent(this, FocusService::class.java).setAction(FocusService.ACTION_STOP)
         )
@@ -320,7 +316,7 @@ class LockActivity : AppCompatActivity() {
         binding.overlayDone.visibility = View.VISIBLE
         binding.btnForceExit.visibility = View.GONE
         com.example.focuspets.util.AlertPlayer.play(this)
-        // 完成即解除固定，等用户点「解锁离开」退出
+        // Unpin on completion, then wait for the user to select Unlock and Leave.
         releaseLock()
     }
 
@@ -340,17 +336,17 @@ class LockActivity : AppCompatActivity() {
         finish()
     }
 
-    // ---------------- 渲染 ----------------
+    // ---------------- Rendering ----------------
 
     private fun renderRunning(remaining: Long?) {
         binding.overlayDone.visibility = View.GONE
-        // 真锁机：隐藏时长选择等其它入口，且默认无常规退出键
+        // During locking, hide duration settings and other entry points; no ordinary exit button by default.
         binding.toggleDuration.visibility = View.GONE
         binding.layoutCustom.visibility = View.GONE
         binding.btnStart.visibility = View.GONE
         binding.btnWhitelist.visibility = View.GONE
         binding.btnExit.visibility = View.GONE
-        // 每日一次强制退出：当日还有机会就显示按钮（用完则隐藏，次日自动恢复）
+        // Show forced exit only if today's allowance remains; hide after use and restore tomorrow.
         if (forceExitAvailable()) {
             binding.btnForceExit.visibility = View.VISIBLE
             binding.btnForceExit.text = "强制退出（今日剩余 1 次）"
@@ -372,7 +368,7 @@ class LockActivity : AppCompatActivity() {
 
     private fun renderIdle() {
         binding.overlayDone.visibility = View.GONE
-        // 空闲态：可退出、可配置时长、可设置白名单，尚未真正锁机
+        // Idle allows exit, duration configuration, and allowlist setup before locking.
         binding.toggleDuration.visibility = View.VISIBLE
         binding.layoutCustom.visibility = View.VISIBLE
         binding.btnStart.visibility = View.VISIBLE
@@ -387,7 +383,7 @@ class LockActivity : AppCompatActivity() {
         binding.progressFocus.setProgress(0)
     }
 
-    /** 锁屏宠物 = 首页当前宠物（猫/狗），并显示其当前装扮，而不是永远显示猫 */
+    /** Show the currently selected Home cat/dog and outfit instead of always showing a cat. */
     private fun loadCurrentPetImage() {
         val ctx = applicationContext
         val petId = SettingsManager.getCurrentPetId(ctx)

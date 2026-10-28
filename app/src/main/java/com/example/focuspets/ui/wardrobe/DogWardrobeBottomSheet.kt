@@ -18,18 +18,17 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
 
 /**
- * 小狗装扮面板：尾巴(免费) / 颜色(灰免费,其余50) / 配饰(领带120 → 西服·礼服150 → 学士帽180)。
- * 复用 CatWardrobe 那套通用 ViewModel（只关心积分与已购 id），购买记录写入同一张 wardrobe_purchases 表。
- *
- * 依赖链：领带必须最先买；西服/礼服需先有领带；学士帽需先有西服/礼服。
- * 某些颜色没有某件配饰立绘（如彩色狗无裙/帽、粉色短尾无西服），UI 会禁用对应按钮并给提示。
+ * Dog wardrobe: free tails, gray free/other colors 50, tie 120 → outfit 150 → cap 180. Reuse the cat's
+ * generic points/purchased-ID ViewModel and wardrobe_purchases table. Accessories require preceding
+ * purchases. Disable unavailable artwork combinations such as multicolor outfits/caps or pink short-
+ * tail suits.
  */
 class DogWardrobeBottomSheet : BottomSheetDialogFragment() {
 
     private var _binding: DialogDogWardrobeBinding? = null
     private val binding get() = _binding!!
 
-    // 复用 CatWardrobe 的通用 ViewModel（同包，可直接引用）
+    // Reuse the cat wardrobe's generic ViewModel from the same package.
     private val viewModel: CatWardrobeViewModel by viewModels {
         val db = AppDatabase.getInstance(requireActivity().applicationContext)
         CatWardrobeViewModelFactory(PetRepository(db))
@@ -68,7 +67,7 @@ class DogWardrobeBottomSheet : BottomSheetDialogFragment() {
         buildOutfit()
     }
 
-    // ---------------- 尾巴（免费自选） ----------------
+    // ---------------- Tail: free selection ----------------
 
     private fun buildTails() {
         binding.gridTails.removeAllViews()
@@ -95,7 +94,7 @@ class DogWardrobeBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
-    // ---------------- 皮肤颜色 ----------------
+    // ---------------- Skin colors ----------------
 
     private fun buildColors() {
         binding.gridColors.removeAllViews()
@@ -134,7 +133,7 @@ class DogWardrobeBottomSheet : BottomSheetDialogFragment() {
         render()
     }
 
-    // ---------------- 配饰（领带 → 西服/礼服 → 学士帽） ----------------
+    // ---------------- Accessories: tie → suit/dress → graduation cap ----------------
 
     private fun buildOutfit() {
         binding.containerOutfit.removeAllViews()
@@ -151,7 +150,7 @@ class DogWardrobeBottomSheet : BottomSheetDialogFragment() {
         val outfitOn = DogWardrobe.isOutfitEquipped(ctx) && outfitOwned
         val capOn = DogWardrobe.isCapEquipped(ctx) && capOwned
 
-        // 领带
+        // Tie.
         val tieBtn = makeChip(
             when {
                 tieOn -> "✓ 红领带（点击脱下）"
@@ -162,7 +161,7 @@ class DogWardrobeBottomSheet : BottomSheetDialogFragment() {
         tieBtn.setOnClickListener {
             if (tieOwned) {
                 if (tieOn) {
-                    // 摘领带连带摘掉其上的西服/礼服与学士帽
+                    // Removing the tie also removes the dependent outfit and cap.
                     DogWardrobe.setTieEquipped(ctx, false)
                     DogWardrobe.setOutfitEquipped(ctx, false)
                     DogWardrobe.setCapEquipped(ctx, false)
@@ -181,7 +180,7 @@ class DogWardrobeBottomSheet : BottomSheetDialogFragment() {
         }
         binding.containerOutfit.addView(tieBtn, rowLp())
 
-        // 西服 / 礼服
+        // Suit / dress.
         val outfitEnabled = tieOwned && DogWardrobe.outfitChangesImage(ctx, tail, color)
         val outfitBtn = makeChip(
             when {
@@ -199,7 +198,7 @@ class DogWardrobeBottomSheet : BottomSheetDialogFragment() {
                 } else {
                     DogWardrobe.setTieEquipped(ctx, true)
                     DogWardrobe.setOutfitEquipped(ctx, true)
-                    // 短尾灰/白等无独立西服立绘（西服与帽同框）→ 穿西服即带帽
+                    // Gray/white short tails lack standalone suit art; equipping the suit also includes the cap.
                     if (!DogWardrobe.hasIndependentSuit(ctx, tail, color)) {
                         DogWardrobe.setCapEquipped(ctx, true)
                     }
@@ -220,7 +219,7 @@ class DogWardrobeBottomSheet : BottomSheetDialogFragment() {
         }
         binding.containerOutfit.addView(outfitBtn, rowLp())
 
-        // 学士帽（需先有红领带；通常还需西服/礼服，但素材缺口的颜色以"帽含衣"方式直接解锁）
+        // Graduation cap requires the red tie and usually an outfit; asset gaps may unlock the cap-with-outfit combination directly.
         val capChanges = DogWardrobe.capChangesImage(ctx, tail, color)
         val outfitChanges = DogWardrobe.outfitChangesImage(ctx, tail, color)
         val capEnabled = tieOwned && capChanges && (outfitOwned || !outfitChanges)
@@ -242,8 +241,8 @@ class DogWardrobeBottomSheet : BottomSheetDialogFragment() {
         capBtn.setOnClickListener {
             if (capOwned) {
                 if (capOn) {
-                    // 短尾灰/白等西服与帽同框组合：学士帽不独立存在，
-                    // 单独脱帽视觉无意义，连同西服一起脱，保证状态与立绘一致。
+                    // For gray/white short-tail suit-and-cap artwork, the cap is not visually independent.
+                    // Removing only the cap has no effect, so remove the suit too to keep state consistent with artwork.
                     if (!DogWardrobe.hasIndependentSuit(ctx, tail, color)) {
                         DogWardrobe.setOutfitEquipped(ctx, false)
                     }

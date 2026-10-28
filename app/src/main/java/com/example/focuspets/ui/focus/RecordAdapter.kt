@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.focuspets.R
 import com.example.focuspets.databinding.ItemFocusRecordBinding
 
-/** 专注事件详情列表：左侧色条 + 内容 + 完成时间 + 时长 */
+/** Record details: left color bar, content, completion time, and duration. */
 class RecordAdapter : RecyclerView.Adapter<RecordAdapter.VH>() {
 
     private var items: List<RecordItem> = emptyList()

@@ -11,13 +11,9 @@ import androidx.core.content.ContextCompat
 import com.example.focuspets.R
 
 /**
- * 专注时段热力图：
- *  - 7 行 = 周一..周日
- *  - 24 列 = 0..23 时
- * 每个格子颜色越深，代表该「星期 × 小时」累计专注分钟数越多。
- *
- * 数据通过 [setData] 传入，matrix[day][hour] 为分钟数（day: 0=周一）。
- * 无需布局嵌套，整张图由 Canvas 一次绘制，零额外 View 节点。
+ * Canvas heatmap with seven weekday rows (Monday=0) and 24 hour columns. Darker cells represent more
+ * accumulated focus minutes. setData accepts matrix[day][hour]; draw everything in one Canvas without
+ * extra View nodes.
  */
 class FocusHeatmapView @JvmOverloads constructor(
     context: Context,
@@ -47,7 +43,7 @@ class FocusHeatmapView @JvmOverloads constructor(
         cellPaint.style = Paint.Style.FILL
     }
 
-    /** 设置热力数据；行数不为 7 时忽略，避免数组越界 */
+    /** Set heatmap data; ignore matrices without seven rows to avoid bounds errors. */
     fun setData(data: Array<IntArray>) {
         if (data.size != days) return
         matrix = data
@@ -72,7 +68,7 @@ class FocusHeatmapView @JvmOverloads constructor(
         val cell = (gridW - cellGap * (hours - 1)) / hours
         val corner = (cell * 0.22f).coerceAtMost(cell / 2f)
 
-        // 顶部小时刻度（每 3 小时标注一次）
+        // Top hour labels every three hours.
         labelPaint.textAlign = Paint.Align.CENTER
         for (h in 0 until hours step 3) {
             val cx = padLeft + h * (cell + cellGap) + cell / 2f
@@ -81,7 +77,7 @@ class FocusHeatmapView @JvmOverloads constructor(
 
         for (d in 0 until days) {
             val y = padTop + d * (cell + cellGap)
-            // 左侧星期标签
+            // Weekday labels on the left.
             labelPaint.textAlign = Paint.Align.RIGHT
             canvas.drawText(weekdayLabels[d], padLeft - dp(6f), y + cell / 2f + sp(3f), labelPaint)
             labelPaint.textAlign = Paint.Align.CENTER
@@ -94,7 +90,7 @@ class FocusHeatmapView @JvmOverloads constructor(
         }
     }
 
-    /** 把分钟数映射成 accent 色的透明度：越久越深 */
+    /** Map minutes to accent opacity: longer focus means darker color. */
     private fun heatColor(v: Int): Int {
         val ratio = (v.toFloat() / maxValue).coerceIn(0f, 1f)
         val alpha = (0.22f + 0.78f * ratio) * 255f

@@ -42,15 +42,15 @@ class FragmentStats : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 应用用户选中的背景色
+        // Apply the selected background color.
         Backgrounds.apply(requireContext(), binding.root)
 
-        // 全球排行榜入口（底部导航最多 5 项，排行榜挪到统计页）
+        // Global leaderboard entry moved to Statistics because bottom navigation supports at most five items.
         binding.btnLeaderboard.setOnClickListener {
             (requireActivity() as MainActivity).showLeaderboard()
         }
 
-        // 成就徽章网格（3 列）
+        // Three-column achievement grid.
         binding.badges.layoutManager = GridLayoutManager(requireContext(), 3)
         binding.badges.adapter = badgeAdapter
 
@@ -82,13 +82,13 @@ class FragmentStats : Fragment() {
         else -> "$min 分钟"
     }
 
-    /** 近 7 天柱状图：柱底对齐、按最大值等比缩放；底部预留星期标签空间，避免标签被挤出/遮挡 */
+    /** Seven-day bars share a bottom baseline and scale to the maximum; reserve weekday-label space to prevent clipping. */
     private fun buildBarChart(bars: List<com.example.focuspets.db.DayBar>) {
         if (_binding == null || bars.isEmpty()) return
         binding.barChart.removeAllViews()
         val max = bars.maxOfOrNull { it.minutes } ?: 0
         val density = resources.displayMetrics.density
-        // 容器固定 180dp、内边距 14dp → 内容区约 152dp；底部预留 24dp 放星期标签
+        // 180dp container with 14dp padding leaves about 152dp content; reserve 24dp for weekday labels.
         val contentH = (180 * density).toInt() - 2 * (14 * density).toInt()
         val labelArea = (24 * density).toInt()
         val maxBarH = (contentH - labelArea).coerceAtLeast((40 * density).toInt())
@@ -99,14 +99,14 @@ class FragmentStats : Fragment() {
         for (bar in bars) {
             val col = LinearLayout(requireContext()).apply {
                 orientation = LinearLayout.VERTICAL
-                // 关键：列内容底部对齐 → 所有柱体共享同一条基线，星期标签恒定显示在底部
+                // Bottom-align columns so all bars share a baseline and weekday labels remain at the bottom.
                 gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
                 layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
             }
             val h = if (max == 0) minBar
             else ((bar.minutes.toFloat() / max) * maxBarH).toInt().coerceAtLeast(minBar)
 
-            // 数值标签（柱顶）：点击柱子也能看到具体分钟数
+            // Values above bars; tapping also reveals exact minutes.
             val valueLabel = TextView(requireContext()).apply {
                 text = if (bar.minutes > 0) "${bar.minutes}" else ""
                 textSize = 11f
@@ -133,7 +133,7 @@ class FragmentStats : Fragment() {
             col.addView(barView)
             col.addView(label)
 
-            // 点击柱子 → 提示该天具体分钟数
+            // Tap a bar to show that day's minutes.
             col.setOnClickListener {
                 val msg = if (bar.minutes > 0) "${bar.label}：${bar.minutes} 分钟"
                 else "${bar.label}：暂无专注记录"

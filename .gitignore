@@ -74,3 +74,9 @@ tools/rembg_run.log
 
 # ---------- 本地数据库快照（二进制，无 diff 意义，不进仓库） ----------
 *.db
+
+/tmp/
+/output/
+node_modules/
+__pycache__/
+*.pyc

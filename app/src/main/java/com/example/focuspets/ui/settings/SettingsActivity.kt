@@ -22,24 +22,21 @@ import com.example.focuspets.user.UserDataManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 /**
- * 设置页：昵称 / 注销 / 重置进度 / 重新查看引导。
- *
- * 两个破坏性操作（注销、重置进度）都要求二次确认：
- * - 注销：清掉本机绑定的匿名云端身份，本地进度保留，下次启动生成新匿名账号。
- * - 重置进度：清空专注记录 / 图鉴 / 妆扮 / 心情，并顺带注销（否则云端会把旧数据合并回来）。
- *
- * 重置后本页直接 finish 回到主页，首页的 Room LiveData 会自动刷新为初始状态。
+ * Settings for nickname, sign-out, progress reset, and onboarding. Confirm sign-out/reset: sign-out
+ * removes the anonymous cloud identity but retains local progress; reset clears records, collection,
+ * wardrobe, mood, and identity to prevent cloud restoration. Finish back to Home so Room LiveData
+ * displays initial state.
  */
 class SettingsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivitySettingsBinding
 
-    /** 选择自定义提醒音频：取持久授权 URI 后保存 */
+    /** Select custom alert audio and save its persistently granted URI. */
     private val pickAudioLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         if (uri == null) {
-            // 用户取消：若之前没有自定义音频，则回退到「仅震动」
+            // On cancellation, fall back to vibration if no custom audio was previously selected.
             if (SettingsManager.getAlertRingtoneUri(this).isNullOrEmpty()) {
                 SettingsManager.setAlertMode(this, SettingsManager.ALERT_VIBRATE)
                 syncAlertToggle()
@@ -47,7 +44,7 @@ class SettingsActivity : AppCompatActivity() {
             return@registerForActivityResult
         }
         runCatching {
-            // 申请长期读取该 URI 的权限（重开后仍可用）
+            // Request persistent read access to keep the URI usable after reopening.
             contentResolver.takePersistableUriPermission(
                 uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
             )
@@ -84,11 +81,11 @@ class SettingsActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // 从其它页面返回时同步一次账号信息（昵称可能在别处改过）
+        // Refresh account details on return because the nickname may have changed elsewhere.
         refreshAccountInfo()
     }
 
-    // ---------------- 账号信息 ----------------
+    // ---------------- Account details ----------------
 
     private fun refreshAccountInfo() {
         binding.tvNickname.text = CloudSyncManager.currentName()
@@ -100,7 +97,7 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-    /** 修改排行榜昵称 */
+    /** Change leaderboard nickname. */
     private fun showRenameDialog() {
         val input = EditText(this).apply {
             setText(CloudSyncManager.currentName())
@@ -132,7 +129,7 @@ class SettingsActivity : AppCompatActivity() {
             .show()
     }
 
-    // ---------------- 注销 ----------------
+    // ---------------- Sign out ----------------
 
     private fun confirmLogout() {
         MaterialAlertDialogBuilder(this)
@@ -152,7 +149,7 @@ class SettingsActivity : AppCompatActivity() {
             .show()
     }
 
-    // ---------------- 重置进度 ----------------
+    // ---------------- Reset progress ----------------
 
     private fun confirmReset() {
         MaterialAlertDialogBuilder(this)
@@ -169,18 +166,18 @@ class SettingsActivity : AppCompatActivity() {
             .setPositiveButton("确认重置") { _, _ ->
                 UserDataManager.resetProgress(this) {
                     Toast.makeText(this, "进度已重置，回到初始状态", Toast.LENGTH_SHORT).show()
-                    // 回到主页，让 Room LiveData 重新拉取初始数据
+                    // Return to Home and let Room LiveData reload the initial state.
                     finish()
                 }
             }
             .show()
     }
 
-    // ---------------- 重新查看引导 ----------------
+    // ---------------- Reopen onboarding ----------------
 
     /**
-     * 重新查看引导：清掉「已看过」标记后进入 OnboardingActivity。
-     * finishAffinity() 同时关掉下方的 MainActivity，避免引导结束后栈里出现两个主页。
+     * Clear the onboarding flag and open OnboardingActivity. finishAffinity also closes MainActivity
+     * underneath to avoid two Home screens afterward.
      */
     private fun replayOnboarding() {
         SettingsManager.resetOnboarding(this)
@@ -194,12 +191,12 @@ class SettingsActivity : AppCompatActivity() {
         "1.0"
     }
 
-    // ---------------- 主题模式（浅色 / 深色 / 跟随系统）----------------
+    // ---------------- Theme: light, dark, or system ----------------
 
-    /** 初始化深色模式分段开关：先设初始选中（不触发监听），再注册切换监听 */
+    /** Initialize the theme segmented control before registering its listener to avoid unwanted recreation. */
     private fun setupThemeToggle() {
         val mode = SettingsManager.getThemeMode(this)
-        // 先设初始选中，此时尚未注册监听，避免触发一次无谓的重建
+        // Set the initial selection before registering the listener, preventing unnecessary recreation.
         binding.themeToggle.check(
             when (mode) {
                 SettingsManager.THEME_LIGHT -> R.id.theme_light
@@ -207,25 +204,25 @@ class SettingsActivity : AppCompatActivity() {
                 else -> R.id.theme_system
             }
         )
-        // 再注册监听，处理用户手动切换
+        // Then register the listener for user changes.
         binding.themeToggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
-            if (!isChecked) return@addOnButtonCheckedListener   // 忽略「取消选中」事件
+            if (!isChecked) return@addOnButtonCheckedListener   // Ignore deselection events.
             val newMode = when (checkedId) {
                 R.id.theme_light -> SettingsManager.THEME_LIGHT
                 R.id.theme_dark -> SettingsManager.THEME_DARK
                 else -> SettingsManager.THEME_SYSTEM
             }
             SettingsManager.setThemeMode(this, newMode)
-            // 应用并立即重建当前页面，使设置页本身也即时切换深浅
+            // Apply and recreate this page immediately so Settings also changes theme.
             AppCompatDelegate.setDefaultNightMode(
                 SettingsManager.themeModeToNightMode(newMode)
             )
         }
     }
 
-    // ---------------- 锁机屏幕固定开关 ----------------
+    // ---------------- Lock screen-pinning switch ----------------
 
-    /** 锁机「系统屏幕固定」开关：默认开启；关闭后锁机不再触发系统「应用已固定」弹窗 */
+    /** Screen pinning is enabled by default; disabling it prevents the system app-pinned prompt. */
     private fun setupScreenPinToggle() {
         binding.switchScreenPin.isChecked = SettingsManager.isScreenPinEnabled(this)
         binding.switchScreenPin.setOnCheckedChangeListener { _, isChecked ->
@@ -233,7 +230,7 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-    // ---------------- 结束提醒（铃声 / 震动 / 自定义音频）----------------
+    // ---------------- Completion alerts: sound, vibration, custom audio ----------------
 
     private fun setupAlertToggle() {
         syncAlertToggle()
@@ -248,7 +245,7 @@ class SettingsActivity : AppCompatActivity() {
             if (mode == SettingsManager.ALERT_SOUND_CUSTOM &&
                 SettingsManager.getAlertRingtoneUri(this).isNullOrEmpty()
             ) {
-                // 选了自定义但还没选文件 → 直接打开文件选择器
+                // If custom audio is selected without a file, open the picker immediately.
                 openAudioPicker()
             } else {
                 SettingsManager.setAlertMode(this, mode)
@@ -258,7 +255,7 @@ class SettingsActivity : AppCompatActivity() {
         binding.btnPickAudio.setOnClickListener { openAudioPicker() }
     }
 
-    /** 根据当前设置刷新选项高亮，并决定是否显示「选择音频」入口 */
+    /** Refresh selection highlighting and decide whether to show the audio picker entry. */
     private fun syncAlertToggle() {
         val mode = SettingsManager.getAlertMode(this)
         val checkedId = when (mode) {

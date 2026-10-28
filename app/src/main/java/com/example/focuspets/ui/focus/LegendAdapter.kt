@@ -6,12 +6,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.focuspets.R
 import com.example.focuspets.databinding.ItemLegendBinding
 
-/** 饼图图例：颜色块 + 内容 + 分钟数 + 占比 */
+/** Pie legend: color swatch, content, minutes, and percentage. */
 class LegendAdapter : RecyclerView.Adapter<LegendAdapter.VH>() {
 
     private var items: List<LegendItem> = emptyList()
 
-    /** 点击某条图例 → 修改该内容的饼图颜色（在记录页中设置） */
+    /** Legend tap requests content recoloring in the records screen. */
     var onItemClick: ((LegendItem) -> Unit)? = null
 
     data class LegendItem(

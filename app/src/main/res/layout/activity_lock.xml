@@ -187,7 +187,7 @@
         </LinearLayout>
     </ScrollView>
 
-    <!-- 专注完成遮罩 -->
+    <!-- Focus completion overlay. -->
     <FrameLayout
         android:id="@+id/overlay_done"
         android:layout_width="match_parent"

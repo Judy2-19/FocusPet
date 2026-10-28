@@ -52,19 +52,19 @@ class FragmentFocus : Fragment() {
         FocusViewModelFactory(PetRepository(db))
     }
 
-    /** 切后台宽限：5 秒内回来没事，超过即判定失败 */
+    /** Background grace period: returning within five seconds is allowed; longer means failure. */
     private val bgHandler = Handler(Looper.getMainLooper())
     private val failRunnable = Runnable { notifyServiceFail() }
 
     private var selectedMinutes = 25
     private var totalMillisAtStart = 0L
 
-    /** 本地仓库实例（读取专注内容历史用，与 ViewModel 共用同一 PetRepository） */
+    /** Local repository for content history, shared with the ViewModel. */
     private val repository by lazy {
         PetRepository(AppDatabase.getInstance(requireActivity().applicationContext))
     }
 
-    /** 用户后台期间收到庆祝事件时暂存，回到前台再弹 */
+    /** Queue celebration events received in the background until the foreground resumes. */
     private var pendingCelebration: List<PetEntity>? = null
 
     private val notificationPermissionLauncher = registerForActivityResult(
@@ -74,11 +74,11 @@ class FragmentFocus : Fragment() {
             Toast.makeText(
                 requireContext(), "没有通知权限，倒计时通知将无法显示", Toast.LENGTH_SHORT
             ).show()
-            startFocus()   // 依然允许计时（服务本身不受通知权限影响，只是看不到通知）
+            startFocus()   // Timing still works without notification permission; only the notification is hidden.
         }
     }
 
-    /** 接收服务的计时广播：每秒 tick / 完成 / 失败 / 用户取消 */
+    /** Receive timer broadcasts: tick, completed, failed, or user-cancelled. */
     private val timerReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
@@ -107,24 +107,24 @@ class FragmentFocus : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 应用用户选中的背景色
+        // Apply the selected background color.
         Backgrounds.apply(requireContext(), binding.root)
 
-        // 右上角「专注记录」入口：打开专注记录页（日/周/月/年 + 饼图）
+        // Top-right records entry opens date-filtered records and the pie chart.
         binding.btnOpenRecords.setOnClickListener {
             startActivity(Intent(requireContext(), FocusRecordsActivity::class.java))
         }
 
-        // 加载历史专注内容（用于复用）
+        // Load historical content for reuse.
         loadContentHistory()
 
-        // 加载常用预设（内容 + 时长 组合，可一键套用）
+        // Load reusable content/duration presets.
         loadPresets()
 
-        // 保存当前「内容 + 时长」为预设，下次直接复用
+        // Save the current content and duration as a preset.
         binding.btnSavePreset.setOnClickListener { saveCurrentAsPreset() }
 
-        // 时长选择（MaterialButtonToggleGroup 单选）
+        // Single-choice duration selection with MaterialButtonToggleGroup.
         binding.toggleDuration.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {
                 selectedMinutes = when (checkedId) {
@@ -139,28 +139,28 @@ class FragmentFocus : Fragment() {
             }
         }
 
-        // 自定义时长
+        // Custom duration.
         binding.btnCustom.setOnClickListener { applyCustomMinutes() }
         binding.etCustomMinutes.setOnEditorActionListener { _, _, _ ->
             applyCustomMinutes()
             true
         }
 
-        // 开始 / 放弃（同一按钮，按状态切换行为）
+        // One button switches between Start and Cancel based on state.
         binding.btnStart.setOnClickListener { tryStartFocus() }
 
-        // 积分展示（Room LiveData，专注记录一入库自动 +N）
+        // Room LiveData points update automatically when a session is inserted.
         viewModel.availablePoints.observe(viewLifecycleOwner) {
             binding.tvPointsFocus.text = "可用积分 $it"
         }
 
-        // 「恭喜解锁新宠物」庆祝事件
+        // New-pet celebration event.
         viewModel.celebrationEvent.observe(viewLifecycleOwner) { pets ->
             pets ?: return@observe
             showCelebration(pets)
         }
 
-        // 页面重建时恢复状态（如旋转屏幕）
+        // Restore state after recreation, such as screen rotation.
         if (FocusService.isRunning) renderRunning(null) else renderIdle()
         refreshPetMood()
     }
@@ -173,7 +173,7 @@ class FragmentFocus : Fragment() {
             addAction(FocusService.BROADCAST_FAILED)
             addAction(FocusService.BROADCAST_CANCELLED)
         }
-        // API 33+ 必须显式声明 RECEIVER_NOT_EXPORTED（包内定向广播）
+        // API 33+ requires explicit RECEIVER_NOT_EXPORTED for app-targeted broadcasts.
         ContextCompat.registerReceiver(
             requireContext(), timerReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED
         )
@@ -184,34 +184,34 @@ class FragmentFocus : Fragment() {
         requireContext().unregisterReceiver(timerReceiver)
     }
 
-    // ---------------- 切后台 5 秒判定（核心技术点） ----------------
+    // ---------------- Five-second background failure check ----------------
 
-    /** 失去焦点：启动 5 秒倒计时，期间不回来就通知服务判定失败 */
+    /** On losing focus, start a five-second timer and notify the service of failure if the user does not return. */
     override fun onPause() {
         super.onPause()
-        // 锁机模式已接管会话时不判失败（用户在 App 内被屏幕固定锁住）
+        // Skip failure while lock mode owns the session and keeps the user pinned inside the app.
         if (FocusService.isRunning && !FocusService.lockActive) {
             bgHandler.postDelayed(failRunnable, BACKGROUND_TOLERANCE_MS)
         }
     }
 
-    /** 重新获得焦点：撤销失败判定 */
+    /** On regaining focus, cancel the pending failure check. */
     override fun onResume() {
         super.onResume()
         bgHandler.removeCallbacks(failRunnable)
-        // 后台期间积压的庆祝弹窗，回来再放
+        // Display celebrations queued while backgrounded.
         pendingCelebration?.let { showCelebration(it); pendingCelebration = null }
     }
 
     private fun notifyServiceFail() {
         val context = context ?: return
-        // 此时 App 虽在后台，但因持有前台服务，进程具有前台优先级，允许 startService
+        // The foreground service gives the process foreground priority, allowing startService even while the app is backgrounded.
         context.startService(
             Intent(context, FocusService::class.java).setAction(FocusService.ACTION_FAIL)
         )
     }
 
-    // ---------------- 计时控制 ----------------
+    // ---------------- Timer control ----------------
 
     private fun tryStartFocus() {
         if (FocusService.isRunning) {
@@ -242,9 +242,9 @@ class FragmentFocus : Fragment() {
         binding.toggleDuration.clearChecked()
     }
 
-    // ---------------- 常用预设（内容 + 时长 组合） ----------------
+    // ---------------- Reusable content/duration presets ----------------
 
-    /** 把当前「专注内容 + 所选时长」存成预设 */
+    /** Save current content and selected duration as a preset. */
     private fun saveCurrentAsPreset() {
         if (FocusService.isRunning) return
         val content = binding.etFocusContent.text.toString().trim()
@@ -294,7 +294,7 @@ class FragmentFocus : Fragment() {
         }
     }
 
-    /** 一键套用预设：内容填入输入框、时长设为预设值 */
+    /** Apply a preset by filling the content field and selecting its duration. */
     private fun applyPreset(p: FocusPresetManager.Preset) {
         if (FocusService.isRunning) return
         selectedMinutes = p.minutes
@@ -306,7 +306,7 @@ class FragmentFocus : Fragment() {
     }
 
     private fun startFocus() {
-        // 读取本次专注内容（可空，留空则记录为空串，饼图里归为「未命名」）
+        // Read optional session content; blank stays empty and appears as unnamed in the chart.
         val content = binding.etFocusContent.text.toString().trim()
         val intent = Intent(requireContext(), FocusService::class.java).apply {
             action = FocusService.ACTION_START
@@ -332,7 +332,7 @@ class FragmentFocus : Fragment() {
             .show()
     }
 
-    // ---------------- 结果处理 ----------------
+    // ---------------- Result handling ----------------
 
     private fun onFinished(minutes: Int) {
         renderIdle()
@@ -341,7 +341,7 @@ class FragmentFocus : Fragment() {
         Toast.makeText(
             requireContext(), "🍅 专注完成！+$minutes 积分", Toast.LENGTH_SHORT
         ).show()
-        // 积分结算后 → 检查是否有新宠物达标（阶段二 ViewModel 的同款查询逻辑）
+        // After settling points, check for newly affordable pets using the ViewModel query logic.
         viewModel.checkNewlyAffordablePets()
     }
 
@@ -355,9 +355,9 @@ class FragmentFocus : Fragment() {
             .show()
     }
 
-    /** 庆祝：积分达标的新宠物提示（去图鉴页解锁） */
+    /** Celebrate newly affordable pets and direct users to Collection to unlock them. */
     private fun showCelebration(pets: List<PetEntity>) {
-        if (!isResumed) {           // 后台时先暂存，onResume 再弹
+        if (!isResumed) {           // Queue while backgrounded; display in onResume.
             pendingCelebration = pets
             return
         }
@@ -373,7 +373,7 @@ class FragmentFocus : Fragment() {
         viewModel.consumeCelebration()
     }
 
-    // ---------------- 渲染 ----------------
+    // ---------------- Rendering ----------------
 
     private fun renderRunning(remaining: Long?) {
         binding.btnStart.text = "放弃专注"
@@ -414,9 +414,9 @@ class FragmentFocus : Fragment() {
         return "%02d:%02d".format(totalSeconds / 60, totalSeconds % 60)
     }
 
-    // ---------------- 专注内容复用 ----------------
+    // ---------------- Reusing session content ----------------
 
-    /** 读取历史专注内容：用最近一次内容预填输入框，并展示高频内容 Chip 供一键复用 */
+    /** Prefill the latest content and show frequent-content chips for one-tap reuse. */
     private fun loadContentHistory() {
         if (lifecycle.currentState == Lifecycle.State.DESTROYED) return
         lifecycleScope.launch(Dispatchers.IO) {
@@ -431,7 +431,7 @@ class FragmentFocus : Fragment() {
         }
     }
 
-    /** 用历史内容渲染 Chip，点击即把该内容填回输入框；点 × 可删除该内容的全部记录 */
+    /** Render history chips: tap to fill content; tap the close icon to delete all records with that content. */
     private fun populateChips(contents: List<String>) {
         binding.chipHistory.removeAllViews()
         if (contents.isEmpty()) {
@@ -455,7 +455,7 @@ class FragmentFocus : Fragment() {
         }
     }
 
-    /** 删除「最近用过」的某条内容：确认后删除其全部专注记录并刷新 */
+    /** Confirm deletion of all records for a recent content value, then refresh. */
     private fun confirmDeleteContent(content: String) {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle("删除专注内容？")
@@ -477,14 +477,13 @@ class FragmentFocus : Fragment() {
     }
 
     companion object {
-        private const val BACKGROUND_TOLERANCE_MS = 5_000L   // 切后台 5 秒宽限
+        private const val BACKGROUND_TOLERANCE_MS = 5_000L   // Five-second background grace period.
     }
 }
 
 /**
- * 专注页 ViewModel：
- * - availablePoints 来自 Room LiveData（Service 写入专注记录后自动刷新）
- * - checkNewlyAffordablePets()：积分结算后检查「达标未解锁」的宠物 → 发庆祝事件
+ * Focus ViewModel: availablePoints observes Room updates after service inserts;
+ * checkNewlyAffordablePets emits celebrations for affordable locked pets after settlement.
  */
 class FocusViewModel(private val repository: PetRepository) : ViewModel() {
 

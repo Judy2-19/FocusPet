@@ -41,7 +41,7 @@ class LeaderboardAdapter : RecyclerView.Adapter<LeaderboardAdapter.VH>() {
         holder.name.text = item.displayName
         holder.points.text = "${item.totalPoints} 分"
 
-        // 宠物头像：猫/狗用 assets 立绘，其余用 emoji 兜底
+        // Leaderboard avatars use cat/dog artwork and emoji for other pets.
         bindPetAvatar(holder, item)
 
         val isMe = item.uid == myUid
@@ -56,7 +56,7 @@ class LeaderboardAdapter : RecyclerView.Adapter<LeaderboardAdapter.VH>() {
     private fun bindPetAvatar(holder: VH, item: LeaderboardEntry) {
         val path = item.petAvatar
         if (!path.isNullOrEmpty()) {
-            // 立绘：后台线程解码，避免卡列表
+            // Decode artwork on a background thread to avoid list jank.
             holder.ivPet.visibility = View.VISIBLE
             holder.tvPet.visibility = View.GONE
             holder.ivPet.tag = path
@@ -69,11 +69,11 @@ class LeaderboardAdapter : RecyclerView.Adapter<LeaderboardAdapter.VH>() {
                     catch (_: Exception) { null }
                 }
                 iv.post {
-                    if (iv.tag != path) return@post   // 行已被复用，放弃
+                    if (iv.tag != path) return@post   // The row has been recycled; discard this result.
                     if (bmp != null) {
                         iv.setImageBitmap(bmp)
                     } else {
-                        // 立绘加载失败 → 退回 emoji
+                        // Fall back to emoji if artwork loading fails.
                         iv.visibility = View.GONE
                         tv.visibility = View.VISIBLE
                         tv.text = PetCatalog.emoji(fallbackId)
@@ -81,7 +81,7 @@ class LeaderboardAdapter : RecyclerView.Adapter<LeaderboardAdapter.VH>() {
                 }
             }
         } else {
-            // 无立绘宠物：直接 emoji
+            // Use emoji directly for pets without artwork.
             holder.ivPet.visibility = View.GONE
             holder.tvPet.visibility = View.VISIBLE
             holder.tvPet.text = PetCatalog.emoji(item.petId)

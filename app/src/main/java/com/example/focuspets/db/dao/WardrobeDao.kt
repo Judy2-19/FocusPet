@@ -25,7 +25,7 @@ interface WardrobeDao {
     @Query("SELECT COALESCE(SUM(cost), 0) FROM wardrobe_purchases")
     suspend fun getTotalSpentOnce(): Int
 
-    /** 清空全部妆扮购买记录（重置进度用） */
+    /** Clear wardrobe purchases when resetting progress. */
     @Query("DELETE FROM wardrobe_purchases")
     suspend fun deleteAll()
 }

@@ -3,17 +3,13 @@ package com.example.focuspets.model
 import android.content.Context
 
 /**
- * 小猫咪「妆扮」系统的单一数据源：
- * - 价格/目录常量
- * - 当前装备状态（SharedPreferences，纯 UI 偏好，不影响积分）
- * - 立绘资源路径解析
- *
- * 注意：购买记录（影响积分的部分）在 Room 的 wardrobe_purchases 表里，
- * 这里只存"穿哪件"，两者通过 itemId 关联。
+ * Single source for cat wardrobe prices, catalog, equipped-state preferences, and artwork resolution.
+ * Room wardrobe_purchases stores spending; SharedPreferences stores only what is worn. Both use
+ * itemId.
  */
 object CatWardrobe {
 
-    /** 小猫咪在 pets 表中的固定 id */
+    /** Fixed cat ID in the pets table. */
     const val CAT_PET_ID = 1
 
     private const val PREFS = "cat_wardrobe"
@@ -21,7 +17,7 @@ object CatWardrobe {
     private const val KEY_DRESS = "equipped_dress"
     private const val KEY_CROWN = "equipped_crown"
 
-    // ---- 价格 ----
+    // ---- Prices ----
     const val COLOR_COST = 50
     const val DRESS_COST = 120
     const val CROWN_COST = 180
@@ -32,8 +28,8 @@ object CatWardrobe {
     val CROWNS = listOf("blue_crown", "pink_crown")
 
     /**
-     * 每个颜色实际拥有哪些王冠立绘。
-     * 素材由豆包生成，并非每种颜色都配齐全套，只提供存在的组合，避免加载不到图。
+     * Available crown artwork per color. Doubao-generated assets do not cover every combination; expose
+     * only existing variants to avoid missing images.
      */
     val CROWN_OPTIONS_BY_COLOR: Map<String, List<String>> = mapOf(
         "gray" to listOf("blue_crown", "pink_crown"),
@@ -44,7 +40,7 @@ object CatWardrobe {
         "white" to listOf("blue_crown", "pink_crown")
     )
 
-    // ---- itemId 约定（与 Room wardrobe_purchases.item_id 一致） ----
+    // ---- itemId convention: matches Room wardrobe_purchases.item_id ----
     fun colorItemId(color: String) = "color_$color"
     const val DRESS_ITEM_ID = "dress"
     fun crownItemId(crown: String) = "crown_$crown"
@@ -65,7 +61,7 @@ object CatWardrobe {
         else -> crown
     }
 
-    // ---- 装备状态读写 ----
+    // ---- Equipped-state access ----
 
     fun getEquippedColor(context: Context): String =
         prefs(context).getString(KEY_COLOR, DEFAULT_COLOR) ?: DEFAULT_COLOR
@@ -91,11 +87,11 @@ object CatWardrobe {
         }
     }
 
-    // ---- 立绘路径 ----
+    // ---- Artwork paths ----
 
     /**
-     * 组合规则：皇冠必须搭配裙子（素材里皇冠图都是"颜色-红裙-王冠"），
-     * 所以解析时若未穿裙子，皇冠自动忽略。
+     * Crowns require a dress because crown assets include the dress. Ignore the crown when no dress is
+     * equipped.
      */
     fun assetPathFor(color: String, dress: Boolean, crown: String?): String = when {
         dress && !crown.isNullOrBlank() -> "cat/${color}_dress_$crown.png"
@@ -113,8 +109,7 @@ object CatWardrobe {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
     /**
-     * 重置进度时清空「穿在身上」的装扮状态（SharedPreferences 整体清空，回到默认
-     * 灰色 / 无裙无冠）。与 Room 的购买记录（wardrobe_purchases）一起复位。
+     * Reset equipped preferences to gray with no dress/crown together with Room purchase records.
      */
     fun clearEquipped(context: Context) {
         prefs(context).edit().clear().apply()

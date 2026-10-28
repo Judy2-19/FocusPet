@@ -11,7 +11,7 @@ import com.example.focuspets.db.entity.UserCollectionEntity
 @Dao
 interface UserCollectionDao {
 
-    /** 查询已解锁列表（连表查出宠物完整信息，按解锁时间排序） */
+    /** Join unlocked entries with full pet data, sorted by unlock time. */
     @Query(
         """
         SELECT pets.* FROM pets
@@ -21,26 +21,26 @@ interface UserCollectionDao {
     )
     suspend fun getUnlockedPets(): List<PetEntity>
 
-    /** 已解锁的宠物 id 集合，解锁事务校验重复用 */
+    /** Unlocked pet IDs for duplicate checks inside unlock transactions. */
     @Query("SELECT pet_id FROM user_collection")
     suspend fun getUnlockedPetIds(): List<Int>
 
     /**
-     * 解锁新宠物 = 插入一条收藏记录（积分是派生值，无需 UPDATE 扣分）。
-     * IGNORE：pet_id 唯一索引冲突时跳过而非崩溃，保证 seed/兜底检查并发调用时幂等。
+     * Unlock by inserting a collection record; points are derived, so no deduction UPDATE is needed.
+     * IGNORE pet_id uniqueness conflicts to keep concurrent seed/fallback calls idempotent.
      */
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun unlockPet(collection: UserCollectionEntity)
 
-    /** 调试（仅 test 分支）：批量解锁（IGNORE 冲突跳过，幂等） */
+    /** Debug/test branch: batch unlock using IGNORE for idempotence. */
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun unlockPets(collections: List<UserCollectionEntity>)
 
-    /** 调试（仅 test 分支）：清空除 keepId 以外的所有收藏记录（回到初始仅赠送首只） */
+    /** Debug/test branch: clear collection entries except keepId, restoring the initial gift-only state. */
     @Query("DELETE FROM user_collection WHERE pet_id != :keepId")
     suspend fun deleteExcept(keepId: Int)
 
-    /** 已消耗积分（已解锁宠物的 unlock_cost 之和） */
+    /** Spent points: sum of unlocked pets' unlock_cost values. */
     @Query(
         """
         SELECT COALESCE(SUM(pets.unlock_cost), 0) FROM pets
@@ -49,7 +49,7 @@ interface UserCollectionDao {
     )
     suspend fun getSpentPoints(): Int
 
-    /** 可用积分（LiveData 版）：总积分(points) - 已解锁宠物消耗 - 妆扮消费 */
+    /** Available points as LiveData: total points minus pet unlock and wardrobe costs. */
     @Query(
         """
         SELECT (SELECT COALESCE(SUM(points), 0) FROM focus_records)
@@ -61,7 +61,7 @@ interface UserCollectionDao {
     )
     fun getAvailablePoints(): LiveData<Int>
 
-    /** 可用积分（suspend 版）：解锁/购买事务内校验用 */
+    /** Available points as a suspend query for unlock/purchase transaction checks. */
     @Query(
         """
         SELECT (SELECT COALESCE(SUM(points), 0) FROM focus_records)

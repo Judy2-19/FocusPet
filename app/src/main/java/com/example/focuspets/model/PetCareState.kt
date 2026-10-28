@@ -2,15 +2,13 @@ package com.example.focuspets.model
 
 import android.content.Context
 
-/** 宠物心情三态：普通 / 生病（专注失败）/ 发光（连续成功 ≥ 3 次） */
+/** Pet moods: normal, sick after focus failure, glowing after at least three consecutive successes. */
 enum class PetMood { NORMAL, SICK, GLOW }
 
 /**
- * 宠物健康与心情状态（阶段三：饥饿 → 阶段四：升级为心情状态机）：
- * - 专注失败 → SICK（不扣积分，切表情/流泪状态，进度不受影响）
- * - 连续成功 3 次 → GLOW（开心/发光）
- * - 再次失败后重新从 0 计数
- * 单机小数据，SharedPreferences 足够，不值得加 Room 字段/迁移。
+ * Pet health/mood state evolved from hunger to a state machine: failure sets SICK without deducting
+ * points or progress; three consecutive successes set GLOW; failure resets the streak.
+ * SharedPreferences suffices for this small local state without Room migrations.
  */
 object PetCareState {
 
@@ -25,7 +23,7 @@ object PetCareState {
     fun getConsecutiveSuccess(context: Context): Int =
         prefs(context).getInt(KEY_CONSECUTIVE_SUCCESS, 0)
 
-    /** 专注成功：连续计数 +1，恢复健康 */
+    /** Success increments the streak and restores health. */
     fun recordSuccess(context: Context) {
         prefs(context).edit()
             .putInt(KEY_CONSECUTIVE_SUCCESS, getConsecutiveSuccess(context) + 1)
@@ -33,7 +31,7 @@ object PetCareState {
             .apply()
     }
 
-    /** 专注失败：连续计数清零，宠物进入生病状态 */
+    /** Failure clears the streak and makes the pet sick. */
     fun recordFailure(context: Context) {
         prefs(context).edit()
             .putInt(KEY_CONSECUTIVE_SUCCESS, 0)
@@ -47,14 +45,12 @@ object PetCareState {
         else -> PetMood.NORMAL
     }
 
-    /** 云端同步写入心情（逻辑与调试强制写入一致） */
+    /** Apply cloud mood using the same logic as the debug override. */
     fun setMood(context: Context, mood: PetMood) = debugForceMood(context, mood)
 
     /**
-     * 调试专用（仅 test 分支）：强制写入某种心情状态。
-     * - SICK：饥饿=true、连续成功=0
-     * - GLOW：饥饿=false、连续成功=阈值
-     * - NORMAL：饥饿=false、连续成功=0
+     * Debug/test branch mood override: SICK sets hungry=true and streak=0; GLOW sets hungry=false and
+     * streak=threshold; NORMAL sets hungry=false and streak=0.
      */
     fun debugForceMood(context: Context, mood: PetMood) {
         prefs(context).edit().apply {

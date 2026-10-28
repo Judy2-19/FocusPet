@@ -1,6 +1,6 @@
-// 冒烟测试：Node 桩环境真实执行 card.html 内联脚本，覆盖 init/load/setupCard/animate
-// 以及"拖动旋转 + 轻点(正面放大 / 背面展开简介)"路径，捕获作用域/运行时错误。
-// 用法：node tools/smoke_card.js app/src/main/assets/card3d/card.html
+// Smoke test: execute card.html's inline script in a Node stub environment, covering init/load/setupCard/animate
+// and drag rotation / front zoom / back description expansion to catch scope and runtime errors.
+// Usage: node tools/smoke_card.js app/src/main/assets/card3d/card.html
 const fs = require('fs');
 const vm = require('vm');
 

@@ -11,7 +11,7 @@
         android:orientation="vertical"
         android:paddingBottom="32dp">
 
-        <!-- 顶栏：返回 + 标题 -->
+        <!-- Top bar: Back and title. -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -41,7 +41,7 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- 账号 -->
+        <!-- Account. -->
         <TextView style="@style/SettingsSectionTitle" android:text="账号" />
 
         <com.google.android.material.card.MaterialCardView
@@ -127,7 +127,7 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- 数据与进度 -->
+        <!-- Data and progress. -->
         <TextView style="@style/SettingsSectionTitle" android:text="数据与进度" />
 
         <com.google.android.material.card.MaterialCardView
@@ -160,7 +160,7 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- 锁机 -->
+        <!-- Lock mode. -->
         <TextView style="@style/SettingsSectionTitle" android:text="锁机" />
 
         <com.google.android.material.card.MaterialCardView
@@ -196,7 +196,7 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- 提醒 -->
+        <!-- Alerts. -->
         <TextView style="@style/SettingsSectionTitle" android:text="结束提醒" />
 
         <com.google.android.material.card.MaterialCardView
@@ -289,7 +289,7 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- 引导 -->
+        <!-- Onboarding. -->
         <TextView style="@style/SettingsSectionTitle" android:text="引导" />
 
         <com.google.android.material.card.MaterialCardView
@@ -328,7 +328,7 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- 外观 -->
+        <!-- Appearance. -->
         <TextView style="@style/SettingsSectionTitle" android:text="外观" />
 
         <com.google.android.material.card.MaterialCardView
@@ -388,7 +388,7 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- 关于 -->
+        <!-- About. -->
         <TextView style="@style/SettingsSectionTitle" android:text="关于" />
 
         <com.google.android.material.card.MaterialCardView

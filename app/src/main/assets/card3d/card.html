@@ -36,14 +36,14 @@
   (function () {
     'use strict';
     var THREE = window.THREE;
-    var gotData = false;   // 是否已收到真实数据（App 注入或 sample）
-    // 任何 JS 错误直接显示出来，避免"空白页"无从排查
+    var gotData = false;   // Whether real data has arrived from the app or sample mode.
+    // Display JavaScript errors directly to help diagnose blank pages.
     window.onerror = function (m, s, l, c) {
       var h = document.getElementById('hint');
       if (h) { h.style.color = '#ff9a9a'; h.textContent = 'JS 错误: ' + m + ' (行 ' + l + ')'; }
     };
 
-    // ---- 稀有度主题：普通=蓝(无闪)、稀有=紫(微闪)、传说=金(很亮很闪) ----
+    // Rarity themes: common blue/cute, rare purple/shimmer, legendary gold/sparkles.
     var THEMES = {
       COMMON:    { bg: ['#3a5f9e', '#24406e', '#12233f'], back: '#101d33', accent: '#a9c8ff', label: '普通',
                    sparkle: 0,  sparkleSize: 0,  sheen: 0.0,  glow: 0x000000, glowI: 0.0,  sparkleColor: 0xa9c8ff },
@@ -53,8 +53,8 @@
                    sparkle: 36, sparkleSize: 13, sheen: 0.42, glow: 0x4a3200, glowI: 0.55, sparkleColor: 0xffe9a0 }
     };
 
-    var CW = 640, CH = 896;          // 卡面画布分辨率（高清）
-    var CARD_H = 4.0;                // 卡牌世界高度
+    var CW = 640, CH = 896;          // Front canvas resolution (portrait).
+    var CARD_H = 4.0;                // Fixed card height.
     var CARD_W = CARD_H * CW / CH;
     var CARD_D = 0.12;
 
@@ -64,7 +64,7 @@
     var W = 0, H = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
     var startTime = performance.now();
 
-    // 交互状态（拖动自由旋转 + 惯性 + 空闲自转）
+    // Interaction state: unlimited drag rotation, inertia, and auto-rotation.
     var dragging = false, idle = true;
     var lastX = 0, lastY = 0, downX = 0, downY = 0, downT = 0, moved = false;
     var target = { x: -0.15, y: 0.3 };
@@ -74,13 +74,13 @@
 
     function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
 
-    // 解析查询参数（不依赖 URLSearchParams —— 老版本 Android WebView 没有它）
+    // Parse query parameters without URLSearchParams, which older Android WebViews lack.
     function q(name) {
       var m = new RegExp('[?&]' + name + '=([^&]*)').exec(location.search);
       return m ? decodeURIComponent(m[1]) : null;
     }
 
-    // ---------- 画卡面 ----------
+    // ---------- Utilities ----------
     function roundRect(x, a, b, w, h, r) {
       r = Math.min(r, w / 2, h / 2);
       x.beginPath();
@@ -92,7 +92,7 @@
       x.closePath();
     }
 
-    // 小爪印（程序绘制，不依赖 emoji 字体）
+    // Draw a paw print in code rather than relying on emoji fonts.
     function drawPaw(x, cx, cy, s, color, alpha) {
       x.save();
       x.globalAlpha = alpha;
@@ -105,7 +105,7 @@
       x.restore();
     }
 
-    // 中文自动换行
+    // Automatically shrink the font to fit.
     function wrapText(x, text, cx, y, maxW, lineH) {
       var chars = String(text).split(''), line = '', lines = [];
       for (var i = 0; i < chars.length; i++) {
@@ -173,7 +173,7 @@
       }
     }
 
-    // ---------- 画卡背：品牌卡背（默认）/ 宠物简介（轻点展开） ----------
+    // ---------- Back: brand card by default, or expanded description ----------
     function drawBack(cv, data, th, showDesc) {
       var x = cv.getContext('2d');
       x.fillStyle = th.back; x.fillRect(0, 0, CW, CH);
@@ -183,7 +183,7 @@
       x.lineWidth = 3; x.strokeStyle = 'rgba(255,255,255,0.35)';
       roundRect(x, 32, 32, CW - 64, CH - 64, 30); x.stroke();
 
-      // 四角小爪印
+      // Small paw prints in the four corners.
       drawPaw(x, 104, 116, 1.0, th.accent, 0.45);
       drawPaw(x, CW - 104, 116, 1.0, th.accent, 0.45);
       drawPaw(x, 104, CH - 116, 1.0, th.accent, 0.45);
@@ -220,7 +220,7 @@
       if (backTex) backTex.needsUpdate = true;
     }
 
-    // ---------- 闪光贴图（斜向柔光带，用于 sheen 扫光） ----------
+    // ---------- Front texture: diagonal texture and sheen sweep ----------
     function makeStreakTex() {
       var c = document.createElement('canvas'); c.width = 512; c.height = 512;
       var x = c.getContext('2d');
@@ -236,7 +236,7 @@
       return t;
     }
 
-    // ---------- 金属环境反射（程序生成，无需 HDR 文件） ----------
+    // ---------- Procedural reflection environment; no HDR file required ----------
     function makeEnv(renderer) {
       try {
         var ec = document.createElement('canvas'); ec.width = 64; ec.height = 64;
@@ -258,7 +258,7 @@
       renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
       renderer.setPixelRatio(dpr);
       renderer.outputEncoding = THREE.sRGBEncoding;
-      renderer.toneMapping = THREE.ACESFilmicToneMapping;   // 关键：压缩高光，修过曝
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;   // Compress highlights to avoid overexposure.
       renderer.toneMappingExposure = 1.0;
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -270,7 +270,7 @@
       var env = makeEnv(renderer);
       if (env) scene.environment = env;
 
-      // 克制布光：半球 + 主光 + 轮廓光（不用高强环境光，避免发白）
+      // Gentle lighting: key, fill, and back lights; avoid a strong rim light that washes out the card.
       scene.add(new THREE.HemisphereLight(0xffffff, 0x2a2440, 0.55));
       var key = new THREE.DirectionalLight(0xfff2d6, 1.0);
       key.position.set(3, 5, 6); key.castShadow = true;
@@ -309,19 +309,19 @@
       camera.aspect = W / H; camera.updateProjectionMatrix();
     }
 
-    // 卡背是否正对镜头（yaw 的 cos < 0 时为背面）
+    // Determine whether the back faces the camera: yaw cosine is negative.
     function facingBack() { return Math.cos(cur.y) < 0; }
 
     function onTap() {
       if (facingBack()) {
-        descShown = !descShown;      // 背面：展开 / 收起简介
+        descShown = !descShown;      // Back: expand or collapse the description.
         refreshBack();
       } else {
-        zoomed = !zoomed;            // 正面：放大 / 还原
+        zoomed = !zoomed;            // Front: zoom in or restore.
       }
     }
 
-    // ---------- 交互：拖动自由旋转（y 无上限，可转很多圈）+ 惯性 + 空闲自转 ----------
+    // ---------- Interaction: unlimited Y-axis rotation, inertia, and auto-rotation ----------
     function attachInput(cv) {
       cv.addEventListener('pointerdown', function (e) {
         dragging = true; idle = false; moved = false;
@@ -336,8 +336,8 @@
         var dx = e.clientX - lastX, dy = e.clientY - lastY;
         lastX = e.clientX; lastY = e.clientY;
         if (Math.abs(e.clientX - downX) > 8 || Math.abs(e.clientY - downY) > 8) moved = true;
-        target.y += dx * 0.012;                 // 水平拖动 = 绕 Y 自由转（无上限）
-        target.x += dy * 0.012;                 // 垂直拖动 = 俯仰
+        target.y += dx * 0.012;                 // Horizontal dragging rotates around Y without limits.
+        target.x += dy * 0.012;                 // Vertical dragging tilts the card.
         target.x = clamp(target.x, -1.2, 1.2);
         vel.y = dx * 0.012; vel.x = dy * 0.012;
       });
@@ -414,7 +414,7 @@
       descShown = false;
       var th = THEMES[data.rarity] || THEMES.COMMON;
 
-      // 正面
+      // Inertia.
       var fcv = document.createElement('canvas'); fcv.width = CW; fcv.height = CH;
       var fx = fcv.getContext('2d');
       drawBase(fx, data, th);
@@ -423,7 +423,7 @@
       frontTex = new THREE.CanvasTexture(fcv);
       frontTex.anisotropy = 8; frontTex.encoding = THREE.sRGBEncoding; frontTex.needsUpdate = true;
 
-      // 背面（品牌卡背 + 简介）
+      // Back: brand card and description.
       backCanvas = document.createElement('canvas'); backCanvas.width = CW; backCanvas.height = CH;
       drawBack(backCanvas, data, th, false);
       backTex = new THREE.CanvasTexture(backCanvas);
@@ -437,7 +437,7 @@
       backMat = new THREE.MeshStandardMaterial({ map: backTex, metalness: 0.2, roughness: 0.6, envMapIntensity: 0.5 });
 
       var geo = new THREE.BoxGeometry(CARD_W, CARD_H, CARD_D);
-      // BoxGeometry 面序: +x,-x,+y,-y,+z(正面),-z(背面)
+      // BoxGeometry material order: +x, -x, +y, -y, +z (front), -z (back).
       cardMesh = new THREE.Mesh(geo, [edgeMat, edgeMat, edgeMat, edgeMat, frontMat, backMat]);
       cardMesh.castShadow = true;
       group.add(cardMesh);
@@ -459,7 +459,7 @@
     function setupCard(data) {
       gotData = true;
       if (!renderer) return;
-      // 多图源回退：imageUrl（预览用真实立绘）→ imageDataUri（App 注入）→ 无图
+      // Artwork priority: imageUrl (real preview artwork), imageDataUri (app injection), then generated artwork.
       var sources = [];
       if (data.imageUrl) sources.push(data.imageUrl);
       if (data.imageDataUri) sources.push(data.imageDataUri);
@@ -485,27 +485,27 @@
           target.x = clamp(target.x, -1.2, 1.2);
           vel.x *= 0.94; vel.y *= 0.94;
         } else if (idle && !descShown) {
-          target.y += 0.0045;                    // 空闲缓慢自转（展开简介时停转，便于阅读）
+          target.y += 0.0045;                    // Slow auto-rotation; pause while the description is expanded for reading.
         }
       }
       cur.x += (target.x - cur.x) * 0.12;
       cur.y += (target.y - cur.y) * 0.12;
       group.rotation.x = cur.x;
       group.rotation.y = cur.y;
-      group.position.y = Math.sin(t * 1.1) * 0.08;          // 呼吸浮动
+      group.position.y = Math.sin(t * 1.1) * 0.08;          // Floating animation.
       zoomT += ((zoomed ? 1.5 : 1.0) - zoomT) * 0.12;
       group.scale.setScalar(zoomT);
 
       if (sparkleMat) sparkleMat.uniforms.uTime.value = t;
       if (sheenMesh && sheenMesh.material.map) {
-        sheenMesh.material.map.offset.x = (t * 0.28) % 1;   // 扫光循环
+        sheenMesh.material.map.offset.x = (t * 0.28) % 1;   // Loop the sheen sweep.
       }
       renderer.render(scene, camera);
     }
 
     window.setupCard = setupCard;
 
-    // ---------- 浏览器预览：?sample=1（可加 &rarity=RARE/LEGENDARY） ----------
+    // ---------- Browser preview: ?sample=1, optionally &rarity=RARE/LEGENDARY ----------
     function sampleImg() {
       var s = 256, cv = document.createElement('canvas'); cv.width = s; cv.height = s;
       var c = cv.getContext('2d');
@@ -517,8 +517,8 @@
       setupCard({
         id: 1, name: '小猫咪', rarity: rarity, locked: false, unlockCost: 0,
         desc: '可换装的小猫咪，默认灰色',
-        imageUrl: '../cat/pink_dress.png',   // 预览用真实立绘（assets/cat 下的粉猫穿裙）
-        imageDataUri: sampleImg()            // 立绘加载失败时退回 emoji
+        imageUrl: '../cat/pink_dress.png',   // Preview with the pink cat dress artwork under assets/cat.
+        imageDataUri: sampleImg()            // Fall back to emoji if the image fails to load.
       });
     }
 
@@ -541,7 +541,7 @@
           });
           runSample(THEMES[rarity] ? rarity : 'LEGENDARY');
         }
-        // 兜底：若 900ms 内没有任何数据（例如预览代理把 ?sample 参数丢了）→ 渲染默认卡，永不空白
+        // If no data arrives after 900 ms, render a default preview card to avoid a blank page when the preview query is lost.
         setTimeout(function () { if (!gotData) runSample('LEGENDARY'); }, 900);
       } catch (err) {
         var eh = document.getElementById('hint');

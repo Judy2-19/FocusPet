@@ -27,7 +27,7 @@ class FragmentCollection : Fragment() {
         CollectionViewModelFactory(PetRepository(db))
     }
 
-    /** 调试（仅 test 分支）：当前是否已全部解锁，决定满配按钮的行为 */
+    /** Debug/test branch: whether all pets are unlocked, controlling the full-unlock button. */
     private var allUnlocked = false
 
     private lateinit var adapter: PetAdapter
@@ -44,10 +44,10 @@ class FragmentCollection : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 应用用户选中的背景色
+        // Apply the user's selected background color.
         Backgrounds.apply(requireContext(), binding.root)
 
-        // 图鉴网格：每只是清晰的平面卡牌缩略图，点进去才是单只 3D 卡牌
+        // Collection grid uses clear flat thumbnails; open a single 3D card on tap.
         binding.rvPets.layoutManager = GridLayoutManager(requireContext(), 3)
         adapter = PetAdapter { item -> handlePetClick(item) }
         binding.rvPets.adapter = adapter
@@ -57,26 +57,26 @@ class FragmentCollection : Fragment() {
         }
         viewModel.uiState.observe(viewLifecycleOwner) { list ->
             adapter.submitList(list)
-            // 调试按钮文案（仅 test 构建可见）：根据「是否已全部解锁」切换
+            // Debug button text, visible only in test builds, depends on whether all pets are unlocked.
             if (BuildConfig.DEBUG && BuildConfig.IS_TEST_BUILD) {
                 allUnlocked = list.isNotEmpty() && list.all { it.isUnlocked }
                 binding.btnDebugUnlock.text = if (allUnlocked) "🛠 重置进度" else "🛠 一键满配"
             }
         }
 
-        // 调试工具（仅 test 构建 -PisTestBuild=true 时可见可用；main 默认 GONE，
-        // 避免误触「满配 / 补满积分 / 重置进度」等测试入口）
+        // Debug tools are available only with -PisTestBuild=true; main defaults to GONE,
+        // preventing accidental full unlock, point top-up, or progress reset.
         val showDebug = BuildConfig.DEBUG && BuildConfig.IS_TEST_BUILD
         binding.btnDebugUnlock.visibility = if (showDebug) View.VISIBLE else View.GONE
         binding.btnDebugPoints.visibility = if (showDebug) View.VISIBLE else View.GONE
         if (showDebug) {
-            // 调试：满配 / 重置进度
+            // Debug: unlock all or reset progress.
             binding.btnDebugUnlock.setOnClickListener {
                 if (allUnlocked) DebugHelper.resetToInitial(requireContext())
                 else DebugHelper.unlockAll(requireContext())
             }
 
-            // 调试：把可用积分补到 100 万
+            // Debug: top up available points to one million.
             binding.btnDebugPoints.setOnClickListener {
                 DebugHelper.grantPoints(requireContext())
                 Toast.makeText(requireContext(), "💰 积分已补到 100 万", Toast.LENGTH_SHORT).show()
@@ -93,7 +93,7 @@ class FragmentCollection : Fragment() {
         }
     }
 
-    /** 点击分发：已解锁 → 单只 3D 卡牌；够分 → 确认解锁；不够 → 差多少 */
+    /** Tap handling: unlocked opens a 3D card; affordable asks for unlock confirmation; otherwise show missing points. */
     private fun handlePetClick(item: PetDisplay) {
         when {
             item.isUnlocked -> {

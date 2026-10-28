@@ -35,31 +35,29 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * 专注计时前台服务：
- * - 持有 CountDownTimer，倒计时期间常驻通知栏（避免进程被杀导致计时中断）
- * - 每秒广播剩余时间给 UI 刷新（包内定向广播，不对外暴露）
- * - 成功完成 → 写入 focus_records（积分结算）→ 广播 FINISHED → 停止服务
- * - 切后台超 5 秒 → UI 层发 ACTION_FAIL → 宠物进入饥饿状态，不结算积分
- * - 锁机白名单软监控：锁机期间周期性检测前台应用，非白名单则把锁机页拉回前台
+ * Foreground focus timer using CountDownTimer and an ongoing notification. Broadcast remaining time
+ * each second within the app. On completion, persist focus_records for points, broadcast FINISHED, and
+ * stop. Backgrounding over five seconds triggers ACTION_FAIL with no points and a hungry pet.
+ * Allowlist monitoring checks the foreground app and brings the lock screen back for disallowed apps.
  */
 class FocusService : Service() {
 
     companion object {
-        // 启动指令
+        // Start/control actions.
         const val ACTION_START = "com.example.focuspets.action.START"
         const val ACTION_FAIL = "com.example.focuspets.action.FAIL"
         const val ACTION_STOP = "com.example.focuspets.action.STOP"
         const val ACTION_LOCK_MONITOR_STOP = "com.example.focuspets.action.LOCK_MONITOR_STOP"
 
-        // 对外广播
+        // Outgoing broadcasts.
         const val BROADCAST_TICK = "com.example.focuspets.broadcast.TICK"
         const val BROADCAST_FINISHED = "com.example.focuspets.broadcast.FINISHED"
         const val BROADCAST_FAILED = "com.example.focuspets.broadcast.FAILED"
         const val BROADCAST_CANCELLED = "com.example.focuspets.broadcast.CANCELLED"
 
-        // Intent extra 键
+        // Intent extra keys.
         const val EXTRA_MINUTES = "extra_minutes"
-        const val EXTRA_CONTENT = "extra_content"          // 本次专注内容（如「写代码」），写入专注记录
+        const val EXTRA_CONTENT = "extra_content"          // Session content, such as coding, saved in the focus record.
         const val EXTRA_REMAINING_MILLIS = "extra_remaining"
         const val EXTRA_TOTAL_MILLIS = "extra_total"
         const val EXTRA_MINUTES_DONE = "extra_minutes_done"
@@ -68,15 +66,15 @@ class FocusService : Service() {
         const val NOTIFICATION_ID = 1001
         const val CHANNEL_ID = "focus_timer_channel"
 
-        /** 计时是否进行中（UI 判断能否开始新计时 / 切后台判定用） */
+        /** Whether a timer is active, used to gate starts and background checks. */
         @Volatile
         var isRunning: Boolean = false
             private set
 
         /**
-         * 锁机模式接管会话时为 true：屏蔽"切后台 5 秒失败"判定。
-         * 锁机时底层专注页会被暂停，但用户其实仍在 App 内（被屏幕固定或软监控锁住），
-         * 不应因此判失败。
+         * True while lock mode owns the session: suppress the five-second background failure. The underlying
+         * focus page pauses while pinning or soft monitoring still keeps the session inside the app; this must
+         * not count as failure.
          */
         @Volatile
         var lockActive: Boolean = false
@@ -89,10 +87,10 @@ class FocusService : Service() {
     )
     private var countdown: CountDownTimer? = null
     private var totalMillis = 0L
-    /** 本次专注内容，由 UI 在启动时通过 EXTRA_CONTENT 传入，完成时写入专注记录 */
+    /** Session content passed by the UI through EXTRA_CONTENT at startup and saved on completion. */
     private var focusContent: String = ""
 
-    // 锁机白名单软监控状态：监控期间检测前台应用，白名单外则拉回锁机页
+    // Allowlist monitoring state: detect foreground apps and bring the lock page back for disallowed apps.
     @Volatile
     var lockMonitorActive: Boolean = false
         private set
@@ -117,10 +115,10 @@ class FocusService : Service() {
             ACTION_LOCK_MONITOR_STOP -> stopMonitor()
             else -> stopSelf()
         }
-        return START_NOT_STICKY   // 被系统回收后不自动重启（专注连续性应由用户重新发起）
+        return START_NOT_STICKY   // Do not restart automatically after system termination; users must start a new session.
     }
 
-    // ------------------------- 计时核心 -------------------------
+    // ------------------------- Timer core -------------------------
 
     private fun startTimer(minutes: Int, content: String, enableMonitor: Boolean = false) {
         if (isRunning) return
@@ -128,10 +126,10 @@ class FocusService : Service() {
         focusContent = content.trim()
         isRunning = true
 
-        // 前台服务：必须在 5 秒内调用 startForeground，否则 ANR + 崩溃
+        // Call startForeground within five seconds to avoid an ANR/crash.
         startForegroundCompat(buildNotification(totalMillis))
 
-        // 锁机白名单软监控：开启后不再依赖系统屏幕固定，改用前台应用检测放行白名单 app
+        // Allowlist mode replaces screen pinning with foreground-app detection so listed apps remain usable.
         if (enableMonitor) startMonitor()
 
         countdown = object : CountDownTimer(totalMillis, 1_000L) {
@@ -147,11 +145,11 @@ class FocusService : Service() {
         }.start()
     }
 
-    /** 倒计时成功完成：结算积分（写库）→ 广播结果 → 停服 */
+    /** Successful countdown: persist points, broadcast the result, then stop the service. */
     private fun completeFocus() {
         val minutes = (totalMillis / 60_000L).toInt()
         serviceScope.launch {
-            // 1. 积分结算：每专注 1 分钟得 1 分 → 写入一条专注记录（含本次专注内容）
+            // 1. Award one point per focus minute and insert the record including content.
             val dao = AppDatabase.getInstance(applicationContext).focusRecordDao()
             dao.insert(
                 FocusRecordEntity(
@@ -161,10 +159,10 @@ class FocusService : Service() {
                     points = minutes
                 )
             )
-            // 2. 专注成功：宠物恢复健康 + 连续成功计数 +1（阶段四心情状态机）
+            // 2. Restore pet health and increment the success streak in the mood state machine.
             PetCareState.recordSuccess(applicationContext)
 
-            // 3. 上报云端（匿名已登录则增量同步积分 / 收藏 / 妆扮 / 心情）
+            // 3. Incrementally sync points, collection, wardrobe, and mood when anonymously logged in.
             CloudSyncManager.notifyChanged()
 
             isRunning = false
@@ -174,19 +172,19 @@ class FocusService : Service() {
         }
     }
 
-    /** 切后台超 5 秒：专注失败，不结算积分，宠物进入饥饿状态 */
+    /** After over five seconds in the background, fail without awarding points and make the pet hungry. */
     private fun failFocus() {
         if (!isRunning) return
         countdown?.cancel()
         isRunning = false
         stopMonitor()
-        // 专注失败：连续成功计数清零，宠物进入生病状态
+        // Failure clears the success streak and makes the pet sick.
         PetCareState.recordFailure(applicationContext)
         send(BROADCAST_FAILED)
         stopSelf()
     }
 
-    /** 用户主动放弃：不结算积分，也不惩罚宠物 */
+    /** Voluntary cancellation awards no points and does not punish the pet. */
     private fun cancelByUser() {
         if (!isRunning) return
         countdown?.cancel()
@@ -204,9 +202,9 @@ class FocusService : Service() {
         super.onDestroy()
     }
 
-    // ------------------------- 锁机白名单软监控 -------------------------
+    // ------------------------- Lock allowlist soft monitoring -------------------------
 
-    /** 启动前台应用监控：周期性检测当前前台 app，若不在白名单且非本应用，则把锁机页拉回前台 */
+    /** Periodically detect the foreground app; return to the lock screen unless it is this app or allowlisted. */
     private fun startMonitor() {
         if (monitorJob != null) return
         lockMonitorActive = true
@@ -225,14 +223,14 @@ class FocusService : Service() {
         }
     }
 
-    /** 停止前台应用监控 */
+    /** Stop foreground-app monitoring. */
     private fun stopMonitor() {
         lockMonitorActive = false
         monitorJob?.cancel()
         monitorJob = null
     }
 
-    /** 通过 UsageStatsManager 取当前前台应用包名（需「使用情况访问」权限） */
+    /** Read the foreground package through UsageStatsManager; requires Usage Access permission. */
     private fun currentForegroundPackage(): String? {
         val usm = getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager ?: return null
         val now = System.currentTimeMillis()
@@ -242,7 +240,7 @@ class FocusService : Service() {
             .maxByOrNull { it.lastTimeUsed }?.packageName
     }
 
-    /** 把锁机页重新带到前台（锁机 Activity 为 singleTask，拉起即回到原栈顶） */
+    /** Bring the singleTask lock Activity back to the top of its existing stack. */
     private fun bringLockToFront() {
         try {
             val lockIntent = Intent(this, LockActivity::class.java).apply {
@@ -256,11 +254,11 @@ class FocusService : Service() {
         } catch (_: Exception) { }
     }
 
-    // ------------------------- 通知 -------------------------
+    // ------------------------- Notifications -------------------------
 
     private fun startForegroundCompat(notification: Notification) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            // API 34+ 强制要求声明前台服务类型（计时类用 specialUse）
+            // API 34+ requires a declared foreground-service type; use specialUse for this timer.
             startForeground(
                 NOTIFICATION_ID,
                 notification,
@@ -291,13 +289,13 @@ class FocusService : Service() {
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle("专注中…不要切走哦 🐣")
             .setContentText("剩余 ${formatMillis(remaining)}")
-            .setOngoing(true)          // 不可滑动清除
-            .setOnlyAlertOnce(true)     // 每秒刷新不重复响铃/震动
+            .setOngoing(true)          // Cannot be dismissed by swiping.
+            .setOnlyAlertOnce(true)     // Do not repeat sound/vibration on every second's update.
             .setContentIntent(contentIntent)
             .build()
     }
 
-    /** 复用同一个 NOTIFICATION_ID 通知，实现"通知栏倒计时"效果 */
+    /** Reuse NOTIFICATION_ID to update the notification countdown in place. */
     private fun updateNotification(remaining: Long) {
         getSystemService(NotificationManager::class.java)
             .notify(NOTIFICATION_ID, buildNotification(remaining))
@@ -308,7 +306,7 @@ class FocusService : Service() {
         return "%02d:%02d".format(totalSeconds / 60, totalSeconds % 60)
     }
 
-    /** 包内定向广播（setPackage 保证只在应用内传播，配合 RECEIVER_NOT_EXPORTED） */
+    /** App-targeted broadcast: setPackage limits delivery to this app, paired with RECEIVER_NOT_EXPORTED. */
     private fun send(action: String, configurator: Intent.() -> Unit = {}) {
         sendBroadcast(Intent(action).setPackage(packageName).apply(configurator))
     }

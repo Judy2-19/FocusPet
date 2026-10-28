@@ -4,19 +4,14 @@ import com.example.focuspets.db.entity.PetEntity
 import com.example.focuspets.db.entity.UserCollectionEntity
 
 /**
- * 数据初始化与预置提供者。
- *
- * 两种触发路径（二者幂等，可安全重复调用）：
- * 1. 首次安装：Room onCreate 回调 → ensureSeeded()
- * 2. 防御性兜底：每次 App 启动后检查一次 pets 表是否为空（应对 onCreate 未执行/数据被清空的极端情况）
- *
- * 幂等保障：
- * - insertAll 使用 OnConflictStrategy.IGNORE（主键冲突直接跳过，不重复 seed）
- * - 赠送 1 号宠物前先查已解锁列表，避免唯一索引 pet_id 冲突
+ * Seed provider with two idempotent entry points: Room onCreate on first installation, and an empty-
+ * table check at each startup for missed callbacks or cleared data. insertAll uses
+ * OnConflictStrategy.IGNORE; check existing unlocks before granting pet 1 to avoid pet_id uniqueness
+ * conflicts.
  */
 object InitialDataProvider {
 
-    /** 9 只预置宠物：普通 x3、稀有 x3、传说 x3（id 固定 1~9，与 MIGRATION 保持一致） */
+    /** Nine preset pets: three common, three rare, three legendary; fixed IDs 1-9 match migrations. */
     val PRESET_PETS: List<PetEntity> = listOf(
         PetEntity(1, "小猫咪", "🐱", Rarity.COMMON, 0, "可换装的小猫咪，默认灰色"),
         PetEntity(2, "小狗", "🐶", Rarity.COMMON, 50, "忠诚的小伙伴（暂未实装立绘）"),
@@ -29,12 +24,11 @@ object InitialDataProvider {
         PetEntity(9, "创世神", "🌌", Rarity.LEGENDARY, 2500, "集齐所有图鉴后的终极奖励")
     )
 
-    /** 首次赠送的宠物：1 号小水滴（unlock_cost = 0，天然不需要特判） */
+    /** Initially granted pet: water droplet ID 1, with unlock_cost=0 and no special cost handling. */
     const val FREE_PET_ID = 1
 
     /**
-     * 检查数据库是否为空；为空则插入预置宠物并默认赠送解锁 1 号。
-     * 必须在 IO 协程中调用（suspend DAO）。
+     * If empty, seed the database and grant pet 1. Call from an IO coroutine because DAOs suspend.
      */
     suspend fun ensureSeeded(db: AppDatabase) {
         val existing = db.petDao().getAllPets()
@@ -42,7 +36,7 @@ object InitialDataProvider {
             db.petDao().insertAll(PRESET_PETS)
         }
 
-        // 默认赠送：1 号普通宠物已解锁（已解锁则跳过，防止唯一索引冲突）
+        // Grant common pet 1 only if not already unlocked, preventing uniqueness conflicts.
         val unlocked = db.userCollectionDao().getUnlockedPetIds()
         if (FREE_PET_ID !in unlocked) {
             db.userCollectionDao()

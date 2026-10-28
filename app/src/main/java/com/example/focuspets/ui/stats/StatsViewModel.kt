@@ -14,10 +14,10 @@ class StatsViewModel(private val repo: PetRepository) : ViewModel() {
     val streak: LiveData<Int> = repo.getStreak()
     val last7: LiveData<List<DayBar>> = repo.getLast7Days()
 
-    /** 专注时段热力图：7(周一..周日) × 24(时) 的分钟数矩阵 */
+    /** Heatmap minute matrix: seven weekdays (Monday-Sunday) by 24 hours. */
     val heatmap: LiveData<Array<IntArray>> = repo.getHeatmap()
 
-    /** 连续打卡成就徽章列表 */
+    /** Streak achievement badges. */
     val achievements: LiveData<List<AchievementBadge>> = repo.getAchievements()
 }
 

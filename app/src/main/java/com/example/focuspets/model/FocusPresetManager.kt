@@ -5,9 +5,8 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * 专注预设：用户「本次专注内容 + 自定义时长」的组合，保存后可一键复用。
- * 例如：「写代码 / 50 分钟」「背单词 / 25 分钟」。
- * 用 SharedPreferences + JSON 存储（不引入额外依赖），最多保留 8 条，新的靠前。
+ * Reusable focus presets pair content and custom duration, e.g. coding/50 minutes or vocabulary/25
+ * minutes. Store at most eight in SharedPreferences as JSON without extra dependencies, newest first.
  */
 object FocusPresetManager {
 
@@ -29,7 +28,7 @@ object FocusPresetManager {
         list
     }.getOrDefault(emptyList())
 
-    /** 保存一条预设（内容去空；相同内容则更新其时长并置顶），返回保存后的完整列表 */
+    /** Save a preset after trimming content; matching content updates duration and moves to the front. Return the full saved list. */
     fun savePreset(context: Context, content: String, minutes: Int): List<Preset> {
         val c = content.trim()
         val m = minutes.coerceIn(1, 180)
@@ -42,7 +41,7 @@ object FocusPresetManager {
         return trimmed
     }
 
-    /** 删除一条预设 */
+    /** Delete a preset. */
     fun removePreset(context: Context, content: String) {
         val remaining = getPresets(context).filter { it.content != content }
         persist(context, remaining)

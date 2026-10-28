@@ -12,7 +12,7 @@ import com.example.focuspets.R
 import com.example.focuspets.databinding.ItemPetBinding
 import com.example.focuspets.db.Rarity
 
-/** 图鉴网格适配器：每只宠物渲染成清晰的平面卡牌缩略图（按当前装扮 / 未解锁灰度） */
+/** Collection grid adapter: flat pet thumbnails with current outfits, grayscale when locked. */
 class PetAdapter(private val onClick: (PetDisplay) -> Unit) :
     ListAdapter<PetDisplay, PetAdapter.VH>(DIFF) {
 

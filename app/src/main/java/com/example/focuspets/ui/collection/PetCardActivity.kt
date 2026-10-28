@@ -11,7 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.focuspets.databinding.ActivityPetCardBinding
 import com.example.focuspets.db.entity.PetEntity
 
-/** 单只宠物的 3D 卡牌页：全屏 immersive WebView 承载 card.html（纯 three.js 单卡） */
+/** Single pet 3D card in an immersive full-screen WebView hosting card.html and three.js. */
 class PetCardActivity : AppCompatActivity() {
 
     companion object {

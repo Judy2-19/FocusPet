@@ -23,9 +23,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 /**
- * 云端同步管理器（单例）：负责把本地状态增量推到后端、并在登录/网络恢复时拉取合并。
- * 设计原则：Room 仍是本地真源，这里只是"镜像 + 跨设备副本"。
- * 离线时只标记 pending，等网络恢复由 FocusPetsApp 的 NetworkCallback 触发补传。
+ * Singleton cloud synchronization: push incremental local state and fetch/merge after login or
+ * reconnection. Room remains the local source of truth; the cloud is a mirror and cross-device
+ * replica. Offline changes set pending, and FocusPetsApp's NetworkCallback retries later.
  */
 object CloudSyncManager {
 
@@ -33,7 +33,7 @@ object CloudSyncManager {
     private lateinit var api: CloudApi
     private lateinit var auth: AuthManager
     private lateinit var appContext: Context
-    // 同步在后台跑，必须兜底异常：真机无后端时网络/DB 错误都只记日志，绝不杀进程
+    // Guard background synchronization: log network/database errors without killing the app when no backend is available.
     private val scope = CoroutineScope(
         SupervisorJob() + Dispatchers.IO + CoroutineExceptionHandler { _, t ->
             Log.w("CloudSyncManager", "sync failed (non-fatal, backend likely offline): ${t.message}")
@@ -47,12 +47,12 @@ object CloudSyncManager {
         auth = authManager
     }
 
-    /** 本地数据变化后调用：联网立即上报；离线标记待同步 */
+    /** Call after local changes: push immediately online or mark pending offline. */
     fun notifyChanged() {
         scope.launch { syncNow() }
     }
 
-    /** 登录成功 / 网络恢复时调用：先拉云端合并，再推本地 */
+    /** Call after login or reconnection: fetch/merge cloud state, then push local state. */
     fun retryPending() {
         scope.launch { pullIfOnline(); syncNow() }
     }
@@ -64,7 +64,7 @@ object CloudSyncManager {
             val remote = api.getUser(uid)
             mergeIntoDb(remote)
         } catch (_: Exception) {
-            // 忽略，下次重试
+            // Ignore and retry next time.
         }
     }
 
@@ -77,8 +77,8 @@ object CloudSyncManager {
 
     private suspend fun syncNow() {
         if (!isOnline()) { markPending(true); return }
-        // 联网即确保匿名账号已建立：若 App 启动时后端不可用导致 uid 一直为空，
-        // 这里兜底补建，避免「uid 没建好 → 永远推不上去 → 排行榜永远未上榜」。
+        // Ensure an anonymous account exists online, even if startup could not reach the backend and left the UID empty.
+        // Retry registration here so a missing UID cannot permanently prevent pushes or leaderboard participation.
         val uid = auth.ensureLogin()
         try {
             api.updateUser(uid, buildPayload())
@@ -102,9 +102,9 @@ object CloudSyncManager {
         val wardrobe = db.wardrobeDao().getOwnedItemIdsOnce()
         val mood = PetCareState.getMood(appContext).name
         val name = auth.displayName()
-        // 当前展示宠物：首页 selectedPet 的 id（持久化在 SettingsManager）
+        // Currently displayed pet: Home selectedPet ID, persisted in SettingsManager.
         val currentPetId = SettingsManager.getCurrentPetId(appContext)
-        // 立绘路径：猫/狗带当前装扮，其余宠物无立绘留空（走 emoji 兜底）
+        // Artwork path includes the cat/dog outfit; other pets leave it empty for the emoji fallback.
         val petAvatar = when (currentPetId) {
             CatWardrobe.CAT_PET_ID -> CatWardrobe.assetPath(appContext)
             DogWardrobe.DOG_PET_ID -> DogWardrobe.assetPath(appContext)
@@ -113,24 +113,24 @@ object CloudSyncManager {
         return CloudUserPayload(name, total, collection, wardrobe, mood, currentPetId, petAvatar)
     }
 
-    /** 云端 → 本地合并（last-write-wins，简单覆盖；演示足够） */
+    /** Cloud-to-local merge: simple last-write-wins replacement, sufficient for the demo. */
     private suspend fun mergeIntoDb(remote: CloudUser) {
-        // 收藏：云端有、本地缺 → 补插入（unlockPets 用 IGNORE，幂等）
+        // Insert cloud collection entries missing locally; unlockPets uses IGNORE for idempotence.
         val localOwned = db.userCollectionDao().getUnlockedPetIds().toSet()
         val toInsert = remote.collection.filter { it !in localOwned }
         if (toInsert.isNotEmpty()) {
             db.userCollectionDao().unlockPets(toInsert.map { UserCollectionEntity(petId = it) })
         }
-        // 妆扮：云端有、本地缺 → 补插入（cost 占位 0，仅用于演示跨设备恢复）
+        // Insert missing cloud wardrobe entries with placeholder cost 0 for the cross-device recovery demo.
         val localWardrobe = db.wardrobeDao().getOwnedItemIdsOnce().toSet()
         val toInsertW = remote.wardrobe.filter { it !in localWardrobe }
         for (id in toInsertW) {
             db.wardrobeDao().insert(WardrobePurchaseEntity(itemId = id, itemType = "synced", cost = 0))
         }
-        // 心情：取云端
+        // Use cloud mood state.
         val mood = runCatching { PetMood.valueOf(remote.mood) }.getOrDefault(PetMood.NORMAL)
         PetCareState.setMood(appContext, mood)
-        // 昵称缓存
+        // Cache nickname.
         auth.setDisplayName(remote.displayName)
     }
 
@@ -140,8 +140,8 @@ object CloudSyncManager {
         )
     }
 
-    // ---------------- 排行榜离线缓存 ----------------
-    // 后端断开时，排行榜页回退显示上一次成功拉取的数据，而不是一片"加载失败"。
+    // ---------------- Offline leaderboard cache ----------------
+    // When the backend is unavailable, show the last successful leaderboard instead of only a loading error.
     private val lbPrefs by lazy {
         appContext.getSharedPreferences("lb_cache", Context.MODE_PRIVATE)
     }

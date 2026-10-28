@@ -39,15 +39,10 @@ import java.util.Locale
 import android.util.Log
 
 /**
- * 成就徽章庆祝：专注完成后检测「新解锁」的徽章，生成成就海报并弹出，支持分享。
- *
- * 设计要点：
- * - 用 SharedPreferences 记录「已庆祝」的徽章 id，保证每个徽章只弹一次（幂等），
- *   避免统计页每次刷新都重复弹窗。
- * - migrateExisting() 在应用启动(首跑)时，把当前已解锁的徽章标记为已庆祝，
- *   防止老用户升级后一次性弹出一堆历史成就。
- * - onFocusFinished() 在专注完成广播后调用，仅当本次有新解锁徽章时才生成海报并弹出。
- * - 海报由 Canvas 绘制成 Bitmap，经 FileProvider 暴露为 content:// Uri 供系统分享。
+ * Achievement celebration: detect newly unlocked badges after focus completion, generate shareable
+ * posters, and show them once. SharedPreferences stores celebrated badge IDs for idempotence.
+ * migrateExisting marks historical badges during upgrades. Posters use Canvas/Bitmap and FileProvider
+ * content:// URIs for system sharing.
  */
 object BadgeCelebration {
 
@@ -61,7 +56,7 @@ object BadgeCelebration {
         }
     )
 
-    /** 应用启动时调用一次：把当前已解锁的徽章标记为"已庆祝"，避免老用户更新后一次性弹出一堆 */
+    /** Run once at startup to mark existing unlocked badges as celebrated and avoid an upgrade popup flood. */
     suspend fun migrateExisting(context: Context) {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         if (prefs.getBoolean(KEY_MIGRATED, false)) return
@@ -76,7 +71,7 @@ object BadgeCelebration {
         prefs.edit().putBoolean(KEY_MIGRATED, true).apply()
     }
 
-    /** 取回"本次新解锁、且尚未庆祝过"的徽章，并把它们标记为已庆祝（幂等） */
+    /** Return newly unlocked, not-yet-celebrated badges and immediately mark them celebrated for idempotence. */
     private fun takeNewlyUnlocked(context: Context, current: List<AchievementBadge>): List<AchievementBadge> {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val set = prefs.getStringSet(KEY_CELEBRATED, emptySet())?.toMutableSet()
@@ -89,7 +84,7 @@ object BadgeCelebration {
         return newly
     }
 
-    /** 专注完成后调用：检测新解锁徽章，生成海报并依次弹出（无新成就则安静返回） */
+    /** After focus completion, generate and display new achievement posters; return silently if there are none. */
     fun onFocusFinished(context: Context) {
         val appContext = context.applicationContext
         scope.launch {
@@ -112,8 +107,8 @@ object BadgeCelebration {
     }
 
     /**
-     * 手动分享：统计页再次点击「已解锁」徽章时调用，生成该徽章的海报并弹出（带分享按钮）。
-     * 与 onFocusFinished 不同，这里不写入「已庆祝」集合，可随时重复分享。
+     * Manual sharing from Statistics: render an unlocked badge poster with share/save actions. Unlike
+     * onFocusFinished, do not update the celebrated set, allowing repeated sharing.
      */
     fun showPosterForBadge(context: Context, badge: AchievementBadge) {
         if (!badge.unlocked) return
@@ -132,10 +127,10 @@ object BadgeCelebration {
         }
     }
 
-    /** 依次弹出多张海报（通常一次只解锁 1 个，顺序弹更稳） */
+    /** Show posters sequentially; usually only one is unlocked at a time. */
     private fun showQueue(context: Context, pairs: List<Pair<Bitmap, Uri>>) {
         if (pairs.isEmpty()) return
-        // 弹窗需要 Activity 上下文；页面已销毁则不弹
+        // Dialogs require a live Activity context; skip if the page has been destroyed.
         if (context is Activity && (context.isFinishing || context.isDestroyed)) return
         var index = 0
         fun showNext() {
@@ -146,7 +141,7 @@ object BadgeCelebration {
         showNext()
     }
 
-    /** 成就海报弹窗：展示海报图 + 分享 / 收下 两个按钮 */
+    /** Achievement poster dialog: preview with Share and Close actions. */
     private fun showPosterDialog(context: Context, bmp: Bitmap, uri: Uri, onDismiss: () -> Unit) {
         val dialog = Dialog(context)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
@@ -166,7 +161,7 @@ object BadgeCelebration {
         dialog.show()
     }
 
-    /** 通过系统分享面板分享海报图片 */
+    /** Share the poster through the system share sheet. */
     private fun sharePoster(context: Context, uri: Uri) {
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "image/png"
@@ -177,7 +172,7 @@ object BadgeCelebration {
         context.startActivity(Intent.createChooser(intent, "分享成就海报"))
     }
 
-    /** 把海报 Bitmap 存到 cache 目录，返回 FileProvider 的 content:// Uri */
+    /** Save the poster Bitmap in cache and expose it through a FileProvider content:// URI. */
     private fun saveToCache(context: Context, bmp: Bitmap): Uri? = runCatching {
         val dir = File(context.cacheDir, "posters")
         dir.mkdirs()
@@ -191,9 +186,8 @@ object BadgeCelebration {
     }.getOrNull()
 
     /**
-     * 绘制成就海报（1080×1620）。内容：
-     * 渐变背景 + 装饰圆 → 白色卡片 → 应用名/副标题 → 徽章大圆+emoji → 标题/描述
-     * → 分隔线 → 昵称达成语 → 宠物陪伴语 → 日期/标语页脚。
+     * Draw a 1080x1620 portrait poster: gradient background and circles, white card, app name/subtitle,
+     * badge/emoji, title/description, divider, nickname/pet message, progress, and sharing footer.
      */
     private fun generatePoster(
         badge: AchievementBadge,
@@ -205,7 +199,7 @@ object BadgeCelebration {
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
 
-        // 背景渐变
+        // Background gradient.
         val bg = Paint().apply {
             shader = LinearGradient(
                 0f, 0f, 0f, h.toFloat(),
@@ -215,12 +209,12 @@ object BadgeCelebration {
         }
         c.drawRect(0f, 0f, w.toFloat(), h.toFloat(), bg)
 
-        // 装饰半透明圆
+        // Decorative translucent circles.
         val deco = Paint().apply { color = Color.WHITE; alpha = 28 }
         c.drawCircle(w * 0.86f, h * 0.08f, 170f, deco)
         c.drawCircle(w * 0.10f, h * 0.94f, 220f, deco)
 
-        // 中央白色卡片 + 轻投影
+        // Central white card with a subtle shadow.
         val cardL = 80f; val cardT = 210f; val cardR = w - 80f; val cardB = h - 210f
         c.drawRoundRect(
             cardL + 10f, cardT + 16f, cardR + 10f, cardB + 16f, 44f, 44f,
@@ -235,7 +229,7 @@ object BadgeCelebration {
         drawCenter(c, "专注养宠", cx, cardT + 96f, 46f, Color.parseColor("#FFB300"), bold = true)
         drawCenter(c, "FOCUS · 成就达成", cx, cardT + 146f, 30f, Color.parseColor("#BDBDBD"), bold = false)
 
-        // 徽章大圆 + emoji
+        // Large badge circle and emoji.
         val cy = cardT + 380f
         val r = 150f
         c.drawCircle(cx, cy, r, Paint().apply { color = Color.parseColor("#FFF3D6"); isAntiAlias = true })
@@ -244,7 +238,7 @@ object BadgeCelebration {
         drawCenter(c, badge.title, cx, cy + r + 96f, 76f, Color.parseColor("#212121"), bold = true)
         drawCenter(c, badge.desc, cx, cy + r + 156f, 40f, Color.parseColor("#757575"), bold = false)
 
-        // 分隔线 + 昵称/宠物语
+        // Divider, nickname, and pet message.
         val divY = cy + r + 220f
         c.drawLine(cx - 170f, divY, cx + 170f, divY,
             Paint().apply { color = Color.parseColor("#EEEEEE"); strokeWidth = 3f })
@@ -252,7 +246,7 @@ object BadgeCelebration {
         drawCenter(c, "$nick 达成了这个成就", cx, divY + 84f, 46f, Color.parseColor("#212121"), bold = true)
         drawCenter(c, "$petEmoji 和它的专注伙伴一起成长", cx, divY + 146f, 40f, Color.parseColor("#9E9E9E"), bold = false)
 
-        // 页脚
+        // Footer.
         val dateStr = SimpleDateFormat("yyyy.MM.dd", Locale.getDefault()).format(Date())
         drawCenter(c, dateStr, cx, cardB - 76f, 30f, Color.parseColor("#BDBDBD"), bold = false)
         drawCenter(c, "每一次专注，都在陪它长大", cx, cardB - 36f, 30f, Color.parseColor("#BDBDBD"), bold = false)
@@ -260,7 +254,7 @@ object BadgeCelebration {
         return bmp
     }
 
-    /** 居中绘制文字：emoji 时按字形垂直居中，普通文字时 y 当作基线 */
+    /** Center text horizontally; center emoji vertically by glyph bounds, but treat y as the baseline for ordinary text. */
     private fun drawCenter(
         c: Canvas, text: String, cx: Float, y: Float, size: Float,
         color: Int, bold: Boolean, emoji: Boolean = false

@@ -22,7 +22,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.launch
 
-/** 妆扮变动通知 key：首页收到后重新加载猫咪立绘 */
+/** Wardrobe-change result key: Home reloads cat artwork on receipt. */
 const val WARDROBE_CHANGED_KEY = "wardrobe_changed"
 
 class CatWardrobeViewModel(private val repository: PetRepository) : ViewModel() {
@@ -56,8 +56,8 @@ class CatWardrobeViewModelFactory(private val repository: PetRepository) :
 }
 
 /**
- * 小猫咪装扮面板：皮肤颜色 / 裙子 / 王冠。
- * 规则：灰猫默认拥有；皇冠必须先购买裙子才能买。
+ * Cat wardrobe: skin color, dress, crown. Gray is included; buying a crown requires first owning the
+ * dress.
  */
 class CatWardrobeBottomSheet : BottomSheetDialogFragment() {
 
@@ -102,7 +102,7 @@ class CatWardrobeBottomSheet : BottomSheetDialogFragment() {
         buildCrowns()
     }
 
-    // ---------------- 皮肤颜色 ----------------
+    // ---------------- Skin colors ----------------
 
     private fun buildColors() {
         binding.gridColors.removeAllViews()
@@ -137,7 +137,7 @@ class CatWardrobeBottomSheet : BottomSheetDialogFragment() {
     private fun equipColor(color: String) {
         val ctx = requireContext()
         CatWardrobe.setEquippedColor(ctx, color)
-        // 换色后若当前皇冠在新颜色下没有立绘，自动摘掉
+        // Remove the current crown if its artwork is unavailable for the new color.
         val crown = CatWardrobe.getEquippedCrown(ctx)
         val available = CatWardrobe.CROWN_OPTIONS_BY_COLOR[color] ?: emptyList()
         if (crown != null && crown !in available) CatWardrobe.setEquippedCrown(ctx, null)
@@ -145,7 +145,7 @@ class CatWardrobeBottomSheet : BottomSheetDialogFragment() {
         render()
     }
 
-    // ---------------- 裙子 ----------------
+    // ---------------- Dress ----------------
 
     private fun buildDress() {
         binding.containerDress.removeAllViews()
@@ -160,7 +160,7 @@ class CatWardrobeBottomSheet : BottomSheetDialogFragment() {
         btn.setOnClickListener {
             if (isOwned) {
                 if (isEquipped) {
-                    // 脱裙子时皇冠一并摘掉（皇冠图都基于裙子）
+                    // Removing the dress also removes the crown because crown assets include the dress.
                     CatWardrobe.setDressEquipped(requireContext(), false)
                     CatWardrobe.setEquippedCrown(requireContext(), null)
                 } else {
@@ -183,7 +183,7 @@ class CatWardrobeBottomSheet : BottomSheetDialogFragment() {
         )
     }
 
-    // ---------------- 王冠 ----------------
+    // ---------------- Crown ----------------
 
     private fun buildCrowns() {
         binding.containerCrown.removeAllViews()
@@ -214,7 +214,7 @@ class CatWardrobeBottomSheet : BottomSheetDialogFragment() {
             btn.isEnabled = dressOwned || isOwned
             btn.setOnClickListener {
                 if (isOwned) {
-                    // 皇冠必须配裙子，戴上时自动确保裙子已穿
+                    // Equipping a crown automatically ensures the required dress is worn.
                     if (isEquipped) {
                         CatWardrobe.setEquippedCrown(ctx, null)
                     } else {

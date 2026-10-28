@@ -14,11 +14,9 @@ import android.widget.Toast
 import java.io.File
 
 /**
- * 崩溃展示页：由 FocusPetsApp 的全局未捕获异常处理器在崩溃时拉起，
- * 把完整堆栈显示在屏幕上（不依赖 MainActivity 能正常启动），
- * 并把文字设为可选中 + 提供「复制」按钮，方便把异常贴给开发者。
- *
- * 注意：本页刻意不引用任何数据库 / 云端 / 自定义主题，避免二次崩溃。
+ * Crash screen launched by the global uncaught-exception handler in FocusPetsApp. Displays a
+ * selectable stack trace with a Copy button, even when MainActivity fails before rendering. Avoid
+ * database, cloud, and custom-library dependencies to prevent secondary crashes.
  */
 class CrashActivity : Activity() {
 
@@ -34,7 +32,7 @@ class CrashActivity : Activity() {
             setTextColor(0xFF212121.toInt())
             textSize = 12f
             setPadding(48, 48, 48, 48)
-            // 关键：允许长按选中文字进行复制
+            // Allow selecting and copying the error text.
             setTextIsSelectable(true)
         }
 

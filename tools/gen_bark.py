@@ -1,8 +1,4 @@
-"""FocusPets 小狗叫声：合成一声短促、音量较小的「汪汪」WAV（22050Hz 16-bit mono）。
-
-输出：app/src/main/res/raw/bark.wav
-两个短音节（uF-wuf），带起音噪声与音高下滑，模拟狗叫。
-"""
+""" FocusPets bark generator: a short quiet 22050 Hz, 16-bit mono WAV at app/src/main/res/raw/bark.wav. Two short syllables (uF-wuf) with attack noise and falling pitch mimic a bark."""
 import math
 import struct
 import wave
@@ -11,18 +7,18 @@ SR = 22050
 
 
 def bark_syllable(t0: float, t1: float, f0: float, f1: float, amp: float):
-    """生成一段带音高下滑的 bark 音节，返回采样列表。"""
+    """ Generate one falling-pitch bark syllable and return its samples."""
     n = int(SR * (t1 - t0))
     out = []
     dur = t1 - t0
     for i in range(n):
         t = i / SR
         lt = t - t0
-        # 频率按指数从 f0 滑到 f1
+        # Slide frequency exponentially from f0 to f1.
         freq = f0 * math.exp(math.log(f1 / f0) * (lt / dur))
-        # 振幅包络：快速起音 + 衰减
+        # Amplitude envelope: fast attack and decay.
         env = math.exp(-7.0 * lt) * (1 - math.exp(-45 * lt))
-        # 起音处叠加一点点噪声，模拟"h"的爆破感
+        # Add a little attack noise to mimic an h-like burst.
         noise = (0.12 if lt < 0.012 else 0.0) * (1 - lt / dur)
         s = amp * env * math.sin(2 * math.pi * freq * t) + noise * math.sin(2 * math.pi * 1800 * t)
         out.append(max(-1.0, min(1.0, s)))
@@ -31,9 +27,9 @@ def bark_syllable(t0: float, t1: float, f0: float, f1: float, amp: float):
 
 def main():
     data = []
-    data += bark_syllable(0.00, 0.13, 520, 280, 0.32)  # 第一声：高→低
-    data += [0.0] * int(SR * 0.05)                      # 短停顿
-    data += bark_syllable(0.18, 0.32, 430, 240, 0.30)  # 第二声：略低
+    data += bark_syllable(0.00, 0.13, 520, 280, 0.32)  # First bark: high to low.
+    data += [0.0] * int(SR * 0.05)                      # Short pause.
+    data += bark_syllable(0.18, 0.32, 430, 240, 0.30)  # Second bark: slightly lower.
 
     raw = bytearray()
     for s in data:
