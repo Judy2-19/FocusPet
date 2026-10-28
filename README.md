@@ -350,3 +350,7 @@ curl -X POST "http://127.0.0.1:8090/api/auth/anon"
 
 - 默认端口 `8090`（bat 写死；手动启动时 `leaderboard_server.py` 的参数可改，但必须和 `local.properties` 里的地址一致）。
 - 数据文件：`server/focuspets.db`（SQLite）。要清空榜单 / 账号，直接删这个文件，下次启动会自动重建空库。
+
+## Member C: Product, Coordination and QA
+
+See the [QA delivery index](docs/qa/README.md) for requirements, ownership, acceptance cases, the demo script, and release assessment. Device acceptance follows the execution records.
