@@ -69,7 +69,7 @@ object CloudSyncManager {
     }
 
     fun currentUid(): String? = if (::auth.isInitialized) auth.uid() else null
-    fun currentName(): String = if (::auth.isInitialized) auth.displayName() else "专注者"
+    fun currentName(): String = if (::auth.isInitialized) auth.displayName() else com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_072)
     fun rename(name: String) {
         if (::auth.isInitialized) auth.setDisplayName(name)
         notifyChanged()

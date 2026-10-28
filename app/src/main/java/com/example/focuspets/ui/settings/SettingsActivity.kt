@@ -52,7 +52,7 @@ class SettingsActivity : AppCompatActivity() {
         SettingsManager.setAlertRingtoneUri(this, uri.toString())
         SettingsManager.setAlertMode(this, SettingsManager.ALERT_SOUND_CUSTOM)
         syncAlertToggle()
-        Toast.makeText(this, "已设置自定义提醒音频", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, getString(R.string.settings_message_0), Toast.LENGTH_SHORT).show()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,8 +64,20 @@ class SettingsActivity : AppCompatActivity() {
         window.decorView.setBackgroundColor(Backgrounds.colorInt(this))
 
         binding.btnBack.setOnClickListener { finish() }
+        binding.tvLanguage.text = if (com.example.focuspets.model.LanguageManager.selected(this) == "en") "English" else "\u7b80\u4f53\u4e2d\u6587"
+        binding.btnLanguage.setOnClickListener {
+            val choices = arrayOf("\u7b80\u4f53\u4e2d\u6587", "English")
+            val current = com.example.focuspets.model.LanguageManager.selected(this)
+            MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.language_title)
+                .setSingleChoiceItems(choices, if (current == "en") 1 else 0) { dialog, index ->
+                    dialog.dismiss()
+                    com.example.focuspets.model.LanguageManager.apply(this, if (index == 1) "en" else "zh-CN")
+                }
+                .show()
+        }
 
-        binding.tvVersion.text = "版本 ${appVersionName()}"
+        binding.tvVersion.text = getString(R.string.settings_message_1, appVersionName())
 
         binding.btnEditName.setOnClickListener { showRenameDialog() }
         binding.btnLogout.setOnClickListener { confirmLogout() }
@@ -91,9 +103,9 @@ class SettingsActivity : AppCompatActivity() {
         binding.tvNickname.text = CloudSyncManager.currentName()
         val uid = CloudSyncManager.currentUid()
         binding.tvUid.text = if (uid.isNullOrBlank()) {
-            "未登录（离线或同步未初始化）"
+            getString(R.string.settings_message_2)
         } else {
-            "匿名账号 ····${uid.takeLast(6)}"
+            getString(R.string.settings_message_3, uid.takeLast(6))
         }
     }
 
@@ -102,7 +114,7 @@ class SettingsActivity : AppCompatActivity() {
         val input = EditText(this).apply {
             setText(CloudSyncManager.currentName())
             setSelection(text.length)
-            hint = "2-12 个字符"
+            hint = getString(R.string.settings_message_4)
             filters = arrayOf(InputFilter.LengthFilter(12))
         }
         val container = FrameLayout(this).apply {
@@ -113,17 +125,17 @@ class SettingsActivity : AppCompatActivity() {
             ))
         }
         MaterialAlertDialogBuilder(this)
-            .setTitle("修改昵称")
+            .setTitle(getString(R.string.settings_message_5))
             .setView(container)
-            .setNegativeButton("取消", null)
-            .setPositiveButton("保存") { _, _ ->
+            .setNegativeButton(getString(R.string.settings_message_6), null)
+            .setPositiveButton(getString(R.string.settings_message_7)) { _, _ ->
                 val name = input.text.toString().trim()
                 if (name.length < 2) {
-                    Toast.makeText(this, "昵称至少 2 个字符", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.settings_message_8), Toast.LENGTH_SHORT).show()
                 } else {
                     CloudSyncManager.rename(name)
                     refreshAccountInfo()
-                    Toast.makeText(this, "昵称已更新：$name", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.settings_message_9, name), Toast.LENGTH_SHORT).show()
                 }
             }
             .show()
@@ -133,16 +145,16 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun confirmLogout() {
         MaterialAlertDialogBuilder(this)
-            .setTitle("注销云端账号？")
+            .setTitle(getString(R.string.settings_message_10))
             .setMessage(
-                "会清除本机绑定的匿名云端身份，下次启动将生成一个新的匿名账号。\n\n" +
-                    "本机进度（专注记录、图鉴、妆扮）不会被删除。"
+                getString(R.string.settings_message_11) +
+                    getString(R.string.settings_message_12)
             )
-            .setNegativeButton("取消", null)
-            .setPositiveButton("确认注销") { _, _ ->
+            .setNegativeButton(getString(R.string.settings_message_6), null)
+            .setPositiveButton(getString(R.string.settings_message_13)) { _, _ ->
                 UserDataManager.logout(this) {
                     refreshAccountInfo()
-                    Toast.makeText(this, "已注销，下次启动以新匿名账号同步", Toast.LENGTH_SHORT)
+                    Toast.makeText(this, getString(R.string.settings_message_14), Toast.LENGTH_SHORT)
                         .show()
                 }
             }
@@ -153,19 +165,19 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun confirmReset() {
         MaterialAlertDialogBuilder(this)
-            .setTitle("重置全部进度？")
+            .setTitle(getString(R.string.settings_message_15))
             .setMessage(
-                "将清空：\n" +
-                    "· 全部专注记录与积分\n" +
-                    "· 已解锁的宠物图鉴（仅保留初始那只）\n" +
-                    "· 猫咪妆扮购买记录\n" +
-                    "· 宠物心情状态\n\n" +
-                    "同时会注销云端账号，避免旧数据被同步回来。\n此操作不可撤销。"
+                getString(R.string.settings_message_16) +
+                    getString(R.string.settings_message_17) +
+                    getString(R.string.settings_message_18) +
+                    getString(R.string.settings_message_19) +
+                    getString(R.string.settings_message_20) +
+                    getString(R.string.settings_message_21)
             )
-            .setNegativeButton("取消", null)
-            .setPositiveButton("确认重置") { _, _ ->
+            .setNegativeButton(getString(R.string.settings_message_6), null)
+            .setPositiveButton(getString(R.string.settings_message_22)) { _, _ ->
                 UserDataManager.resetProgress(this) {
-                    Toast.makeText(this, "进度已重置，回到初始状态", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.settings_message_23), Toast.LENGTH_SHORT).show()
                     // Return to Home and let Room LiveData reload the initial state.
                     finish()
                 }
@@ -269,7 +281,7 @@ class SettingsActivity : AppCompatActivity() {
         binding.layoutPickAudio.visibility = if (showPick) View.VISIBLE else View.GONE
         val hasUri = !SettingsManager.getAlertRingtoneUri(this).isNullOrEmpty()
         binding.tvAudioName.text = if (showPick) {
-            if (hasUri) "已选择自定义音频" else "尚未选择文件"
+            if (hasUri) getString(R.string.settings_message_24) else getString(R.string.settings_message_25)
         } else ""
     }
 

@@ -12,7 +12,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="🐶 装扮小狗"
+            android:text="@string/ui_148"
             android:textSize="20sp"
             android:textStyle="bold" />
 
@@ -21,7 +21,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="可用积分 0"
+            android:text="@string/ui_051"
             android:textColor="@color/text_hint"
             android:textSize="14sp" />
 
@@ -29,7 +29,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="尾巴（免费自选）"
+            android:text="@string/ui_061"
             android:textSize="15sp"
             android:textStyle="bold" />
 
@@ -44,7 +44,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
-            android:text="皮肤颜色"
+            android:text="@string/ui_103"
             android:textSize="15sp"
             android:textStyle="bold" />
 
@@ -59,7 +59,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
-            android:text="配饰（先领带 → 西服/礼服 → 学士帽）"
+            android:text="@string/ui_132"
             android:textSize="15sp"
             android:textStyle="bold" />
 
@@ -85,6 +85,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="完成" />
+            android:text="@string/ui_057" />
     </LinearLayout>
 </ScrollView>

@@ -14,7 +14,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="专注统计"
+            android:text="@string/ui_028"
             android:textColor="@color/text_primary"
             android:textSize="20sp"
             android:textStyle="bold" />
@@ -23,7 +23,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="每一次专注，都在陪它长大"
+            android:text="@string/ui_092"
             android:textColor="@color/text_hint"
             android:textSize="12sp" />
 
@@ -43,7 +43,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="🏆 查看全球排行榜"
+                android:text="@string/ui_145"
                 android:textColor="@color/cat_accent"
                 android:textSize="15sp"
                 android:textStyle="bold" />
@@ -70,7 +70,7 @@
                     android:id="@+id/tv_today"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="0 分钟"
+                    android:text="@string/ui_002"
                     android:textColor="@color/text_primary"
                     android:textSize="20sp"
                     android:textStyle="bold" />
@@ -79,7 +79,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="今日专注"
+                    android:text="@string/ui_036"
                     android:textColor="@color/text_hint"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -97,7 +97,7 @@
                     android:id="@+id/tv_total"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="0 分钟"
+                    android:text="@string/ui_002"
                     android:textColor="@color/text_primary"
                     android:textSize="20sp"
                     android:textStyle="bold" />
@@ -106,7 +106,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="累计专注"
+                    android:text="@string/ui_107"
                     android:textColor="@color/text_hint"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -124,7 +124,7 @@
                     android:id="@+id/tv_sessions"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="0 次"
+                    android:text="@string/ui_004"
                     android:textColor="@color/text_primary"
                     android:textSize="20sp"
                     android:textStyle="bold" />
@@ -133,7 +133,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="专注次数"
+                    android:text="@string/ui_027"
                     android:textColor="@color/text_hint"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -151,7 +151,7 @@
                     android:id="@+id/tv_streak"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="0 天"
+                    android:text="@string/ui_003"
                     android:textColor="@color/text_primary"
                     android:textSize="20sp"
                     android:textStyle="bold" />
@@ -160,7 +160,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="连续打卡"
+                    android:text="@string/ui_123"
                     android:textColor="@color/text_hint"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -171,7 +171,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="22dp"
-            android:text="专注时段热力图"
+            android:text="@string/ui_026"
             android:textColor="@color/text_primary"
             android:textSize="15sp"
             android:textStyle="bold" />
@@ -180,7 +180,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:text="看看你一天里最专注的时段 🔥"
+            android:text="@string/ui_104"
             android:textColor="@color/text_hint"
             android:textSize="11sp" />
 
@@ -207,7 +207,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="少"
+                    android:text="@string/ui_060"
                     android:textColor="@color/text_hint"
                     android:textSize="11sp" />
 
@@ -222,7 +222,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="多"
+                    android:text="@string/ui_056"
                     android:textColor="@color/text_hint"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -233,7 +233,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:gravity="center"
-                android:text="颜色越深 = 该时段专注越久"
+                android:text="@string/ui_138"
                 android:textColor="@color/text_hint"
                 android:textSize="11sp" />
         </LinearLayout>
@@ -243,7 +243,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="22dp"
-            android:text="连续打卡成就徽章"
+            android:text="@string/ui_124"
             android:textColor="@color/text_primary"
             android:textSize="15sp"
             android:textStyle="bold" />
@@ -260,7 +260,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="22dp"
-            android:text="近 7 天专注（分钟）"
+            android:text="@string/ui_120"
             android:textColor="@color/text_primary"
             android:textSize="15sp"
             android:textStyle="bold" />
@@ -280,7 +280,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:gravity="center"
-            android:text="数据来自专注记录"
+            android:text="@string/ui_078"
             android:textColor="@color/text_hint"
             android:textSize="11sp" />
 

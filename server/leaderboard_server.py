@@ -19,7 +19,7 @@ def now_ms() -> int:
 
 
 def random_name() -> str:
-    return "专注者" + str(random.randint(1000, 9999))
+    return "Focuser" + str(random.randint(1000, 9999))
 
 
 def init_db() -> None:
@@ -206,7 +206,7 @@ def main() -> None:
     init_db()
     httpd = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
     print(f"FocusPets backend listening on http://0.0.0.0:{PORT}")
-    print(f"  DB: {DB_PATH}  |  模拟器连 http://10.0.2.2:{PORT}/  |  真机连 http://<本机局域网IP>:{PORT}/")
+    print(f"  DB: {DB_PATH}  |  Emulator: http://10.0.2.2:{PORT}/  |  Device: http://<LAN_IP>:{PORT}/")
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

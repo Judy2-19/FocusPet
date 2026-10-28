@@ -46,18 +46,18 @@ object CatWardrobe {
     fun crownItemId(crown: String) = "crown_$crown"
 
     fun colorLabel(color: String) = when (color) {
-        "gray" -> "灰色"
-        "blue" -> "蓝色"
-        "pink" -> "粉色"
-        "yellow" -> "黄色"
-        "white" -> "白色"
-        "black" -> "黑色"
+        "gray" -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_084)
+        "blue" -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_038)
+        "pink" -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_125)
+        "yellow" -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_179)
+        "white" -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_177)
+        "black" -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_036)
         else -> color
     }
 
     fun crownLabel(crown: String) = when (crown) {
-        "blue_crown" -> "蓝色王冠"
-        "pink_crown" -> "粉色王冠"
+        "blue_crown" -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_037)
+        "pink_crown" -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_124)
         else -> crown
     }
 

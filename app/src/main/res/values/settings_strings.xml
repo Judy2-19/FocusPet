@@ -1,0 +1,28 @@
+<resources>
+    <string name="settings_message_0">Custom alert audio selected</string>
+    <string name="settings_message_1">Version %1$s</string>
+    <string name="settings_message_2">Not signed in (offline or sync unavailable)</string>
+    <string name="settings_message_3">Anonymous account ····%1$s</string>
+    <string name="settings_message_4">2–12 characters</string>
+    <string name="settings_message_5">Change nickname</string>
+    <string name="settings_message_6">Cancel</string>
+    <string name="settings_message_7">Save</string>
+    <string name="settings_message_8">Nickname must contain at least 2 characters</string>
+    <string name="settings_message_9">Nickname updated: %1$s</string>
+    <string name="settings_message_10">Sign out of cloud account?</string>
+    <string name="settings_message_11">Your anonymous cloud identity will be removed. A new account will be created on next launch.\n\n</string>
+    <string name="settings_message_12">Local progress (focus history, collection, and outfits) will be kept.</string>
+    <string name="settings_message_13">Sign out</string>
+    <string name="settings_message_14">Signed out. A new anonymous account will sync on next launch.</string>
+    <string name="settings_message_15">Reset all progress?</string>
+    <string name="settings_message_16">This will clear:\n</string>
+    <string name="settings_message_17">· All focus history and points\n</string>
+    <string name="settings_message_18">· Unlocked pets (except your starter)\n</string>
+    <string name="settings_message_19">· Cat outfit purchases\n</string>
+    <string name="settings_message_20">· Pet moods\n\n</string>
+    <string name="settings_message_21">You will also be signed out to prevent cloud restoration.\nThis cannot be undone.</string>
+    <string name="settings_message_22">Reset</string>
+    <string name="settings_message_23">Progress reset to the initial state</string>
+    <string name="settings_message_24">Custom audio selected</string>
+    <string name="settings_message_25">No file selected</string>
+</resources>

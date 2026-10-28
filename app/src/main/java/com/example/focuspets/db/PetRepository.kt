@@ -137,12 +137,12 @@ class PetRepository(private val db: AppDatabase) {
         val streak = computeStreak()
         val sessions = db.focusRecordDao().getSessionCount()
         val defs = listOf(
-            BadgeDef("first", "\uD83C\uDF31", "初次打卡", "完成第一次专注", 1, sessions),
-            BadgeDef("s3", "\uD83D\uDD25", "三日之约", "连续专注 3 天", 3, streak),
-            BadgeDef("s7", "\u2B50", "一周坚持", "连续专注 7 天", 7, streak),
-            BadgeDef("s14", "\uD83D\uDCE0", "双周达人", "连续专注 14 天", 14, streak),
-            BadgeDef("s30", "\uD83D\uDC51", "月度王者", "连续专注 30 天", 30, streak),
-            BadgeDef("s100", "\uD83C\uDFC6", "百日传奇", "连续专注 100 天", 100, streak),
+            BadgeDef("first", "\uD83C\uDF31", com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_061), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_051), 1, sessions),
+            BadgeDef("s3", "\uD83D\uDD25", com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_151), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_067), 3, streak),
+            BadgeDef("s7", "\u2B50", com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_122), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_069), 7, streak),
+            BadgeDef("s14", "\uD83D\uDCE0", com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_157), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_066), 14, streak),
+            BadgeDef("s30", "\uD83D\uDC51", com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_103), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_068), 30, streak),
+            BadgeDef("s100", "\uD83C\uDFC6", com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_087), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_065), 100, streak),
         )
         return defs.map { d ->
             AchievementBadge(
@@ -178,11 +178,11 @@ class PetRepository(private val db: AppDatabase) {
         val map = db.focusRecordDao().getDailyMinutes().associate { it.date to it.minutes }
         val cal = Calendar.getInstance()
         val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val weekLabels = arrayOf("日", "一", "二", "三", "四", "五", "六")
+        val weekLabels = arrayOf(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_146), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_102), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_156), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_176), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_152), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_079), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_134))
         cal.add(Calendar.DAY_OF_MONTH, -6)
         return (0..6).map {
             val key = sdf.format(cal.time)
-            val label = "周" + weekLabels[cal.get(Calendar.DAY_OF_WEEK) - 1]
+            val label = "" + weekLabels[cal.get(Calendar.DAY_OF_WEEK) - 1]
             val bar = DayBar(label, map[key] ?: 0)
             cal.add(Calendar.DAY_OF_MONTH, 1)
             bar

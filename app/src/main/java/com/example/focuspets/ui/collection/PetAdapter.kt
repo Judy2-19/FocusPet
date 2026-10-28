@@ -39,7 +39,7 @@ class PetAdapter(private val onClick: (PetDisplay) -> Unit) :
         if (bmp != null) holder.b.ivPet.setImageBitmap(bmp)
         else holder.b.ivPet.setImageResource(android.R.drawable.ic_menu_gallery)
 
-        holder.b.tvName.text = item.pet.name
+        holder.b.tvName.text = com.example.focuspets.model.UiStrings.petName(item.pet.id, item.pet.name)
 
         val (label, colorRes) = rarityLabel(item.pet.rarity)
         holder.b.tvRarity.text = label
@@ -53,8 +53,8 @@ class PetAdapter(private val onClick: (PetDisplay) -> Unit) :
     }
 
     private fun rarityLabel(r: Rarity): Pair<String, Int> = when (r) {
-        Rarity.COMMON -> "普通" to R.color.rarity_common
-        Rarity.RARE -> "稀有" to R.color.rarity_rare
-        Rarity.LEGENDARY -> "传说" to R.color.rarity_legend
+        Rarity.COMMON -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_050) to R.color.rarity_common
+        Rarity.RARE -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_127) to R.color.rarity_rare
+        Rarity.LEGENDARY -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_094) to R.color.rarity_legend
     }
 }

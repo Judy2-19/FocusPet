@@ -4,51 +4,51 @@ import math
 from pathlib import Path
 from PIL import Image
 
-BASE_DIR = Path("C:/Users/13671/Desktop/MobileApp")
-SRC_DIR = BASE_DIR / "图片" / "初始-猫"
+BASE_DIR = Path(__file__).resolve().parent
+SRC_DIR = BASE_DIR / "artwork" / "starter-cat"
 ASSET_DIR = BASE_DIR / "app" / "src" / "main" / "assets" / "cat"
 RAW_DIR = BASE_DIR / "app" / "src" / "main" / "res" / "raw"
 
 COLOR_MAP = {
-    "灰": "gray",
-    "蓝": "blue",
-    "粉": "pink",
-    "黄": "yellow",
-    "白": "white",
-    "黑": "black",
+    "gray": "gray",
+    "blue": "blue",
+    "pink": "pink",
+    "yellow": "yellow",
+    "white": "white",
+    "black": "black",
 }
 
 CROWN_MAP = {
-    "蓝冠": "blue_crown",
-    "粉冠": "pink_crown",
+    "blue-crown": "blue_crown",
+    "pink-crown": "pink_crown",
 }
 
 # Target mappings: source relative path and destination filename.
 MAPPINGS = [
     # Base colors.
-    ("不同颜色的猫/灰.jpg", "gray.jpg"),
-    ("不同颜色的猫/蓝.jpg", "blue.jpg"),
-    ("不同颜色的猫/粉.jpg", "pink.jpg"),
-    ("不同颜色的猫/黄.jpg", "yellow.jpg"),
-    ("不同颜色的猫/白.jpg", "white.jpg"),
-    ("不同颜色的猫/黑.jpg", "black.jpg"),
+    ("coat-colors/gray.jpg", "gray.jpg"),
+    ("coat-colors/blue.jpg", "blue.jpg"),
+    ("coat-colors/pink.jpg", "pink.jpg"),
+    ("coat-colors/yellow.jpg", "yellow.jpg"),
+    ("coat-colors/white.jpg", "white.jpg"),
+    ("coat-colors/black.jpg", "black.jpg"),
     # Dresses.
-    ("裙子/灰-红裙.jpg", "gray_dress.jpg"),
-    ("裙子/蓝-红裙.jpg", "blue_dress.jpg"),
-    ("裙子/粉-红裙.jpg", "pink_dress.jpg"),
-    ("裙子/黄-红裙.jpg", "yellow_dress.jpg"),
-    ("裙子/白-红裙.jpg", "white_dress.jpg"),
-    ("裙子/黑-红裙.jpg", "black_dress.jpg"),
+    ("dresses/gray-red-dress.jpg", "gray_dress.jpg"),
+    ("dresses/blue-red-dress.jpg", "blue_dress.jpg"),
+    ("dresses/pink-red-dress.jpg", "pink_dress.jpg"),
+    ("dresses/yellow-red-dress.jpg", "yellow_dress.jpg"),
+    ("dresses/white-red-dress.jpg", "white_dress.jpg"),
+    ("dresses/black-red-dress.jpg", "black_dress.jpg"),
     # Crowns.
-    ("皇冠/灰-红裙-蓝冠.jpg", "gray_dress_blue_crown.jpg"),
-    ("皇冠/蓝-红裙-蓝冠.jpg", "blue_dress_blue_crown.jpg"),
-    ("皇冠/蓝-红裙-粉冠.jpg", "blue_dress_pink_crown.jpg"),
-    ("皇冠/粉-红裙-蓝冠.jpg", "pink_dress_blue_crown.jpg"),
-    ("皇冠/粉-红裙-粉冠.jpg", "pink_dress_pink_crown.jpg"),
-    ("皇冠/黄-红裙-蓝冠.jpg", "yellow_dress_blue_crown.jpg"),
-    ("皇冠/黄-红裙-粉冠.jpg", "yellow_dress_pink_crown.jpg"),
-    ("皇冠/黑-红裙-蓝冠.jpg", "black_dress_blue_crown.jpg"),
-    ("皇冠/黑-红裙-粉冠.jpg", "black_dress_pink_crown.jpg"),
+    ("crowns/gray-red-dress-blue-crown.jpg", "gray_dress_blue_crown.jpg"),
+    ("crowns/blue-red-dress-blue-crown.jpg", "blue_dress_blue_crown.jpg"),
+    ("crowns/blue-red-dress-pink-crown.jpg", "blue_dress_pink_crown.jpg"),
+    ("crowns/pink-red-dress-blue-crown.jpg", "pink_dress_blue_crown.jpg"),
+    ("crowns/pink-red-dress-pink-crown.jpg", "pink_dress_pink_crown.jpg"),
+    ("crowns/yellow-red-dress-blue-crown.jpg", "yellow_dress_blue_crown.jpg"),
+    ("crowns/yellow-red-dress-pink-crown.jpg", "yellow_dress_pink_crown.jpg"),
+    ("crowns/black-red-dress-blue-crown.jpg", "black_dress_blue_crown.jpg"),
+    ("crowns/black-red-dress-pink-crown.jpg", "black_dress_pink_crown.jpg"),
 ]
 
 

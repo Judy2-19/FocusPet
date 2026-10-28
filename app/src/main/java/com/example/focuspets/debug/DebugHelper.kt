@@ -109,7 +109,7 @@ object DebugHelper {
             db.focusRecordDao().insert(
                 FocusRecordEntity(
                     focusDate = TEST_GRANT_MARKER,
-                    content = "测试积分",
+                    content = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_147),
                     durationMinutes = 0,
                     points = TEST_POINTS - current
                 )

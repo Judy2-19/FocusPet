@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image, ImageFilter
 from rembg import remove
 
-BASE = Path("C:/Users/13671/Desktop/MobileApp")
+BASE = Path(__file__).resolve().parents[1]
 ORIG = BASE / "tools" / "originals"
 OUT = BASE / "app" / "src" / "main" / "assets" / "cat"
 BG = np.array([254, 248, 234], dtype=float)
@@ -94,7 +94,7 @@ def main():
         res.save(png)
         pngs.append(png)
         report.append((jpg.stem, edge_fringe_pct(arr)))
-        print(f"OK {jpg.name} -> {png.name}  边缘色块={report[-1][1]:.1f}%")
+        print(f"OK {jpg.name} -> {png.name}  edge artifacts={report[-1][1]:.1f}%")
 
     # Preview.
     cols = 7
@@ -106,7 +106,7 @@ def main():
         sheet.paste(im, (i % cols * cell, i // cols * cell), im)
     sheet.save(BASE / "tools" / "preview_v2.png", "PNG")
 
-    print("\n=== 黄色系边缘色块对比（应接近 0） ===")
+    print("\n=== Yellow edge artifacts (expected near 0) ===")
     for name, pct in report:
         if name.startswith("yellow"):
             print(f"  {name:26s} {pct:.1f}%")

@@ -115,7 +115,7 @@ class HomeFragment : Fragment() {
         Backgrounds.apply(requireContext(), binding.root)
 
         // Use the leaderboard nickname in the companion title instead of the first-person placeholder.
-        binding.tvTitle.text = "${CloudSyncManager.currentName()}的伙伴"
+        binding.tvTitle.text = getString(com.example.focuspets.R.string.core_message_29, CloudSyncManager.currentName())
 
         // Show the soft background palette on first entry if no color has been selected.
         if (!SettingsManager.isBgChosen(requireContext())) {
@@ -155,15 +155,15 @@ class HomeFragment : Fragment() {
         if (showDebugMood) {
             // Cycle SICK/NORMAL/GLOW to verify rendering.
             fun moodLabel(m: PetMood) = when (m) {
-                PetMood.SICK -> "生病"
-                PetMood.GLOW -> "发光"
-                PetMood.NORMAL -> "普通"
+                PetMood.SICK -> getString(com.example.focuspets.R.string.core_message_30)
+                PetMood.GLOW -> getString(com.example.focuspets.R.string.core_message_31)
+                PetMood.NORMAL -> getString(com.example.focuspets.R.string.core_message_32)
             }
-            binding.btnDebugMood.text = "🎭 调试心情：" + moodLabel(PetCareState.getMood(requireContext()))
+            binding.btnDebugMood.text = getString(com.example.focuspets.R.string.core_message_33) + moodLabel(PetCareState.getMood(requireContext()))
             binding.btnDebugMood.setOnClickListener {
                 val mood = DebugHelper.cycleMood(requireContext())
                 viewModel.refreshMood(requireContext())
-                binding.btnDebugMood.text = "🎭 调试心情：" + moodLabel(mood)
+                binding.btnDebugMood.text = getString(com.example.focuspets.R.string.core_message_33) + moodLabel(mood)
             }
         }
 
@@ -395,7 +395,7 @@ class HomeFragment : Fragment() {
     /** Play a quiet meow and show a meow bubble. */
     private fun playMeow() {
         soundPool?.play(meowSoundId, 0.25f, 0.25f, 1, 0, 1f)
-        binding.tvMeowBubble.text = "喵~"
+        binding.tvMeowBubble.text = getString(com.example.focuspets.R.string.ui_053)
         binding.tvMeowBubble.visibility = View.VISIBLE
         binding.tvMeowBubble.alpha = 0f
         binding.tvMeowBubble.animate().alpha(1f).setDuration(180).start()
@@ -407,7 +407,7 @@ class HomeFragment : Fragment() {
     /** Play a quiet bark and reuse the speech bubble for barking. */
     private fun playWoof() {
         soundPool?.play(barkSoundId, 0.25f, 0.25f, 1, 0, 1f)
-        binding.tvMeowBubble.text = "汪~"
+        binding.tvMeowBubble.text = getString(com.example.focuspets.R.string.core_message_34)
         binding.tvMeowBubble.visibility = View.VISIBLE
         binding.tvMeowBubble.alpha = 0f
         binding.tvMeowBubble.animate().alpha(1f).setDuration(180).start()
@@ -573,7 +573,7 @@ class HomeFragment : Fragment() {
             binding.ivPetCat.visibility = View.VISIBLE
             binding.tvPetEmoji.visibility = View.GONE
             binding.btnWardrobe.visibility = if (showing) View.VISIBLE else View.GONE
-            binding.btnWardrobe.text = if (petIsCat) "🐱 装扮小猫" else "🐶 装扮小狗"
+            binding.btnWardrobe.text = if (petIsCat) getString(com.example.focuspets.R.string.ui_146) else getString(com.example.focuspets.R.string.ui_148)
             if (petIsCat) loadCatImage() else loadDogImage()
         } else {
             binding.ivPetCat.visibility = View.GONE
@@ -583,8 +583,8 @@ class HomeFragment : Fragment() {
         }
 
         // Collection progress.
-        binding.tvPetName.text = state.selectedPet.name
-        binding.tvCollectionStatus.text = "已收集 ${state.unlockedCount} / 9"
+        binding.tvPetName.text = com.example.focuspets.model.UiStrings.petName(state.selectedPet.id, state.selectedPet.name)
+        binding.tvCollectionStatus.text = getString(com.example.focuspets.R.string.core_message_35, state.unlockedCount)
 
         // Persist the current Home pet for the cloud leaderboard avatar. Sync only when the pet changes,
         // including the first display, so the cloud receives the latest artwork path.
@@ -598,17 +598,17 @@ class HomeFragment : Fragment() {
         // Point progress targets the lowest-cost locked pet in the catalog.
         if (state.nextLockedPet == null) {
             binding.progressNext.setProgressCompat(100, true)
-            binding.tvProgressHint.text = "🎉 图鉴已全部收集完成！"
+            binding.tvProgressHint.text = getString(com.example.focuspets.R.string.core_message_36)
         } else {
             binding.progressNext.setProgressCompat(state.progressPercent, true)
             binding.tvProgressHint.text =
-                "距解锁 ${state.nextLockedPet.emoji} ${state.nextLockedPet.name} 还差 ${state.remainingPoints} 积分"
+                getString(com.example.focuspets.R.string.core_message_37, state.nextLockedPet.emoji, com.example.focuspets.model.UiStrings.petName(state.nextLockedPet.id, state.nextLockedPet.name), state.remainingPoints)
         }
 
         // Render the three mood states.
         when (state.mood) {
             PetMood.SICK -> {
-                binding.tvMoodTag.text = "🤒 生病中…完成一次专注恢复"
+                binding.tvMoodTag.text = getString(com.example.focuspets.R.string.core_message_38)
                 binding.tvMoodTag.setBackgroundColor(
                     ContextCompat.getColor(context, R.color.rarity_common)
                 )
@@ -625,7 +625,7 @@ class HomeFragment : Fragment() {
             }
 
             PetMood.GLOW -> {
-                binding.tvMoodTag.text = "✨ 容光焕发！"
+                binding.tvMoodTag.text = getString(com.example.focuspets.R.string.core_message_39)
                 binding.tvMoodTag.setBackgroundColor(
                     ContextCompat.getColor(context, R.color.rarity_legend)
                 )
@@ -643,7 +643,7 @@ class HomeFragment : Fragment() {
             }
 
             PetMood.NORMAL -> {
-                binding.tvMoodTag.text = "😊 陪伴中"
+                binding.tvMoodTag.text = getString(com.example.focuspets.R.string.ui_158)
                 binding.tvMoodTag.setBackgroundColor(
                     ContextCompat.getColor(context, R.color.rarity_rare)
                 )
@@ -662,12 +662,12 @@ class HomeFragment : Fragment() {
 
         // Accessibility: update TalkBack descriptions for the current pet and mood when switching.
         val moodText = when (state.mood) {
-            PetMood.SICK -> "，当前生病中"
-            PetMood.GLOW -> "，当前容光焕发"
-            PetMood.NORMAL -> "，当前陪伴中"
+            PetMood.SICK -> getString(com.example.focuspets.R.string.core_message_40)
+            PetMood.GLOW -> getString(com.example.focuspets.R.string.core_message_41)
+            PetMood.NORMAL -> getString(com.example.focuspets.R.string.core_message_42)
         }
         binding.petTouchArea.contentDescription =
-            "${state.selectedPet.name} ${state.selectedPet.emoji}$moodText，点击或左右滑动可切换宠物"
+            getString(com.example.focuspets.R.string.core_message_43, com.example.focuspets.model.UiStrings.petName(state.selectedPet.id, state.selectedPet.name), state.selectedPet.emoji, moodText)
     }
 
     override fun onDestroyView() {

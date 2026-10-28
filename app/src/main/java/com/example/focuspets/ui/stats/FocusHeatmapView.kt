@@ -34,7 +34,7 @@ class FocusHeatmapView @JvmOverloads constructor(
     private val padLeft = dp(24f)
     private val padTop = dp(16f)
     private val cellGap = dp(2f)
-    private val weekdayLabels = arrayOf("一", "二", "三", "四", "五", "六", "日")
+    private val weekdayLabels = arrayOf(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_102), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_156), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_176), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_152), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_079), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_134), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_146))
 
     init {
         labelPaint.color = 0xFF9E9E9E.toInt()

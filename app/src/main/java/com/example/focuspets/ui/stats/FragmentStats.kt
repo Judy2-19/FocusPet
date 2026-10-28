@@ -61,10 +61,10 @@ class FragmentStats : Fragment() {
             binding.tvTotal.text = formatMinutes(it)
         }
         viewModel.sessions.observe(viewLifecycleOwner) {
-            binding.tvSessions.text = "$it 次"
+            binding.tvSessions.text = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_002 ,(it).toString())
         }
         viewModel.streak.observe(viewLifecycleOwner) {
-            binding.tvStreak.text = "$it 天"
+            binding.tvStreak.text = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_001 ,(it).toString())
         }
         viewModel.heatmap.observe(viewLifecycleOwner) {
             binding.heatmap.setData(it)
@@ -78,8 +78,8 @@ class FragmentStats : Fragment() {
     }
 
     private fun formatMinutes(min: Int): String = when {
-        min >= 60 -> "${min / 60} 小时 ${min % 60} 分"
-        else -> "$min 分钟"
+        min >= 60 -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_019 ,(min / 60).toString(), (min % 60).toString())
+        else -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_007 ,(min).toString())
     }
 
     /** Seven-day bars share a bottom baseline and scale to the maximum; reserve weekday-label space to prevent clipping. */
@@ -135,16 +135,16 @@ class FragmentStats : Fragment() {
 
             // Tap a bar to show that day's minutes.
             col.setOnClickListener {
-                val msg = if (bar.minutes > 0) "${bar.label}：${bar.minutes} 分钟"
-                else "${bar.label}：暂无专注记录"
+                val msg = if (bar.minutes > 0) com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_013 ,(bar.label).toString(), (bar.minutes).toString())
+                else com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_014 ,(bar.label).toString())
                 Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
             }
 
             binding.barChart.addView(col)
         }
         binding.tvChartHint.text =
-            if (max == 0) "还没有专注记录，开始第一个番茄钟吧～"
-            else "近 7 天最高 ${max} 分钟 · 点击柱子看具体分钟数"
+            if (max == 0) com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_116)
+            else com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_024 ,(max).toString())
     }
 
     override fun onDestroyView() {

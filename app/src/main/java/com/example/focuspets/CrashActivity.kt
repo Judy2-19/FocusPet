@@ -25,10 +25,10 @@ class CrashActivity : Activity() {
 
         val trace = (intent.getStringExtra("trace")
             ?: runCatching { File(filesDir, "last_crash.txt").readText() }.getOrNull()
-            ?: "（无堆栈信息）")
+            ?: com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_020))
 
         val tv = TextView(this).apply {
-            text = "😵 应用崩溃了\n\n下面这段可直接选中复制（或点「复制崩溃信息」按钮）：\n\n$trace"
+            text = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_190 ,(trace).toString())
             setTextColor(0xFF212121.toInt())
             textSize = 12f
             setPadding(48, 48, 48, 48)
@@ -47,16 +47,16 @@ class CrashActivity : Activity() {
         }
 
         val copy = Button(this).apply {
-            text = "复制崩溃信息"
+            text = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_053)
             setOnClickListener {
                 val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 cm.setPrimaryClip(ClipData.newPlainText("focuspets_crash", trace))
-                Toast.makeText(this@CrashActivity, "已复制到剪贴板", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@CrashActivity, com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_052), Toast.LENGTH_SHORT).show()
             }
         }
 
         val close = Button(this).apply {
-            text = "关闭应用"
+            text = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_048)
             setOnClickListener { finishAffinity() }
         }
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>宠物卡牌</title>
+<title>Pet card</title>
 <style>
   html, body { margin: 0; height: 100%; overflow: hidden;
     background: radial-gradient(circle at 50% 32%, #2a2440, #0c0a16);
@@ -22,17 +22,21 @@
 </style>
 </head>
 <body>
-  <button id="close" title="关闭">✕</button>
+  <button id="close" title="Close">✕</button>
   <canvas id="c"></canvas>
-  <div id="hint">拖动旋转 · 正面轻点放大 · 转到背面轻点看简介</div>
+  <div id="hint">Drag to rotate · Tap the front to zoom · Tap the back for details</div>
   <div id="samplebar">
-    <button data-r="COMMON">普通</button>
-    <button data-r="RARE">稀有</button>
-    <button data-r="LEGENDARY">传说</button>
+    <button data-r="COMMON">Common</button>
+    <button data-r="RARE">Rare</button>
+    <button data-r="LEGENDARY">Legendary</button>
   </div>
 
   <script src="three.min.js"></script>
   <script>
+    var cardLanguage = "en";
+    var cardTranslations = {"Pet card": "\u5ba0\u7269\u5361\u724c", "Close": "\u5173\u95ed", "Drag to rotate \u00b7 Tap the front to zoom \u00b7 Tap the back for details": "\u62d6\u52a8\u65cb\u8f6c \u00b7 \u6b63\u9762\u8f7b\u70b9\u653e\u5927 \u00b7 \u8f6c\u5230\u80cc\u9762\u8f7b\u70b9\u770b\u7b80\u4ecb", "Common": "\u666e\u901a", "Rare": "\u7a00\u6709", "Legendary": "\u4f20\u8bf4", "Locked": "\u672a\u89e3\u9501", "PET COLLECTION": "\u5ba0\u7269\u56fe\u9274", "Tap the card for details": "\u8f7b\u70b9\u5361\u7247\u67e5\u770b\u7b80\u4ecb", "Your focus companion": "\u4e13\u6ce8\u7684\u597d\u4f19\u4f34", "Tap again to close": "\u518d\u70b9\u4e00\u4e0b\u6536\u8d77"};
+    function tr(s) { return cardLanguage === "zh-CN" ? (cardTranslations[s] || s) : s; }
+
   (function () {
     'use strict';
     var THREE = window.THREE;
@@ -40,16 +44,16 @@
     // Display JavaScript errors directly to help diagnose blank pages.
     window.onerror = function (m, s, l, c) {
       var h = document.getElementById('hint');
-      if (h) { h.style.color = '#ff9a9a'; h.textContent = 'JS 错误: ' + m + ' (行 ' + l + ')'; }
+      if (h) { h.style.color = '#ff9a9a'; h.textContent = 'JS error: ' + m + ' (line ' + l + ')'; }
     };
 
     // Rarity themes: common blue/cute, rare purple/shimmer, legendary gold/sparkles.
     var THEMES = {
-      COMMON:    { bg: ['#3a5f9e', '#24406e', '#12233f'], back: '#101d33', accent: '#a9c8ff', label: '普通',
+      COMMON:    { bg: ['#3a5f9e', '#24406e', '#12233f'], back: '#101d33', accent: '#a9c8ff', label: tr('Common'),
                    sparkle: 0,  sparkleSize: 0,  sheen: 0.0,  glow: 0x000000, glowI: 0.0,  sparkleColor: 0xa9c8ff },
-      RARE:      { bg: ['#6a3fb0', '#432a75', '#221040'], back: '#1d1036', accent: '#d9b3ff', label: '稀有',
+      RARE:      { bg: ['#6a3fb0', '#432a75', '#221040'], back: '#1d1036', accent: '#d9b3ff', label: tr('Rare'),
                    sparkle: 9,  sparkleSize: 9,  sheen: 0.16, glow: 0x2a1b4d, glowI: 0.45, sparkleColor: 0xe0c4ff },
-      LEGENDARY: { bg: ['#f6d271', '#e0a233', '#9c6a12'], back: '#2a1c05', accent: '#fff4c2', label: '传说',
+      LEGENDARY: { bg: ['#f6d271', '#e0a233', '#9c6a12'], back: '#2a1c05', accent: '#fff4c2', label: tr('Legendary'),
                    sparkle: 36, sparkleSize: 13, sheen: 0.42, glow: 0x4a3200, glowI: 0.55, sparkleColor: 0xffe9a0 }
     };
 
@@ -169,7 +173,7 @@
         x.font = '150px sans-serif'; x.fillStyle = '#fff';
         x.fillText('🔒', CW / 2, CH / 2);
         x.font = 'bold 44px sans-serif';
-        x.fillText('未解锁', CW / 2, CH / 2 + 90);
+        x.fillText(tr('Locked'), CW / 2, CH / 2 + 90);
       }
     }
 
@@ -196,19 +200,19 @@
         x.fillStyle = th.accent; x.font = 'bold 56px sans-serif';
         x.fillText('FocusPets', CW / 2, 540);
         x.fillStyle = 'rgba(255,255,255,0.78)'; x.font = '34px sans-serif';
-        x.fillText('宠 物 图 鉴', CW / 2, 604);
+        x.fillText(tr('PET COLLECTION'), CW / 2, 604);
         x.fillStyle = 'rgba(255,255,255,0.42)'; x.font = '26px sans-serif';
-        x.fillText('轻点卡片查看简介', CW / 2, 812);
+        x.fillText(tr('Tap the card for details'), CW / 2, 812);
       } else {
         x.fillStyle = th.accent; x.font = 'bold 48px sans-serif';
         x.fillText(data.name, CW / 2, 200);
         x.strokeStyle = 'rgba(255,255,255,0.3)'; x.lineWidth = 2;
         x.beginPath(); x.moveTo(CW / 2 - 130, 246); x.lineTo(CW / 2 + 130, 246); x.stroke();
         x.fillStyle = 'rgba(255,255,255,0.94)'; x.font = '36px sans-serif';
-        var desc = (data.desc && String(data.desc).length) ? data.desc : '专注的好伙伴';
+        var desc = (data.desc && String(data.desc).length) ? data.desc : tr('Your focus companion');
         wrapText(x, desc, CW / 2, 340, CW - 170, 58);
         x.fillStyle = 'rgba(255,255,255,0.42)'; x.font = '26px sans-serif';
-        x.fillText('再点一下收起', CW / 2, 812);
+        x.fillText(tr('Tap again to close'), CW / 2, 812);
       }
     }
 
@@ -457,6 +461,14 @@
     }
 
     function setupCard(data) {
+      cardLanguage = data.language || 'en';
+      document.title = tr('Pet card');
+      document.getElementById('close').title = tr('Close');
+      document.getElementById('hint').textContent = tr('Drag to rotate · Tap the front to zoom · Tap the back for details');
+      Object.keys(THEMES).forEach(function(key) {
+        var labels = {COMMON: 'Common', RARE: 'Rare', LEGENDARY: 'Legendary'};
+        THEMES[key].label = tr(labels[key]);
+      });
       gotData = true;
       if (!renderer) return;
       // Artwork priority: imageUrl (real preview artwork), imageDataUri (app injection), then generated artwork.
@@ -515,8 +527,8 @@
     }
     function runSample(rarity) {
       setupCard({
-        id: 1, name: '小猫咪', rarity: rarity, locked: false, unlockCost: 0,
-        desc: '可换装的小猫咪，默认灰色',
+        id: 1, name: 'Kitten', rarity: rarity, locked: false, unlockCost: 0,
+        desc: 'A dress-up kitten with a gray coat',
         imageUrl: '../cat/pink_dress.png',   // Preview with the pink cat dress artwork under assets/cat.
         imageDataUri: sampleImg()            // Fall back to emoji if the image fails to load.
       });
@@ -527,7 +539,7 @@
         if (!THREE) {
           var h = document.getElementById('hint');
           h.style.color = '#ff9a9a';
-          h.textContent = 'three.js 未加载（检查 card3d/three.min.js 是否可访问）';
+          h.textContent = 'three.js did not load (check card3d/three.min.js)';
           return;
         }
         init();
@@ -545,7 +557,7 @@
         setTimeout(function () { if (!gotData) runSample('LEGENDARY'); }, 900);
       } catch (err) {
         var eh = document.getElementById('hint');
-        if (eh) { eh.style.color = '#ff9a9a'; eh.textContent = '初始化失败: ' + err.message; }
+        if (eh) { eh.style.color = '#ff9a9a'; eh.textContent = 'Initialization failed: ' + err.message; }
       }
     });
   })();

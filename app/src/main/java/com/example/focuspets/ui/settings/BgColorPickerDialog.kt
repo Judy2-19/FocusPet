@@ -49,12 +49,12 @@ class BgColorPickerDialog : DialogFragment() {
     private fun buildSwatches() {
         // Chinese color names matching SettingsManager.PALETTE order for screen readers.
         val labels = listOf(
-            "暖米色", "蜜桃粉", "天空蓝", "薄荷绿",
-            "薰衣草紫", "奶油黄", "樱花粉", "青瓷绿"
+            com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_175), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_123), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_139), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_101),
+            com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_093), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_054), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_045), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_043)
         )
         val size = (resources.displayMetrics.density * 52).toInt()
         SettingsManager.PALETTE.forEachIndexed { index, color ->
-            val label = labels.getOrElse(index) { "背景" }
+            val label = labels.getOrElse(index) { com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_035) }
             val swatch = View(requireContext()).apply {
                 val d = GradientDrawable().apply {
                     shape = GradientDrawable.OVAL
@@ -62,7 +62,7 @@ class BgColorPickerDialog : DialogFragment() {
                     setStroke((resources.displayMetrics.density * 4).toInt(), Color.WHITE)
                 }
                 background = d
-                contentDescription = "$label 背景色"
+                contentDescription = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_006 ,(label).toString())
                 val lp = GridLayout.LayoutParams().apply {
                     width = size
                     height = size

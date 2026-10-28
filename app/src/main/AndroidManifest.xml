@@ -66,7 +66,7 @@
         <activity
             android:name=".ui.lock.LockWhitelistActivity"
             android:exported="false"
-            android:label="锁机白名单应用"
+            android:label="Allowed apps in lock mode"
             android:parentActivityName=".ui.lock.LockActivity"
             android:theme="@style/Theme.FocusPets" />
 

@@ -1,25 +1,25 @@
-""" FocusPets short-tail dog cutouts: read 图片/狗/短尾巴 and output transparent PNGs under assets/dog/. Use lightweight rembg u2netp, alpha decontamination, and gentle feathering for pale backgrounds. Name files tail_color[_red_tie][_black_suit|red_dress][_academic_cap]. Explicit color tokens allow future variants: short tails use black_suit, long tails red_dress, caps academic_cap. Deduplicate by filename, retaining the first image, including suit/cap folder duplicates. Process only 短尾巴; preserve existing long-tail artwork."""
+""" FocusPets short-tail dog cutouts: read artwork/dog/short-tail and output transparent PNGs under assets/dog/. Use lightweight rembg u2netp, alpha decontamination, and gentle feathering for pale backgrounds. Name files tail_color[_red_tie][_black_suit|red_dress][_academic_cap]. Explicit color tokens allow future variants: short tails use black_suit, long tails red_dress, caps academic_cap. Deduplicate by filename, retaining the first image, including suit/cap folder duplicates. Process only short-tail; preserve existing long-tail artwork."""
 from pathlib import Path
 import os
 import numpy as np
 from PIL import Image, ImageFilter
 from rembg import new_session, remove
 
-BASE = Path("C:/Users/13671/Desktop/MobileApp")
-IN = BASE / "图片" / "狗" / "短尾巴"
+BASE = Path(__file__).resolve().parents[1]
+IN = BASE / "artwork" / "dog" / "short-tail"
 OUT = BASE / "app" / "src" / "main" / "assets" / "dog"
 
 # Use the lightweight model to reduce inference memory versus default u2net and avoid sandbox OOM.
 SESS = new_session("u2netp")
 
-COLORS = [("白", "white"), ("灰", "gray"), ("黑", "black"),
-          ("黄", "yellow"), ("粉", "pink"), ("彩色", "colorful")]
+COLORS = [("white", "white"), ("gray", "gray"), ("black", "black"),
+          ("yellow", "yellow"), ("pink", "pink"), ("colorful", "colorful")]
 
 
 def name_for(jpg: Path) -> str:
     stem = jpg.stem
     parent = jpg.parent.name          # Red tie / suit / graduation cap / default.
-    text = f"{stem} {parent}"         # Keywords may occur in parent folder names, e.g. 红领带/黄.jpg.
+    text = f"{stem} {parent}"         # Keywords may occur in parent folder names, e.g. red-tie/yellow.jpg.
     # Dog color is the earliest color word in the filename. All dogs wear black suits,
     # so a later black token must not override the leading fur color (pink/yellow/black/gray/white).
     color = None
@@ -32,13 +32,13 @@ def name_for(jpg: Path) -> str:
     parts = ["short"]
     if color:
         parts.append(color)
-    if "领带" in text:
+    if "tie" in text:
         parts.append("red_tie")
-    if "西服" in text:
+    if "suit" in text:
         parts.append("black_suit")
-    elif "礼裙" in text:
+    elif "dress" in text:
         parts.append("red_dress")
-    if any(k in text for k in ("学士帽", "学院帽")):
+    if any(k in text for k in ("graduation-cap", "graduation-cap")):
         parts.append("academic_cap")
     return "_".join(parts)
 
@@ -97,7 +97,7 @@ def main():
         except Exception as e:
             print(f"ERR  {jpg.name}: {e}")
 
-    print(f"\n共生成 {len(pngs)} 张短尾小狗透明 PNG -> {OUT}")
+    print(f"\nGenerated {len(pngs)} short-tail dog transparent PNG files -> {OUT}")
 
 
 if __name__ == "__main__":

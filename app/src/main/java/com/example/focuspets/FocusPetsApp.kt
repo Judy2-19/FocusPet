@@ -49,6 +49,8 @@ class FocusPetsApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        com.example.focuspets.model.UiStrings.init(this)
+        com.example.focuspets.model.LanguageManager.apply(this)
 
         // Apply the saved light/dark/system theme before drawing the first screen to prevent flashing.
         AppCompatDelegate.setDefaultNightMode(

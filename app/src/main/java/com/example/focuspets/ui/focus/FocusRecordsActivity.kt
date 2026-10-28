@@ -177,7 +177,7 @@ class FocusRecordsActivity : AppCompatActivity() {
             set(Calendar.MONTH, binding.calendar.getMonth())
         }
         binding.tvCalTitle.text =
-            "${cal.get(Calendar.YEAR)}年${cal.get(Calendar.MONTH) + 1}月"
+            com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_016 ,(cal.get(Calendar.YEAR)).toString(), (cal.get(Calendar.MONTH) + 1).toString())
     }
 
     /** Load active dates for the displayed month and mark them with dots. */
@@ -210,7 +210,7 @@ class FocusRecordsActivity : AppCompatActivity() {
                 val start = cal.timeInMillis
                 cal.add(Calendar.DAY_OF_MONTH, 1)
                 val end = cal.timeInMillis
-                Triple(start, end, SimpleDateFormat("yyyy年M月d日 EEEE", Locale.CHINA).format(Date(start)))
+                Triple(start, end, SimpleDateFormat(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_058), com.example.focuspets.model.UiStrings.locale()).format(Date(start)))
             }
             Period.WEEK -> {
                 cal.zeroTime()
@@ -220,7 +220,7 @@ class FocusRecordsActivity : AppCompatActivity() {
                 val start = cal.timeInMillis
                 cal.add(Calendar.DAY_OF_MONTH, 7)
                 val end = cal.timeInMillis
-                val sf = SimpleDateFormat("M月d日", Locale.CHINA)
+                val sf = SimpleDateFormat(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_099), com.example.focuspets.model.UiStrings.locale())
                 val s = sf.format(Date(start))
                 val e = sf.format(Date(end - 1))
                 Triple(start, end, "$s - $e")
@@ -229,7 +229,7 @@ class FocusRecordsActivity : AppCompatActivity() {
                 cal.set(Calendar.DAY_OF_MONTH, 1)
                 cal.zeroTime()
                 val start = cal.timeInMillis
-                val label = "${cal.get(Calendar.YEAR)}年${cal.get(Calendar.MONTH) + 1}月"
+                val label = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_016 ,(cal.get(Calendar.YEAR)).toString(), (cal.get(Calendar.MONTH) + 1).toString())
                 cal.add(Calendar.MONTH, 1)
                 val end = cal.timeInMillis
                 Triple(start, end, label)
@@ -239,7 +239,7 @@ class FocusRecordsActivity : AppCompatActivity() {
                 cal.set(Calendar.DAY_OF_MONTH, 1)
                 cal.zeroTime()
                 val start = cal.timeInMillis
-                val label = "${cal.get(Calendar.YEAR)}年"
+                val label = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_015 ,(cal.get(Calendar.YEAR)).toString())
                 cal.add(Calendar.YEAR, 1)
                 val end = cal.timeInMillis
                 Triple(start, end, label)
@@ -287,7 +287,7 @@ class FocusRecordsActivity : AppCompatActivity() {
             binding.tvSummaryMinutes.text = formatMinutes(it)
         }
         viewModel.sessionCount.observe(this) {
-            binding.tvSummarySessions.text = "$it 次"
+            binding.tvSummarySessions.text = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_002 ,(it).toString())
         }
     }
 
@@ -309,18 +309,18 @@ class FocusRecordsActivity : AppCompatActivity() {
                     ContentColorStore.setColor(this@FocusRecordsActivity, key, it)
                 }
             colorMap[key] = color
-            PieChartView.Slice(if (key.isEmpty()) "未命名" else key, c.minutes, color)
+            PieChartView.Slice(if (key.isEmpty()) com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_173) else key, c.minutes, color)
         }
         currentSlices = slices
         contentColorMap = colorMap
-        binding.pieChart.setData(slices, "总专注\n${formatMinutes(currentTotal)}")
+        binding.pieChart.setData(slices, com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_154 ,(formatMinutes(currentTotal)).toString()))
 
         // 2. Legend entries support recoloring on tap.
         val legend = cms.mapIndexed { i, c ->
             val key = if (c.content.isBlank()) "" else c.content
             val color = colorMap[key] ?: palette[i % palette.size]
             val pct = if (currentTotal > 0) c.minutes * 100 / currentTotal else 0
-            LegendAdapter.LegendItem(color, if (key.isEmpty()) "未命名" else key, c.minutes, pct)
+            LegendAdapter.LegendItem(color, if (key.isEmpty()) com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_173) else key, c.minutes, pct)
         }
         legendAdapter.submit(legend)
 
@@ -328,13 +328,13 @@ class FocusRecordsActivity : AppCompatActivity() {
         val recs = lastRecs
         val items = recs.map { r ->
             val raw = if (r.content.isBlank()) "" else r.content
-            val content = if (raw.isEmpty()) "未命名" else raw
+            val content = if (raw.isEmpty()) com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_173) else raw
             val color = colorMap[raw] ?: if (raw.isEmpty()) palette[6] else palette[0]
-            val time = SimpleDateFormat("M月d日 HH:mm", Locale.CHINA).format(Date(r.createdAt))
+            val time = SimpleDateFormat(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_100), com.example.focuspets.model.UiStrings.locale()).format(Date(r.createdAt))
             RecordAdapter.RecordItem(color, content, time, r.durationMinutes)
         }
         recordAdapter.submit(items)
-        binding.tvEventsTitle.text = "专注事件（${recs.size}）"
+        binding.tvEventsTitle.text = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_062 ,(recs.size).toString())
         binding.tvEmpty.visibility = if (recs.isEmpty()) View.VISIBLE else View.GONE
         binding.rvRecords.visibility = if (recs.isEmpty()) View.GONE else View.VISIBLE
         updateShareEnabled()
@@ -342,8 +342,8 @@ class FocusRecordsActivity : AppCompatActivity() {
 
     /** Show the palette on legend tap; persist the selection and refresh chart/legend. */
     private fun showColorPicker(content: String) {
-        if (content == "未命名") {
-            Toast.makeText(this, "未命名内容不可改色", Toast.LENGTH_SHORT).show()
+        if (content == com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_173)) {
+            Toast.makeText(this, com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_172), Toast.LENGTH_SHORT).show()
             return
         }
         colorPickerDialog?.dismiss()
@@ -370,9 +370,9 @@ class FocusRecordsActivity : AppCompatActivity() {
             grid.addView(swatch)
         }
         colorPickerDialog = MaterialAlertDialogBuilder(ctx)
-            .setTitle("「$content」的颜色")
+            .setTitle(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_049 ,(content).toString()))
             .setView(grid)
-            .setNegativeButton("取消", null)
+            .setNegativeButton(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_042), null)
             .show()
     }
 
@@ -383,30 +383,30 @@ class FocusRecordsActivity : AppCompatActivity() {
     }
 
     private fun formatMinutes(min: Int): String = when {
-        min >= 60 -> "${min / 60} 小时 ${min % 60} 分"
-        else -> "$min 分钟"
+        min >= 60 -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_019 ,(min / 60).toString(), (min % 60).toString())
+        else -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_007 ,(min).toString())
     }
 
     // ---------------- Sharing ----------------
 
     private fun sharePie() {
         if (currentSlices.isEmpty()) {
-            Toast.makeText(this, "暂无数据可分享", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_114), Toast.LENGTH_SHORT).show()
             return
         }
         val bmp = buildShareBitmap()
         val uri = saveBitmap(bmp)
         if (uri == null) {
-            Toast.makeText(this, "分享失败，请重试", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_168), Toast.LENGTH_SHORT).show()
             return
         }
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "image/png"
             putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_TITLE, "我的专注内容占比")
+            putExtra(Intent.EXTRA_TITLE, com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_107))
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        startActivity(Intent.createChooser(intent, "分享饼图"))
+        startActivity(Intent.createChooser(intent, com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_137)))
     }
 
     /** Render a 1080-pixel-wide chart/legend poster using the same drawing logic as the screen. */
@@ -430,14 +430,14 @@ class FocusRecordsActivity : AppCompatActivity() {
         c.drawColor(Color.parseColor("#FFF8EA"))
 
         var y = pad
-        drawCenter(c, "专注内容占比", w / 2f, y + titleSize, titleSize, Color.parseColor("#212121"), true)
+        drawCenter(c, com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_063), w / 2f, y + titleSize, titleSize, Color.parseColor("#212121"), true)
         y += titleSize + 24
         drawCenter(c, label, w / 2f, y + subSize, subSize, Color.parseColor("#9E9E9E"), false)
         y += subSize + 40
 
         val cx = w / 2f
         val cy = y + pieR
-        PieChartView.drawPie(c, cx, cy, pieR, slices, 0.52f, Color.WHITE, "总专注\n${formatMinutes(total)}")
+        PieChartView.drawPie(c, cx, cy, pieR, slices, 0.52f, Color.WHITE, com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_155 ,(formatMinutes(total)).toString()))
         y += pieR * 2 + 48
 
         var ly = y
@@ -446,7 +446,7 @@ class FocusRecordsActivity : AppCompatActivity() {
             c.drawCircle(pad + legendSize / 2f, ly + legendSize / 2f, 13f, dotPaint)
             drawLeft(c, s.label, pad + 44f, ly + legendSize, legendSize, Color.parseColor("#212121"), false)
             val pct = if (total > 0) s.value * 100 / total else 0
-            drawRight(c, "$pct%  ·  ${s.value} 分", w - pad, ly + legendSize, legendSize, Color.parseColor("#757575"), false)
+            drawRight(c, com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_011 ,(pct).toString(), (s.value).toString()), w - pad, ly + legendSize, legendSize, Color.parseColor("#757575"), false)
             ly += legendGap
         }
         return bmp

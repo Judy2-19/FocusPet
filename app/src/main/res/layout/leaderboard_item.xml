@@ -48,7 +48,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:text="昵称"
+        android:text="@string/ui_081"
         android:textColor="@color/text_primary"
         android:textSize="15sp"
         android:importantForAccessibility="no" />
@@ -57,7 +57,7 @@
         android:id="@+id/tv_points"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="0 分"
+        android:text="@string/ui_001"
         android:textColor="@color/text_hint"
         android:textSize="14sp"
         android:importantForAccessibility="no" />

@@ -1,11 +1,11 @@
 # ==========================================================
-# FocusPets - Android 项目 .gitignore
-# 原则：只提交「源码 + 构建脚本 + wrapper」，
-#       一切机器本地生成物（构建产物、IDE 缓存、签名密钥）全部忽略。
-# 注意：gitignore 不支持行内注释，# 必须写在行首。
+# FocusPets - Android project .gitignore
+# Track source, build scripts and the Gradle wrapper.
+# Ignore machine-local outputs, IDE caches and signing credentials.
+# Comments must start on their own line; inline comments are unsupported.
 # ==========================================================
 
-# ---------- Gradle 构建产物 ----------
+# ---------- Gradle build outputs ----------
 .gradle/
 build/
 app/build/
@@ -13,26 +13,26 @@ captures/
 .externalNativeBuild/
 .cxx/
 
-# SDK 路径（每台机器不同，绝不能提交）
+# Machine-specific SDK paths must not be committed.
 local.properties
 
-# 注意：gradlew / gradlew.bat / gradle/wrapper/gradle-wrapper.jar
-# 和 gradle-wrapper.properties 应该提交，clone 后才能直接构建。
+# Commit gradlew, gradlew.bat, gradle/wrapper/gradle-wrapper.jar
+# and gradle-wrapper.properties so a fresh clone can build.
 
 # ---------- Android Studio / IntelliJ ----------
 *.iml
 .idea/
 
-# ---------- 签名与密钥（泄露 = App 可被冒名重签名） ----------
+# ---------- Signing credentials (keep private) ----------
 *.jks
 *.keystore
 keystore.properties
 signing.properties
 
-# ---------- 原生构建 / NDK ----------
+# ---------- Native builds / NDK ----------
 obj/
 
-# ---------- 打包产物 ----------
+# ---------- Packaged outputs ----------
 *.apk
 *.aab
 *.ap_
@@ -41,38 +41,38 @@ bin/
 gen/
 out/
 
-# ---------- 日志与崩溃报告 ----------
+# ---------- Logs and crash reports ----------
 *.log
 hs_err_pid*
 
-# ---------- 操作系统垃圾文件 ----------
+# ---------- Operating system temporary files ----------
 .DS_Store
 Thumbs.db
 desktop.ini
 *.swp
 *~
 
-# ---------- VS Code（若用 VS Code 打开过） ----------
+# ---------- VS Code ----------
 .vscode/
 .history/
 
-# ---------- 本地工作数据（不属于工程，不上传） ----------
-# WorkBuddy 会话/记忆
+# ---------- Local working data (not part of the project) ----------
+# WorkBuddy sessions and memory
 .workbuddy/
-# 本地课程笔记（如需提交请删除下一行）
+# Local study notes (remove the next pattern to track them)
 .memory/
 
-# ---------- 设计源图 / 抠图原始素材（体积大、非工程产物，不进仓库） ----------
-# 图片/
+# ---------- Source artwork (optional exclusion for large originals) ----------
+# artwork/
 # tools/originals/
 
-# ---------- 生成预览 / 测试产物（不进仓库） ----------
+# ---------- Generated previews / test outputs ----------
 tools/preview_*.png
 tools/_test_*.png
 tools/*preview*.html
 tools/rembg_run.log
 
-# ---------- 本地数据库快照（二进制，无 diff 意义，不进仓库） ----------
+# ---------- Local database snapshots ----------
 *.db
 
 /tmp/

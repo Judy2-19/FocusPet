@@ -34,7 +34,7 @@ import kotlinx.coroutines.launch
         SyncQueueEntity::class,
         SyncMetaEntity::class
     ],
-    version = 6,            // v5 to v6: add focus_records.points independently of duration to support point-only test grants.
+    version = 7,            // v6 to v7: translate the built-in catalog without changing progress.
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -47,6 +47,16 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun syncDao(): SyncDao
 
     companion object {
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                for (pet in InitialDataProvider.PRESET_PETS) {
+                    db.execSQL(
+                        "UPDATE pets SET name=?, description=? WHERE id=?",
+                        arrayOf<Any>(pet.name, pet.description, pet.id)
+                    )
+                }
+            }
+        }
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
@@ -132,17 +142,17 @@ abstract class AppDatabase : RoomDatabase() {
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 // ---- Common ----
-                db.execSQL("UPDATE pets SET name='小水滴', emoji='💧', rarity='COMMON', unlock_cost=0, description='最基础的元素精灵' WHERE id=1")
-                db.execSQL("UPDATE pets SET name='火苗崽', emoji='🔥', rarity='COMMON', unlock_cost=50, description='充满热情的小家伙' WHERE id=2")
-                db.execSQL("UPDATE pets SET name='木灵', emoji='🌿', rarity='COMMON', unlock_cost=100, description='喜欢安静地睡觉' WHERE id=3")
+                db.execSQL("UPDATE pets SET name='Droplet', emoji='💧', rarity='COMMON', unlock_cost=0, description='A friendly elemental spirit' WHERE id=1")
+                db.execSQL("UPDATE pets SET name='Ember', emoji='🔥', rarity='COMMON', unlock_cost=50, description='A little friend full of enthusiasm' WHERE id=2")
+                db.execSQL("UPDATE pets SET name='Wood Sprite', emoji='🌿', rarity='COMMON', unlock_cost=100, description='Loves a quiet nap' WHERE id=3")
                 // ---- Rare ----
-                db.execSQL("UPDATE pets SET name='星光兽', emoji='⭐', rarity='RARE', unlock_cost=300, description='只在深夜出现' WHERE id=4")
-                db.execSQL("UPDATE pets SET name='雷电犬', emoji='⚡', rarity='RARE', unlock_cost=500, description='行动迅捷如闪电' WHERE id=5")
-                db.execSQL("UPDATE pets SET name='冰晶狐', emoji='❄️', rarity='RARE', unlock_cost=700, description='高傲的冰雪贵族' WHERE id=6")
+                db.execSQL("UPDATE pets SET name='Starlight Beast', emoji='⭐', rarity='RARE', unlock_cost=300, description='Appears only late at night' WHERE id=4")
+                db.execSQL("UPDATE pets SET name='Thunder Hound', emoji='⚡', rarity='RARE', unlock_cost=500, description='Moves as fast as lightning' WHERE id=5")
+                db.execSQL("UPDATE pets SET name='Ice Fox', emoji='❄️', rarity='RARE', unlock_cost=700, description='A noble spirit of ice and snow' WHERE id=6")
                 // ---- Legendary ----
-                db.execSQL("UPDATE pets SET name='暗影龙', emoji='🌑', rarity='LEGENDARY', unlock_cost=1200, description='拥有毁灭力量' WHERE id=7")
-                db.execSQL("UPDATE pets SET name='神圣鹿', emoji='🦌', rarity='LEGENDARY', unlock_cost=1800, description='森林的守护神' WHERE id=8")
-                db.execSQL("UPDATE pets SET name='创世神', emoji='🌌', rarity='LEGENDARY', unlock_cost=2500, description='集齐所有图鉴后的终极奖励' WHERE id=9")
+                db.execSQL("UPDATE pets SET name='Shadow Dragon', emoji='🌑', rarity='LEGENDARY', unlock_cost=1200, description='Wields tremendous power' WHERE id=7")
+                db.execSQL("UPDATE pets SET name='Sacred Deer', emoji='🦌', rarity='LEGENDARY', unlock_cost=1800, description='Guardian of the forest' WHERE id=8")
+                db.execSQL("UPDATE pets SET name='Creator', emoji='🌌', rarity='LEGENDARY', unlock_cost=2500, description='The ultimate collection reward' WHERE id=9")
             }
         }
 
@@ -153,7 +163,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "focus_pets.db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)   // Upgrade pet data in place on older devices while retaining session records.
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)   // Upgrade pet data in place on older devices while retaining session records.
                     .fallbackToDestructiveMigration()   // Fallback: rebuild an incompatible leftover database rather than crash; demo data may be discarded.
                     .addCallback(SeedCallback)      // Seed data when the database is first created.
                     .build()

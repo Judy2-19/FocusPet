@@ -32,7 +32,7 @@ class LeaderboardViewModel : ViewModel() {
 
     fun refresh() {
         viewModelScope.launch {
-            _status.postValue("加载中…")
+            _status.postValue(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_095))
             try {
                 val resp = repo.getLeaderboard(50)
                 _board.postValue(LeaderboardResult(resp.list, resp.me, fromCache = false))
@@ -42,9 +42,9 @@ class LeaderboardViewModel : ViewModel() {
                 val cached = CloudSyncManager.loadCachedLeaderboard()
                 if (cached != null) {
                     _board.postValue(LeaderboardResult(cached.list, cached.me, fromCache = true))
-                    _status.postValue("⚠ 后端未连接，显示上次缓存（共 ${cached.list.size} 条）")
+                    _status.postValue(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_182 ,(cached.list.size).toString()))
                 } else {
-                    _status.postValue("排行榜加载失败：${e.message}（请确认后端服务已启动）")
+                    _status.postValue(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_167 ,(e.message).toString()))
                 }
             }
         }

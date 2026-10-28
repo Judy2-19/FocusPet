@@ -28,10 +28,17 @@ class AuthManager(private val context: Context, private val api: CloudApi) {
     }
 
     fun uid(): String? = prefs.getString(KEY_UID, null)
-    fun displayName(): String = prefs.getString(KEY_NAME, "专注者") ?: "专注者"
+    fun displayName(): String {
+        val name = prefs.getString(KEY_NAME, "Focuser") ?: "Focuser"
+        // Translate only legacy generated nicknames, retaining user-created names.
+        val generated = name.replace(Regex("^\\u4e13\\u6ce8\\u8005(?=\\d*$)"), "Focuser")
+        return if (!prefs.getBoolean("custom_display_name", false) && generated.matches(Regex("Focuser\\d*"))) {
+            com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_072) + generated.removePrefix("Focuser")
+        } else name
+    }
 
     fun setDisplayName(name: String) {
-        prefs.edit().putString(KEY_NAME, name).apply()
+        prefs.edit().putString(KEY_NAME, name).putBoolean("custom_display_name", true).apply()
     }
 
     /**
@@ -39,7 +46,7 @@ class AuthManager(private val context: Context, private val api: CloudApi) {
      * identity. Local progress remains, but no longer syncs with the old identity.
      */
     fun logout() {
-        prefs.edit().remove(KEY_UID).remove(KEY_NAME).apply()
+        prefs.edit().remove(KEY_UID).remove(KEY_NAME).remove("custom_display_name").apply()
     }
 
     companion object {

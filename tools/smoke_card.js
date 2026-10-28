@@ -68,39 +68,45 @@ const src = blocks.sort((a, b) => b.length - a.length)[0];
 
 vm.createContext(sandbox);
 vm.runInContext(src, sandbox, { filename: 'card-inline.js' });
-console.log('1) 脚本解析/执行 OK');
+console.log('1) Script parsing/execution OK');
 
-if (!loadHandler) { console.log('!! 未捕获到 load 处理器'); process.exit(1); }
+if (!loadHandler) { console.log('!! No load handler captured'); process.exit(1); }
 loadHandler();
-console.log('2) load 处理器 OK（init + 兜底渲染）');
+console.log('2) Load handler OK (initialization and fallback rendering)');
 
 const setSample = (data) => windowObj.setupCard(data);
-setSample({ id: 1, name: '小猫咪', rarity: 'LEGENDARY', locked: false, unlockCost: 0, desc: '可换装的小猫咪，默认灰色' });
-console.log('3) setupCard(传说) OK');
+setSample({ id: 1, name: 'Kitten', rarity: 'LEGENDARY', locked: false, unlockCost: 0, desc: 'A dress-up kitten with a gray coat' });
+console.log('3) setupCard(Legendary) OK');
 
-setSample({ id: 9, name: '创世神', rarity: 'COMMON', locked: true, unlockCost: 2500, desc: '集齐所有图鉴后的终极奖励' });
-console.log('4) setupCard(锁定) OK  ← 之前 data.locked 报错点');
+setSample({ id: 9, name: 'Creator', rarity: 'COMMON', locked: true, unlockCost: 2500, desc: 'The ultimate collection reward' });
+console.log('4) setupCard(locked) OK (data.locked regression)');
 
 const cv = els['c'];
 function fire(type, x, y) {
   (cv._l[type] || []).forEach(cb => cb({ clientX: x, clientY: y, pointerId: 1 }));
 }
 
-setSample({ id: 4, name: '星光兽', rarity: 'RARE', locked: false, unlockCost: 300, desc: '只在深夜出现' });
+setSample({ id: 4, name: 'Starlight Beast', rarity: 'RARE', locked: false, unlockCost: 300, desc: 'Appears only late at night' });
 fire('pointerdown', 100, 300);
 fire('pointermove', 560, 300);
 fire('pointerup', 560, 300);
 for (let i = 0; i < 60; i++) if (rafCb) rafCb();
-console.log('5) 拖动旋转 60 帧 OK（y 无上限）');
+console.log('5) Drag rotation, 60 frames OK (unlimited y)');
 
 fire('pointerdown', 300, 300);
 fire('pointerup', 300, 300);
 for (let i = 0; i < 5; i++) if (rafCb) rafCb();
-console.log('6) 轻点 OK ← 覆盖 onTap（正面放大 / 背面展开简介）');
+console.log('6) Tap OK (front zoom / back description)');
 
 for (const r of ['COMMON', 'RARE', 'LEGENDARY']) {
-  setSample({ id: 1, name: '测试', rarity: r, locked: false, unlockCost: 0, desc: '一句简介' });
-  console.log('7) 稀有度 ' + r + ' 构建 OK');
+  setSample({ id: 1, name: 'Test', rarity: r, locked: false, unlockCost: 0, desc: 'Sample description' });
+  console.log('7) Rarity ' + r + ' build OK');
 }
 
-console.log('=== 全部通过 ✓ ===');
+setSample({ id: 1, name: '\u5c0f\u732b\u54aa', language: 'zh-CN', rarity: 'COMMON', locked: false, unlockCost: 0 });
+if (vm.runInContext("tr('Common')", sandbox) !== '\u666e\u901a') throw new Error('Chinese rarity translation failed');
+if (documentObj.title !== '\u5ba0\u7269\u5361\u724c') throw new Error('Chinese card title failed');
+setSample({ id: 1, name: 'Kitten', language: 'en', rarity: 'COMMON', locked: false, unlockCost: 0 });
+if (vm.runInContext("tr('Common')", sandbox) !== 'Common') throw new Error('English switch-back failed');
+console.log('8) Chinese / English card switching OK');
+console.log('=== All passed ✓ ===');

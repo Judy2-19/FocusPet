@@ -39,7 +39,7 @@ class LeaderboardAdapter : RecyclerView.Adapter<LeaderboardAdapter.VH>() {
         val item = items[position]
         holder.rank.text = "#${item.rank}"
         holder.name.text = item.displayName
-        holder.points.text = "${item.totalPoints} 分"
+        holder.points.text = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_018 ,(item.totalPoints).toString())
 
         // Leaderboard avatars use cat/dog artwork and emoji for other pets.
         bindPetAvatar(holder, item)
@@ -47,9 +47,9 @@ class LeaderboardAdapter : RecyclerView.Adapter<LeaderboardAdapter.VH>() {
         val isMe = item.uid == myUid
         holder.itemView.setBackgroundColor(if (isMe) 0x1AFFB300.toInt() else 0x00000000)
         holder.itemView.contentDescription = buildString {
-            append("第 ${item.rank} 名，${item.displayName}，${item.totalPoints} 分")
-            append("，宠物 ${PetCatalog.emoji(item.petId)}")
-            if (isMe) append("，这是你")
+            append(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_126 ,(item.rank).toString(), (item.displayName).toString(), (item.totalPoints).toString()))
+            append(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_022 ,(PetCatalog.emoji(item.petId)).toString()))
+            if (isMe) append(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_023))
         }
     }
 

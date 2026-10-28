@@ -238,7 +238,7 @@ app/src/main/assets/cat/    # 21 张猫咪立绘（已去水印），命名：{�
 app/src/main/assets/dog/    # 42 张小狗立绘（透明 PNG，cutout_dog.py 抠图），命名：{尾巴}_{颜色}[_tie][_{礼服|西服}][_cap].png
 app/src/main/res/raw/       # meow.wav：合成的小声喵叫；bark.wav：合成的小声狗叫
 process_cat_assets.py       # 一次性脚本：去水印 + 重命名 + 生成 meow.wav
-tools/cutout_dog.py         # 小狗抠图：从「图片/狗」生成 assets/dog/ 透明 PNG
+tools/cutout_dog.py         # 小狗抠图：从「artwork/dog」生成 assets/dog/ 透明 PNG
 tools/gen_bark.py           # 合成 bark.wav 的脚本
 ```
 

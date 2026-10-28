@@ -20,7 +20,9 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="我的伙伴"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:text="@string/ui_073"
             android:textSize="20sp"
             android:textStyle="bold" />
 
@@ -29,7 +31,7 @@
             style="?attr/materialButtonOutlinedStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="📖 图鉴"
+            android:text="@string/ui_152"
             app:cornerRadius="20dp" />
 
         <com.google.android.material.button.MaterialButton
@@ -38,7 +40,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:text="⚙ 设置"
+            android:text="@string/ui_009"
             app:cornerRadius="20dp" />
     </LinearLayout>
 
@@ -50,7 +52,7 @@
         android:layout_weight="1"
         android:clickable="true"
         android:focusable="true"
-        android:contentDescription="宠物舞台：点击或左右滑动切换宠物"
+        android:contentDescription="@string/ui_058"
         android:importantForAccessibility="yes">
 
         <View
@@ -104,7 +106,7 @@
             android:textColor="?attr/colorOnSurfaceVariant"
             android:paddingHorizontal="12dp"
             android:paddingVertical="4dp"
-            android:text="喵~"
+            android:text="@string/ui_053"
             android:textSize="15sp"
             android:translationX="72dp"
             android:translationY="-96dp"
@@ -126,7 +128,7 @@
             android:id="@+id/tv_pet_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="小水滴"
+            android:text="@string/ui_059"
             android:textSize="22sp"
             android:textStyle="bold" />
 
@@ -138,7 +140,7 @@
             android:background="@drawable/bg_badge"
             android:paddingHorizontal="14dp"
             android:paddingVertical="4dp"
-            android:text="😊 陪伴中"
+            android:text="@string/ui_158"
             android:textColor="#FFFFFF"
             android:textSize="12sp" />
 
@@ -159,7 +161,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="距解锁 🐶 小狗 还差 50 积分"
+            android:text="@string/ui_117"
             android:textColor="@color/text_hint"
             android:textSize="12sp" />
 
@@ -168,7 +170,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="已收集 1 / 9"
+            android:text="@string/ui_062"
             android:textSize="13sp"
             android:textStyle="bold" />
 
@@ -176,7 +178,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:text="点击宠物切换 · 左右滑动也可以"
+            android:text="@string/ui_099"
             android:textColor="@color/text_hint"
             android:textSize="11sp" />
 
@@ -187,7 +189,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:text="🐱 装扮小猫"
+            android:text="@string/ui_146"
             android:visibility="gone"
             app:cornerRadius="16dp" />
 
@@ -198,7 +200,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:text="🎨 换背景"
+            android:text="@string/ui_142"
             app:cornerRadius="16dp" />
 
         <!-- Debug mood-cycle button for test builds only. -->
@@ -208,7 +210,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:text="🎭 调试心情：普通"
+            android:text="@string/ui_143"
             app:cornerRadius="16dp" />
 
     </LinearLayout>

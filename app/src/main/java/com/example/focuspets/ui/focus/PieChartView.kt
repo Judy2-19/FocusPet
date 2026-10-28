@@ -65,7 +65,7 @@ class PieChartView @JvmOverloads constructor(
                 p.textAlign = Paint.Align.CENTER
                 p.textSize = r * 0.2f
                 val fm = p.fontMetrics
-                canvas.drawText("暂无数据", cx, cy - (fm.ascent + fm.descent) / 2f, p)
+                canvas.drawText(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_115), cx, cy - (fm.ascent + fm.descent) / 2f, p)
                 return
             }
 

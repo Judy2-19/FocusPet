@@ -270,10 +270,11 @@ class FocusService : Service() {
     }
 
     private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val channel = NotificationChannel(
-            CHANNEL_ID, "专注计时", NotificationManager.IMPORTANCE_LOW
+            CHANNEL_ID, com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_070), NotificationManager.IMPORTANCE_LOW
         ).apply {
-            description = "番茄钟倒计时进行中"
+            description = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_064)
             setShowBadge(false)
         }
         getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
@@ -287,8 +288,8 @@ class FocusService : Service() {
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setContentTitle("专注中…不要切走哦 🐣")
-            .setContentText("剩余 ${formatMillis(remaining)}")
+            .setContentTitle(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_075))
+            .setContentText(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_132 ,(formatMillis(remaining)).toString()))
             .setOngoing(true)          // Cannot be dismissed by swiping.
             .setOnlyAlertOnce(true)     // Do not repeat sound/vibration on every second's update.
             .setContentIntent(contentIntent)

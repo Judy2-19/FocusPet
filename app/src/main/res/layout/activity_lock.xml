@@ -32,7 +32,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="🔒 锁机模式"
+                android:text="@string/ui_156"
                 android:textColor="@color/cat_accent"
                 android:textSize="16sp"
                 android:textStyle="bold" />
@@ -42,7 +42,7 @@
                 style="?attr/materialButtonOutlinedStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="40dp"
-                android:text="退出"
+                android:text="@string/ui_125"
                 android:textSize="13sp"
                 app:cornerRadius="20dp" />
         </LinearLayout>
@@ -54,7 +54,7 @@
             android:layout_marginTop="16dp"
             android:scaleType="fitCenter"
             android:src="@android:drawable/ic_menu_compass"
-            android:contentDescription="专注中的小猫" />
+            android:contentDescription="@string/ui_020" />
 
         <TextView
             android:id="@+id/tv_remaining"
@@ -66,14 +66,14 @@
             android:textColor="@color/text_primary"
             android:textSize="68sp"
             android:textStyle="bold"
-            android:contentDescription="剩余专注时间" />
+            android:contentDescription="@string/ui_047" />
 
         <TextView
             android:id="@+id/tv_subtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="选择时长，开始锁机专注"
+            android:text="@string/ui_129"
             android:textColor="@color/text_hint"
             android:textSize="14sp" />
 
@@ -82,7 +82,7 @@
             android:layout_width="match_parent"
             android:layout_height="12dp"
             android:layout_marginTop="28dp"
-            android:contentDescription="专注进度" />
+            android:contentDescription="@string/ui_032" />
 
         <com.google.android.material.button.MaterialButtonToggleGroup
             android:id="@+id/toggle_duration"
@@ -97,21 +97,21 @@
                 style="?attr/materialButtonOutlinedStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="15 分钟" />
+                android:text="@string/ui_005" />
 
             <Button
                 android:id="@+id/btn_25"
                 style="?attr/materialButtonOutlinedStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="25 分钟" />
+                android:text="@string/ui_006" />
 
             <Button
                 android:id="@+id/btn_45"
                 style="?attr/materialButtonOutlinedStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="45 分钟" />
+                android:text="@string/ui_007" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
         <LinearLayout
@@ -126,7 +126,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="自定义分钟（1~180）">
+                android:hint="@string/ui_111">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_custom_minutes"
@@ -143,7 +143,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
-                android:text="应用" />
+                android:text="@string/ui_065" />
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
@@ -151,7 +151,7 @@
             android:layout_width="match_parent"
             android:layout_height="60dp"
             android:layout_marginTop="32dp"
-            android:text="开始锁机专注"
+            android:text="@string/ui_068"
             android:textSize="16sp"
             app:cornerRadius="30dp" />
 
@@ -161,7 +161,7 @@
             android:layout_width="match_parent"
             android:layout_height="52dp"
             android:layout_marginTop="14dp"
-            android:text="📋 白名单应用（锁机期间可用）"
+            android:text="@string/ui_151"
             android:textSize="14sp"
             app:cornerRadius="26dp" />
 
@@ -171,7 +171,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
             android:gravity="center"
-            android:text="🔒 开始后手机将被锁定在本页面，无法主动退出（白名单内的应用仍可使用）；专注结束自动解锁。"
+            android:text="@string/ui_154"
             android:textColor="@color/text_hint"
             android:textSize="12sp" />
 
@@ -180,7 +180,7 @@
             android:layout_width="match_parent"
             android:layout_height="60dp"
             android:layout_marginTop="16dp"
-            android:text="强制退出（今日剩余 1 次）"
+            android:text="@string/ui_070"
             android:textSize="16sp"
             android:visibility="gone"
             app:cornerRadius="30dp" />
@@ -214,7 +214,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="专注完成！"
+                android:text="@string/ui_023"
                 android:textColor="#FFFFFF"
                 android:textSize="22sp"
                 android:textStyle="bold" />
@@ -224,7 +224,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:text="+25 积分"
+                android:text="@string/ui_000"
                 android:textColor="#FFD54F"
                 android:textSize="18sp" />
 
@@ -233,7 +233,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="56dp"
                 android:layout_marginTop="24dp"
-                android:text="解锁离开"
+                android:text="@string/ui_114"
                 app:cornerRadius="28dp" />
         </LinearLayout>
     </FrameLayout>

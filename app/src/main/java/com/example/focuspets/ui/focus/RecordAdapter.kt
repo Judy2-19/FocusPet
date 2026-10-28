@@ -37,7 +37,7 @@ class RecordAdapter : RecyclerView.Adapter<RecordAdapter.VH>() {
             b.barColor.setBackgroundColor(item.color)
             b.tvRecordContent.text = item.content
             b.tvRecordTime.text = item.timeText
-            b.tvRecordMinutes.text = "${item.minutes} 分"
+            b.tvRecordMinutes.text = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_017 ,(item.minutes).toString())
         }
     }
 }

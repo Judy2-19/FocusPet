@@ -15,11 +15,18 @@ object UsageStatsPermission {
     fun hasPermission(context: Context): Boolean {
         val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as? AppOpsManager
             ?: return false
-        val mode = appOps.unsafeCheckOpNoThrow(
+        val mode = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            appOps.unsafeCheckOpNoThrow(
             "android:get_usage_stats",
             android.os.Process.myUid(),
             context.packageName
-        )
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            appOps.checkOpNoThrow(
+                "android:get_usage_stats", android.os.Process.myUid(), context.packageName
+            )
+        }
         return mode == AppOpsManager.MODE_ALLOWED
     }
 

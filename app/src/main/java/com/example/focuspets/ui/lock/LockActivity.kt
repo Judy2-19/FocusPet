@@ -202,7 +202,7 @@ class LockActivity : AppCompatActivity() {
         if (FocusService.isRunning) return
         val m = binding.etCustomMinutes.text.toString().toIntOrNull()
         if (m == null || m < 1 || m > 180) {
-            Toast.makeText(this, "请输入 1~180 之间的分钟数", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_059), Toast.LENGTH_SHORT).show()
             return
         }
         selectedMinutes = m
@@ -216,16 +216,16 @@ class LockActivity : AppCompatActivity() {
         if (FocusService.isRunning) return
         // Confirm before starting: Start Lock actually locks; dismissing does not start the countdown.
         MaterialAlertDialogBuilder(this)
-            .setTitle("开始锁机专注？")
+            .setTitle(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_144))
             .setMessage(
-                "开始后手机将被锁定在本页面，无法主动退出；专注结束自动解锁。\n" +
+                com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_181) +
                 if (SettingsManager.getLockWhitelist(this).isNotEmpty())
-                    "已设置白名单：锁机期间可正常使用白名单内的应用，其余应用会被自动拉回。"
+                    com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_029)
                 else
-                    "未设置白名单：将使用系统级屏幕固定，把手机完全锁死在当前页面。"
+                    com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_113)
             )
-            .setPositiveButton("开始锁机") { _, _ -> beginLock() }
-            .setNegativeButton("不用了", null)
+            .setPositiveButton(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_142)) { _, _ -> beginLock() }
+            .setNegativeButton(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_119), null)
             .show()
     }
 
@@ -267,7 +267,7 @@ class LockActivity : AppCompatActivity() {
             action = FocusService.ACTION_START
             putExtra(FocusService.EXTRA_MINUTES, selectedMinutes)
             // Locked sessions use the default lock-mode content label in session records.
-            putExtra(FocusService.EXTRA_CONTENT, "锁机")
+            putExtra(FocusService.EXTRA_CONTENT, com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_096))
             // Whether allowlist soft monitoring is enabled.
             putExtra(FocusService.EXTRA_LOCK_MONITOR, useMonitor)
         }
@@ -281,10 +281,10 @@ class LockActivity : AppCompatActivity() {
     /** Guide the user to grant special Usage Access permission manually in Settings. */
     private fun promptUsagePermission() {
         MaterialAlertDialogBuilder(this)
-            .setTitle("需要「使用情况访问」权限")
-            .setMessage("锁机白名单需要读取前台应用来判断是否放行。请在接下来的设置页中，找到「专注养宠」并开启「使用情况访问」权限，然后返回重新点击「开始锁机专注」。")
-            .setPositiveButton("去授权") { _, _ -> UsageStatsPermission.openSettings(this) }
-            .setNegativeButton("取消", null)
+            .setTitle(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_174))
+            .setMessage(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_030))
+            .setPositiveButton(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_083)) { _, _ -> UsageStatsPermission.openSettings(this) }
+            .setNegativeButton(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_042), null)
             .show()
     }
 
@@ -293,10 +293,10 @@ class LockActivity : AppCompatActivity() {
     private fun confirmForceExit() {
         if (!forceExitAvailable()) return
         MaterialAlertDialogBuilder(this)
-            .setTitle("强制退出锁机？")
-            .setMessage("这是今天的最后一次强制退出机会，确定要解锁离开吗？")
-            .setPositiveButton("强制退出") { _, _ -> doForceExit() }
-            .setNegativeButton("继续专注", null)
+            .setTitle(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_077))
+            .setMessage(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_150))
+            .setPositiveButton(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_078)) { _, _ -> doForceExit() }
+            .setNegativeButton(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_090), null)
             .show()
     }
 
@@ -312,7 +312,7 @@ class LockActivity : AppCompatActivity() {
     }
 
     private fun onFinished(minutes: Int) {
-        binding.tvDoneSub.text = "+$minutes 积分"
+        binding.tvDoneSub.text = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_021 ,(minutes).toString())
         binding.overlayDone.visibility = View.VISIBLE
         binding.btnForceExit.visibility = View.GONE
         com.example.focuspets.util.AlertPlayer.play(this)
@@ -322,9 +322,9 @@ class LockActivity : AppCompatActivity() {
 
     private fun onFailed() {
         MaterialAlertDialogBuilder(this)
-            .setTitle("😿 专注失败")
-            .setMessage("本次专注没有完成。")
-            .setPositiveButton("知道了") { _, _ ->
+            .setTitle(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_191))
+            .setMessage(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_149))
+            .setPositiveButton(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_121)) { _, _ ->
                 releaseLock()
                 finish()
             }
@@ -349,12 +349,12 @@ class LockActivity : AppCompatActivity() {
         // Show forced exit only if today's allowance remains; hide after use and restore tomorrow.
         if (forceExitAvailable()) {
             binding.btnForceExit.visibility = View.VISIBLE
-            binding.btnForceExit.text = "强制退出（今日剩余 1 次）"
+            binding.btnForceExit.text = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_076)
         } else {
             binding.btnForceExit.visibility = View.GONE
         }
         binding.tvHint.visibility = View.GONE
-        binding.tvSubtitle.text = "锁机专注中…保持手机在本页面"
+        binding.tvSubtitle.text = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_097)
         if (remaining != null) {
             binding.tvRemaining.text = formatMillis(remaining)
             val percent = if (totalMillisAtStart > 0)
@@ -372,13 +372,13 @@ class LockActivity : AppCompatActivity() {
         binding.toggleDuration.visibility = View.VISIBLE
         binding.layoutCustom.visibility = View.VISIBLE
         binding.btnStart.visibility = View.VISIBLE
-        binding.btnStart.text = "开始锁机专注"
+        binding.btnStart.text = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_143)
         binding.btnStart.isEnabled = true
         binding.btnWhitelist.visibility = View.VISIBLE
         binding.btnExit.visibility = View.VISIBLE
         binding.btnForceExit.visibility = View.GONE
         binding.tvHint.visibility = View.VISIBLE
-        binding.tvSubtitle.text = "选择时长，开始锁机专注"
+        binding.tvSubtitle.text = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_047)
         binding.tvRemaining.text = formatMillis(selectedMinutes * 60_000L)
         binding.progressFocus.setProgress(0)
     }
@@ -390,7 +390,7 @@ class LockActivity : AppCompatActivity() {
         val path = if (petId == DogWardrobe.DOG_PET_ID) DogWardrobe.assetPath(ctx)
                    else CatWardrobe.assetPath(ctx)
         binding.ivCat.contentDescription =
-            if (petId == DogWardrobe.DOG_PET_ID) "专注中的小狗" else "专注中的小猫"
+            if (petId == DogWardrobe.DOG_PET_ID) com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_074) else com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_073)
         lifecycleScope.launch {
             val bmp = withContext(Dispatchers.IO) {
                 try {

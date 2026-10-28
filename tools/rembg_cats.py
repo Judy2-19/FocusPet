@@ -4,7 +4,7 @@ from pathlib import Path
 from PIL import Image, ImageFilter
 from rembg import remove
 
-BASE = Path("C:/Users/13671/Desktop/MobileApp")
+BASE = Path(__file__).resolve().parents[1]
 ASSET_DIR = BASE / "app" / "src" / "main" / "assets" / "cat"
 MAGENTA = (255, 0, 255)
 

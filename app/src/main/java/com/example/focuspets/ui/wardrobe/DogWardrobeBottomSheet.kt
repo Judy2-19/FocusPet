@@ -61,7 +61,7 @@ class DogWardrobeBottomSheet : BottomSheetDialogFragment() {
 
     private fun render() {
         if (_binding == null) return
-        binding.tvPoints.text = "可用积分 $points"
+        binding.tvPoints.text = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_033 ,(points).toString())
         buildTails()
         buildColors()
         buildOutfit()
@@ -107,7 +107,7 @@ class DogWardrobeBottomSheet : BottomSheetDialogFragment() {
             val text = when {
                 isEquipped -> "✓ $label"
                 isOwned -> label
-                else -> "$label ${DogWardrobe.COLOR_COST}分"
+                else -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_005 ,(label).toString(), (DogWardrobe.COLOR_COST).toString())
             }
             val btn = makeChip(text, isEquipped)
             btn.setOnClickListener {
@@ -140,7 +140,7 @@ class DogWardrobeBottomSheet : BottomSheetDialogFragment() {
         val ctx = requireContext()
         val tail = DogWardrobe.getEquippedTail(ctx)
         val color = DogWardrobe.getEquippedColor(ctx)
-        val outfitName = if (tail == "long") "礼服" else "西服"
+        val outfitName = if (tail == "long") com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_057) else com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_145)
 
         val tieOwned = owned.contains(DogWardrobe.TIE_ITEM_ID)
         val outfitOwned = owned.contains(DogWardrobe.OUTFIT_ITEM_ID)
@@ -153,9 +153,9 @@ class DogWardrobeBottomSheet : BottomSheetDialogFragment() {
         // Tie.
         val tieBtn = makeChip(
             when {
-                tieOn -> "✓ 红领带（点击脱下）"
-                tieOwned -> "红领带（点击穿上）"
-                else -> "红领带 ${DogWardrobe.TIE_COST}分"
+                tieOn -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_186)
+                tieOwned -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_131)
+                else -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_130 ,(DogWardrobe.TIE_COST).toString())
             }, tieOn
         )
         tieBtn.setOnClickListener {
@@ -184,9 +184,9 @@ class DogWardrobeBottomSheet : BottomSheetDialogFragment() {
         val outfitEnabled = tieOwned && DogWardrobe.outfitChangesImage(ctx, tail, color)
         val outfitBtn = makeChip(
             when {
-                outfitOn -> "✓ $outfitName（点击脱下）"
-                outfitOwned -> "$outfitName（点击穿上）"
-                else -> "$outfitName ${DogWardrobe.OUTFIT_COST}分"
+                outfitOn -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_183 ,(outfitName).toString())
+                outfitOwned -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_010 ,(outfitName).toString())
+                else -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_009 ,(outfitName).toString(), (DogWardrobe.OUTFIT_COST).toString())
             }, outfitOn
         )
         outfitBtn.isEnabled = outfitEnabled || outfitOwned
@@ -225,16 +225,16 @@ class DogWardrobeBottomSheet : BottomSheetDialogFragment() {
         val capEnabled = tieOwned && capChanges && (outfitOwned || !outfitChanges)
         binding.tvCapHint.visibility = if (capEnabled || capOwned) View.GONE else View.VISIBLE
         binding.tvCapHint.text = when {
-            !tieOwned -> "需要先购买红领带"
-            outfitChanges && !outfitOwned -> "需要先购买${outfitName}才能买学士帽"
-            !capChanges -> "当前颜色暂无学士帽立绘"
+            !tieOwned -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_041)
+            outfitChanges && !outfitOwned -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_039 ,(outfitName).toString())
+            !capChanges -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_117)
             else -> ""
         }
         val capBtn = makeChip(
             when {
-                capOn -> "✓ 学士帽（点击脱下）"
-                capOwned -> "学士帽（点击穿上）"
-                else -> "学士帽 ${DogWardrobe.CAP_COST}分"
+                capOn -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_184)
+                capOwned -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_082)
+                else -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_081 ,(DogWardrobe.CAP_COST).toString())
             }, capOn
         )
         capBtn.isEnabled = capEnabled || capOwned

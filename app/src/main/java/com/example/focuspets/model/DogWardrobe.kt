@@ -40,18 +40,18 @@ object DogWardrobe {
     const val CAP_ITEM_ID = "dog_cap"
 
     fun colorLabel(color: String) = when (color) {
-        "gray" -> "灰色"
-        "white" -> "白色"
-        "pink" -> "粉色"
-        "yellow" -> "黄色"
-        "black" -> "黑色"
-        "colorful" -> "彩色"
+        "gray" -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_084)
+        "white" -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_177)
+        "pink" -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_125)
+        "yellow" -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_179)
+        "black" -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_036)
+        "colorful" -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_105)
         else -> color
     }
 
     fun tailLabel(tail: String) = when (tail) {
-        "long" -> "长尾巴"
-        "short" -> "短尾巴"
+        "long" -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_098)
+        "short" -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_138)
         else -> tail
     }
 

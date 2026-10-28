@@ -37,10 +37,10 @@ class CatWardrobeViewModel(private val repository: PetRepository) : ViewModel() 
         viewModelScope.launch {
             val ok = repository.buyWardrobeItem(itemId, itemType, cost)
             if (ok) {
-                _message.value = "🎉 购买成功！-$cost 积分"
+                _message.value = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_187 ,(cost).toString())
                 onSuccess()
             } else {
-                _message.value = "积分不足，再专注一会儿吧"
+                _message.value = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_118)
             }
         }
     }
@@ -96,7 +96,7 @@ class CatWardrobeBottomSheet : BottomSheetDialogFragment() {
 
     private fun render() {
         if (_binding == null) return
-        binding.tvPoints.text = "可用积分 $points"
+        binding.tvPoints.text = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_033 ,(points).toString())
         buildColors()
         buildDress()
         buildCrowns()
@@ -115,7 +115,7 @@ class CatWardrobeBottomSheet : BottomSheetDialogFragment() {
             val text = when {
                 isEquipped -> "✓ $label"
                 isOwned -> label
-                else -> "$label ${CatWardrobe.COLOR_COST}分"
+                else -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_003 ,(label).toString(), (CatWardrobe.COLOR_COST).toString())
             }
             val btn = makeChip(text, isEquipped)
             btn.setOnClickListener {
@@ -152,9 +152,9 @@ class CatWardrobeBottomSheet : BottomSheetDialogFragment() {
         val isOwned = owned.contains(CatWardrobe.DRESS_ITEM_ID)
         val isEquipped = CatWardrobe.isDressEquipped(requireContext()) && isOwned
         val text = when {
-            isEquipped -> "✓ 红裙（点击脱下）"
-            isOwned -> "红裙（点击穿上）"
-            else -> "红裙 ${CatWardrobe.DRESS_COST}分"
+            isEquipped -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_185)
+            isOwned -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_129)
+            else -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_128 ,(CatWardrobe.DRESS_COST).toString())
         }
         val btn = makeChip(text, isEquipped)
         btn.setOnClickListener {
@@ -198,7 +198,7 @@ class CatWardrobeBottomSheet : BottomSheetDialogFragment() {
         }
         binding.tvCrownHint.visibility = if (dressOwned) View.GONE else View.VISIBLE
         binding.tvCrownHint.text =
-            if (dressOwned) "" else "需要先购买裙子才能买王冠"
+            if (dressOwned) "" else com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_040)
 
         val equippedCrown = CatWardrobe.getEquippedCrown(ctx)
         for (crown in options) {
@@ -208,7 +208,7 @@ class CatWardrobeBottomSheet : BottomSheetDialogFragment() {
             val text = when {
                 isEquipped -> "✓ $label"
                 isOwned -> label
-                else -> "$label ${CatWardrobe.CROWN_COST}分"
+                else -> com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_004 ,(label).toString(), (CatWardrobe.CROWN_COST).toString())
             }
             val btn = makeChip(text, isEquipped)
             btn.isEnabled = dressOwned || isOwned

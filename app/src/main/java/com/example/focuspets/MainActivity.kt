@@ -46,10 +46,10 @@ class MainActivity : AppCompatActivity() {
         // Do not immediately run normal initialization, which could crash again and hide the trace.
         FocusPetsApp.consumeLastCrash(this)?.let { trace ->
             AlertDialog.Builder(this)
-                .setTitle("上次崩溃信息（请截图发我）")
+                .setTitle(getString(com.example.focuspets.R.string.core_message_44))
                 .setMessage(trace)
                 .setCancelable(false)
-                .setPositiveButton("知道了") { _, _ -> finish() }
+                .setPositiveButton(getString(com.example.focuspets.R.string.core_message_17)) { _, _ -> finish() }
                 .show()
             return
         }
@@ -106,7 +106,7 @@ class MainActivity : AppCompatActivity() {
             // Disable bottom navigation during focus to prevent timer disruption and impossible-to-exit states.
             if (FocusService.isRunning) {
                 Toast.makeText(
-                    this, "请先结束当前专注，再进入锁机模式", Toast.LENGTH_SHORT
+                    this, getString(com.example.focuspets.R.string.core_message_45), Toast.LENGTH_SHORT
                 ).show()
                 return true
             }

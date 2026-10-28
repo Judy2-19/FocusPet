@@ -53,14 +53,14 @@ class FragmentCollection : Fragment() {
         binding.rvPets.adapter = adapter
 
         viewModel.availablePoints.observe(viewLifecycleOwner) {
-            binding.tvPoints.text = "可用积分 $it"
+            binding.tvPoints.text = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_032 ,(it).toString())
         }
         viewModel.uiState.observe(viewLifecycleOwner) { list ->
             adapter.submitList(list)
             // Debug button text, visible only in test builds, depends on whether all pets are unlocked.
             if (BuildConfig.DEBUG && BuildConfig.IS_TEST_BUILD) {
                 allUnlocked = list.isNotEmpty() && list.all { it.isUnlocked }
-                binding.btnDebugUnlock.text = if (allUnlocked) "🛠 重置进度" else "🛠 一键满配"
+                binding.btnDebugUnlock.text = if (allUnlocked) com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_192) else com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_193)
             }
         }
 
@@ -79,14 +79,14 @@ class FragmentCollection : Fragment() {
             // Debug: top up available points to one million.
             binding.btnDebugPoints.setOnClickListener {
                 DebugHelper.grantPoints(requireContext())
-                Toast.makeText(requireContext(), "💰 积分已补到 100 万", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_189), Toast.LENGTH_SHORT).show()
             }
         }
         viewModel.unlockEvent.observe(viewLifecycleOwner) { pet ->
             pet ?: return@observe
             Toast.makeText(
                 requireContext(),
-                "🎉 解锁成功：${pet.name}！",
+                com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_188 ,(com.example.focuspets.model.UiStrings.petName(pet.id, pet.name)).toString()),
                 Toast.LENGTH_SHORT
             ).show()
             viewModel.consumeUnlockEvent()
@@ -104,22 +104,22 @@ class FragmentCollection : Fragment() {
             }
 
             item.enoughPoints -> MaterialAlertDialogBuilder(requireContext())
-                .setTitle("解锁「${item.pet.name}」？")
+                .setTitle(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_169 ,(com.example.focuspets.model.UiStrings.petName(item.pet.id, item.pet.name)).toString()))
                 .setMessage(
-                    "是否花费 ${item.pet.unlockCost} 积分解锁？\n" +
-                        "当前可用积分：${item.availablePoints}"
+                    com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_140 ,(item.pet.unlockCost).toString()) +
+                        com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_034 ,(item.availablePoints).toString())
                 )
-                .setPositiveButton("解锁") { _, _ -> viewModel.unlockPet(item.pet) }
-                .setNegativeButton("再想想", null)
+                .setPositiveButton(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_171)) { _, _ -> viewModel.unlockPet(item.pet) }
+                .setNegativeButton(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_119), null)
                 .show()
 
             else -> MaterialAlertDialogBuilder(requireContext())
-                .setTitle("尚未解锁")
+                .setTitle(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_120))
                 .setMessage(
-                    "还差 ${item.pointsNeeded} 积分即可解锁「${item.pet.name}」，" +
-                        "继续专注吧！"
+                    com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_180 ,(item.pointsNeeded).toString(), (com.example.focuspets.model.UiStrings.petName(item.pet.id, item.pet.name)).toString()) +
+                        com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_089)
                 )
-                .setPositiveButton("加油", null)
+                .setPositiveButton(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_091), null)
                 .show()
         }
     }

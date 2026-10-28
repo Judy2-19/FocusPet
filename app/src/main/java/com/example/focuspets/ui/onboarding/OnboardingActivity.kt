@@ -136,7 +136,7 @@ class OnboardingActivity : AppCompatActivity() {
     private fun updateUi(index: Int) {
         dots.forEachIndexed { i, v -> v.background = dotDrawable(i == index) }
         val last = index == binding.flipper.childCount - 1
-        binding.btnNext.text = if (last) "开始体验" else "下一步"
+        binding.btnNext.text = if (last) com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_080) else com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_111)
         binding.btnSkip.visibility = if (last) View.GONE else View.VISIBLE
     }
 

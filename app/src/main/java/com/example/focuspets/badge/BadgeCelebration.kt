@@ -166,10 +166,10 @@ object BadgeCelebration {
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "image/png"
             putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_TITLE, "我的专注成就")
+            putExtra(Intent.EXTRA_TITLE, com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_106))
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        context.startActivity(Intent.createChooser(intent, "分享成就海报"))
+        context.startActivity(Intent.createChooser(intent, com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_136)))
     }
 
     /** Save the poster Bitmap in cache and expose it through a FileProvider content:// URI. */
@@ -226,8 +226,8 @@ object BadgeCelebration {
         )
 
         val cx = w / 2f
-        drawCenter(c, "专注养宠", cx, cardT + 96f, 46f, Color.parseColor("#FFB300"), bold = true)
-        drawCenter(c, "FOCUS · 成就达成", cx, cardT + 146f, 30f, Color.parseColor("#BDBDBD"), bold = false)
+        drawCenter(c, com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_071), cx, cardT + 96f, 46f, Color.parseColor("#FFB300"), bold = true)
+        drawCenter(c, com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_060), cx, cardT + 146f, 30f, Color.parseColor("#BDBDBD"), bold = false)
 
         // Large badge circle and emoji.
         val cy = cardT + 380f
@@ -242,14 +242,14 @@ object BadgeCelebration {
         val divY = cy + r + 220f
         c.drawLine(cx - 170f, divY, cx + 170f, divY,
             Paint().apply { color = Color.parseColor("#EEEEEE"); strokeWidth = 3f })
-        val nick = if (nickname.isNotBlank()) nickname else "专注者"
-        drawCenter(c, "$nick 达成了这个成就", cx, divY + 84f, 46f, Color.parseColor("#212121"), bold = true)
-        drawCenter(c, "$petEmoji 和它的专注伙伴一起成长", cx, divY + 146f, 40f, Color.parseColor("#9E9E9E"), bold = false)
+        val nick = if (nickname.isNotBlank()) nickname else com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_072)
+        drawCenter(c, com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_008 ,(nick).toString()), cx, divY + 84f, 46f, Color.parseColor("#212121"), bold = true)
+        drawCenter(c, com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_012 ,(petEmoji).toString()), cx, divY + 146f, 40f, Color.parseColor("#9E9E9E"), bold = false)
 
         // Footer.
         val dateStr = SimpleDateFormat("yyyy.MM.dd", Locale.getDefault()).format(Date())
         drawCenter(c, dateStr, cx, cardB - 76f, 30f, Color.parseColor("#BDBDBD"), bold = false)
-        drawCenter(c, "每一次专注，都在陪它长大", cx, cardB - 36f, 30f, Color.parseColor("#BDBDBD"), bold = false)
+        drawCenter(c, com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_086), cx, cardB - 36f, 30f, Color.parseColor("#BDBDBD"), bold = false)
 
         return bmp
     }

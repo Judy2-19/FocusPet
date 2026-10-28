@@ -1,19 +1,19 @@
-""" FocusPets: cut out the three new cat crown images from 图片/初始-猫/皇冠 into transparent PNGs under assets/cat/. The background is beige #FEF8EA (254,248,234); reuse v2 edge decontamination and light feathering. Match CatWardrobe.assetPathFor with cat/<color>_dress_<crown-color>.png."""
+""" FocusPets: cut out the three new cat crown images from artwork/starter-cat/crowns into transparent PNGs under assets/cat/. The background is beige #FEF8EA (254,248,234); reuse v2 edge decontamination and light feathering. Match CatWardrobe.assetPathFor with cat/<color>_dress_<crown-color>.png."""
 from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageFilter
 from rembg import remove
 
-BASE = Path("C:/Users/13671/Desktop/MobileApp")
-SRC = BASE / "图片" / "初始-猫" / "皇冠"
+BASE = Path(__file__).resolve().parents[1]
+SRC = BASE / "artwork" / "starter-cat" / "crowns"
 OUT = BASE / "app" / "src" / "main" / "assets" / "cat"
 BG = np.array([254, 248, 234], dtype=float)  # #FEF8EA
 
 MAPPING = {
-    "白-红裙-蓝冠.jpg": "white_dress_blue_crown.png",
-    "白-红裙-粉冠.jpg": "white_dress_pink_crown.png",
-    "灰-红裙-粉冠.jpg": "gray_dress_pink_crown.png",
+    "white-red-dress-blue-crown.jpg": "white_dress_blue_crown.png",
+    "white-red-dress-pink-crown.jpg": "white_dress_pink_crown.png",
+    "gray-red-dress-pink-crown.jpg": "gray_dress_pink_crown.png",
 }
 
 
@@ -38,7 +38,7 @@ def main():
     for src_name, out_name in MAPPING.items():
         jpg = SRC / src_name
         if not jpg.exists():
-            print("SKIP 缺失:", src_name)
+            print("SKIP missing:", src_name)
             continue
         img = Image.open(jpg).convert("RGB")
         out = remove(img).convert("RGBA")

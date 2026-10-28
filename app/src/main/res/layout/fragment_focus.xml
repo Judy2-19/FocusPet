@@ -24,7 +24,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="专注"
+                android:text="@string/ui_018"
                 android:textSize="22sp"
                 android:textStyle="bold"
                 android:textColor="@color/text_primary" />
@@ -34,7 +34,7 @@
                 style="?attr/materialButtonOutlinedStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="📊 记录"
+                android:text="@string/ui_150"
                 android:textSize="13sp"
                 android:paddingStart="14dp"
                 android:paddingEnd="14dp" />
@@ -59,7 +59,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="本次专注内容"
+                    android:text="@string/ui_089"
                     android:textSize="14sp"
                     android:textStyle="bold"
                     android:textColor="@color/text_primary" />
@@ -68,7 +68,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:hint="写代码 / 看书 / 写报告…">
+                    android:hint="@string/ui_043">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/et_focus_content"
@@ -84,7 +84,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:text="最近用过"
+                    android:text="@string/ui_084"
                     android:textSize="12sp"
                     android:textColor="@color/text_hint"
                     android:visibility="gone" />
@@ -105,7 +105,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="😿 宠物饿坏了…完成一次专注让它恢复健康"
+            android:text="@string/ui_159"
             android:textColor="#E53935"
             android:textSize="13sp"
             android:visibility="gone" />
@@ -120,14 +120,14 @@
             android:textSize="64sp"
             android:textStyle="bold"
             android:fontFamily="monospace"
-            android:contentDescription="剩余专注时间" />
+            android:contentDescription="@string/ui_047" />
 
         <TextView
             android:id="@+id/tv_subtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="选择时长，开始一次专注"
+            android:text="@string/ui_128"
             android:textColor="@color/text_hint"
             android:textSize="14sp" />
 
@@ -137,7 +137,7 @@
             android:layout_width="match_parent"
             android:layout_height="12dp"
             android:layout_marginTop="32dp"
-            android:contentDescription="专注进度" />
+            android:contentDescription="@string/ui_032" />
 
         <!-- Duration choices: 15, 25, or 45 minutes. -->
         <com.google.android.material.button.MaterialButtonToggleGroup
@@ -154,21 +154,21 @@
                 style="?attr/materialButtonOutlinedStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="15 分钟" />
+                android:text="@string/ui_005" />
 
             <Button
                 android:id="@+id/btn_25"
                 style="?attr/materialButtonOutlinedStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="25 分钟" />
+                android:text="@string/ui_006" />
 
             <Button
                 android:id="@+id/btn_45"
                 style="?attr/materialButtonOutlinedStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="45 分钟" />
+                android:text="@string/ui_007" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
         <!-- Custom duration. -->
@@ -183,7 +183,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="自定义分钟（1~180）">
+                android:hint="@string/ui_111">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_custom_minutes"
@@ -200,7 +200,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
-                android:text="应用" />
+                android:text="@string/ui_065" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_save_preset"
@@ -208,7 +208,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
-                android:text="⭐ 存为预设"
+                android:text="@string/ui_012"
                 android:textSize="13sp" />
         </LinearLayout>
 
@@ -218,7 +218,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:text="常用预设"
+            android:text="@string/ui_063"
             android:textSize="12sp"
             android:textColor="@color/text_hint"
             android:visibility="gone" />
@@ -237,7 +237,7 @@
             android:layout_width="match_parent"
             android:layout_height="60dp"
             android:layout_marginTop="40dp"
-            android:text="开始专注"
+            android:text="@string/ui_067"
             android:textSize="16sp"
             app:cornerRadius="30dp" />
 
@@ -246,7 +246,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="可用积分 0"
+            android:text="@string/ui_051"
             android:textSize="15sp"
             android:textStyle="bold" />
 
@@ -255,7 +255,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
             android:gravity="center"
-            android:text="🍅 专注期间请保持 App 在前台\n切后台超过 5 秒，本次专注将失败"
+            android:text="@string/ui_140"
             android:textColor="@color/text_hint"
             android:textSize="12sp" />
     </LinearLayout>

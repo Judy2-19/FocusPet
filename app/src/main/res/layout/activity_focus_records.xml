@@ -25,7 +25,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:padding="4dp"
-                android:text="‹ 返回"
+                android:text="@string/ui_008"
                 android:textSize="16sp"
                 android:textColor="@color/cat_accent" />
 
@@ -34,7 +34,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:text="专注记录"
+                android:text="@string/ui_030"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:textColor="@color/text_primary" />
@@ -71,7 +71,7 @@
                         style="?attr/borderlessButtonStyle"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
-                        android:contentDescription="上个月"
+                        android:contentDescription="@string/ui_014"
                         app:icon="@drawable/ic_chevron_left"
                         app:iconTint="@android:color/black"
                         android:insetLeft="0dp"
@@ -95,7 +95,7 @@
                         style="?attr/borderlessButtonStyle"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
-                        android:contentDescription="下个月"
+                        android:contentDescription="@string/ui_017"
                         app:icon="@drawable/ic_chevron_right"
                         app:iconTint="@android:color/black"
                         android:insetLeft="0dp"
@@ -114,7 +114,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="🔴 有记录的日期 · 点击查看当天专注事件"
+                    android:text="@string/ui_157"
                     android:textSize="12sp"
                     android:textColor="@color/text_hint" />
             </LinearLayout>
@@ -148,7 +148,7 @@
                         android:layout_width="44dp"
                         android:layout_height="44dp"
                         android:text=""
-                        android:contentDescription="上一时段"
+                        android:contentDescription="@string/ui_013"
                         app:icon="@drawable/ic_chevron_left"
                         app:iconTint="@android:color/black"
                         android:insetLeft="0dp"
@@ -173,7 +173,7 @@
                         android:layout_width="44dp"
                         android:layout_height="44dp"
                         android:text=""
-                        android:contentDescription="下一时段"
+                        android:contentDescription="@string/ui_015"
                         app:icon="@drawable/ic_chevron_right"
                         app:iconTint="@android:color/black"
                         android:insetLeft="0dp"
@@ -197,7 +197,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="日" />
+                        android:text="@string/ui_080" />
 
                     <Button
                         android:id="@+id/btn_p_week"
@@ -205,7 +205,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="周" />
+                        android:text="@string/ui_052" />
 
                     <Button
                         android:id="@+id/btn_p_month"
@@ -213,7 +213,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="月" />
+                        android:text="@string/ui_085" />
 
                     <Button
                         android:id="@+id/btn_p_year"
@@ -221,7 +221,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="年" />
+                        android:text="@string/ui_064" />
                 </com.google.android.material.button.MaterialButtonToggleGroup>
 
                 <TextView
@@ -230,7 +230,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:gravity="center"
-                    android:text="回到今天"
+                    android:text="@string/ui_054"
                     android:textSize="13sp"
                     android:textColor="@color/cat_accent" />
             </LinearLayout>
@@ -262,7 +262,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="本时段专注"
+                        android:text="@string/ui_088"
                         android:textSize="12sp"
                         android:textColor="@color/text_hint" />
 
@@ -271,7 +271,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="0 分钟"
+                        android:text="@string/ui_002"
                         android:textSize="22sp"
                         android:textStyle="bold"
                         android:textColor="@color/text_primary" />
@@ -297,7 +297,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="专注次数"
+                        android:text="@string/ui_027"
                         android:textSize="12sp"
                         android:textColor="@color/text_hint" />
 
@@ -306,7 +306,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="0 次"
+                        android:text="@string/ui_004"
                         android:textSize="22sp"
                         android:textStyle="bold"
                         android:textColor="@color/text_primary" />
@@ -333,7 +333,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="内容占比"
+                    android:text="@string/ui_042"
                     android:textSize="15sp"
                     android:textStyle="bold"
                     android:textColor="@color/text_primary" />
@@ -350,7 +350,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:layout_marginTop="12dp"
-                    android:text="分享饼图"
+                    android:text="@string/ui_045"
                     android:textSize="14sp" />
 
                 <androidx.recyclerview.widget.RecyclerView
@@ -383,7 +383,7 @@
                     android:id="@+id/tv_events_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="专注事件"
+                    android:text="@string/ui_021"
                     android:textSize="15sp"
                     android:textStyle="bold"
                     android:textColor="@color/text_primary" />
@@ -402,7 +402,7 @@
                     android:layout_gravity="center"
                     android:layout_marginTop="12dp"
                     android:layout_marginBottom="12dp"
-                    android:text="这一时段还没有专注记录，去专注一次吧～"
+                    android:text="@string/ui_122"
                     android:textSize="13sp"
                     android:textColor="@color/text_hint"
                     android:visibility="gone" />

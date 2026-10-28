@@ -43,7 +43,7 @@ class LegendAdapter : RecyclerView.Adapter<LegendAdapter.VH>() {
         fun bind(item: LegendItem) {
             b.dotColor.setBackgroundColor(item.color)
             b.tvLegendLabel.text = item.label
-            b.tvLegendMinutes.text = "${item.minutes} 分"
+            b.tvLegendMinutes.text = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_017 ,(item.minutes).toString())
             b.tvLegendPercent.text = "${item.percent}%"
         }
     }

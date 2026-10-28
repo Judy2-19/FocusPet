@@ -14,7 +14,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="专注排行榜"
+            android:text="@string/ui_024"
             android:textColor="@color/text_primary"
             android:textSize="20sp"
             android:textStyle="bold" />
@@ -23,7 +23,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="看看谁最专注，陪宠物长得最快"
+            android:text="@string/ui_105"
             android:textColor="@color/text_hint"
             android:textSize="12sp" />
 
@@ -39,7 +39,7 @@
                 android:id="@+id/tv_my_rank"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="我的排名：—"
+                android:text="@string/ui_074"
                 android:textColor="@color/text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -49,7 +49,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="我的积分：0"
+                android:text="@string/ui_075"
                 android:textColor="@color/text_hint"
                 android:textSize="13sp" />
 
@@ -58,7 +58,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="昵称：专注者"
+                android:text="@string/ui_083"
                 android:textColor="@color/text_hint"
                 android:textSize="13sp" />
         </LinearLayout>
@@ -75,7 +75,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="6dp"
-                android:text="刷新" />
+                android:text="@string/ui_046" />
 
             <Button
                 android:id="@+id/btn_rename"
@@ -83,7 +83,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="6dp"
-                android:text="修改昵称" />
+                android:text="@string/ui_038" />
         </LinearLayout>
 
         <androidx.recyclerview.widget.RecyclerView

@@ -36,13 +36,14 @@ object PetCardIcon {
         val (kind, uri) = buildIcon(context, pet, unlocked)
         val sb = StringBuilder()
         sb.append("{")
+        sb.append("\"language\":").append(jstr(com.example.focuspets.model.UiStrings.locale().toLanguageTag())).append(",")
         sb.append("\"id\":").append(pet.id).append(",")
-        sb.append("\"name\":").append(jstr(pet.name)).append(",")
+        sb.append("\"name\":").append(jstr(com.example.focuspets.model.UiStrings.petName(pet.id, pet.name))).append(",")
         sb.append("\"rarity\":").append(jstr(pet.rarity.name)).append(",")
         sb.append("\"locked\":").append(if (unlocked) "false" else "true").append(",")
         sb.append("\"unlockCost\":").append(pet.unlockCost).append(",")
         sb.append("\"kind\":").append(jstr(kind)).append(",")
-        sb.append("\"desc\":").append(jstr(cleanDesc(pet.description))).append(",")
+        sb.append("\"desc\":").append(jstr(cleanDesc(com.example.focuspets.model.UiStrings.petDescription(pet.id, pet.description)))).append(",")
         sb.append("\"imageDataUri\":").append(jstr(uri ?: ""))
         sb.append("}")
         return sb.toString()
@@ -153,8 +154,7 @@ object PetCardIcon {
 
     /** Remove development notes about missing artwork, leaving only the player-facing description. */
     private fun cleanDesc(s: String): String =
-        s.replace(Regex("（[^）]*(暂未实装|未实装|暂无立绘|待实装)[^）]*）"), "")
-            .replace(Regex("\\([^)]*(暂未实装|未实装|暂无立绘|待实装)[^)]*\\)"), "")
+        s.replace(Regex("\\([^)]*(not implemented|artwork unavailable|coming soon)[^)]*\\)", RegexOption.IGNORE_CASE), "")
             .trim()
 
     private fun jstr(s: String): String =

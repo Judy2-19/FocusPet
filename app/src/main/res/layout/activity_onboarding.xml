@@ -36,7 +36,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:gravity="center"
-                android:text="欢迎来到 专注养宠"
+                android:text="@string/ui_091"
                 android:textColor="@color/text_primary"
                 android:textSize="24sp"
                 android:textStyle="bold" />
@@ -46,7 +46,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
                 android:gravity="center"
-                android:text="用每一次专注，点亮属于你的小宠物"
+                android:text="@string/ui_101"
                 android:textColor="@color/text_hint"
                 android:textSize="15sp" />
 
@@ -56,7 +56,7 @@
                 android:layout_marginTop="28dp"
                 android:gravity="center"
                 android:lineSpacingExtra="4dp"
-                android:text="专注越久，积分越多，\n伙伴也会越来越开心 ✨"
+                android:text="@string/ui_031"
                 android:textColor="@color/text_hint"
                 android:textSize="14sp" />
         </LinearLayout>
@@ -74,7 +74,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"
-                android:text="怎么玩？"
+                android:text="@string/ui_072"
                 android:textColor="@color/text_primary"
                 android:textSize="22sp"
                 android:textStyle="bold" />
@@ -82,27 +82,27 @@
             <TextView
                 android:id="@+id/step1"
                 style="@style/OnboardingStep"
-                android:text="🍅 在「专注」页开始一次专注计时" />
+                android:text="@string/ui_141" />
 
             <TextView
                 android:id="@+id/step2"
                 style="@style/OnboardingStep"
-                android:text="✅ 完成后获得积分，宠物心情变好" />
+                android:text="@string/ui_011" />
 
             <TextView
                 android:id="@+id/step3"
                 style="@style/OnboardingStep"
-                android:text="📖 用积分在「图鉴」解锁更多伙伴" />
+                android:text="@string/ui_153" />
 
             <TextView
                 android:id="@+id/step4"
                 style="@style/OnboardingStep"
-                android:text="🔒 用「锁机」强制专注，还能给小猫换装" />
+                android:text="@string/ui_155" />
 
             <TextView
                 android:id="@+id/step5"
                 style="@style/OnboardingStep"
-                android:text="🏆 在「排行」里和朋友比比专注时长" />
+                android:text="@string/ui_144" />
         </LinearLayout>
 
         <!-- Page 3: choose background. -->
@@ -124,7 +124,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="选一个喜欢的背景色"
+                android:text="@string/ui_127"
                 android:textColor="@color/text_primary"
                 android:textSize="20sp"
                 android:textStyle="bold" />
@@ -133,7 +133,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="之后随时可以在首页「换背景」里改"
+                android:text="@string/ui_033"
                 android:textColor="@color/text_hint"
                 android:textSize="13sp" />
 
@@ -167,7 +167,7 @@
             android:paddingEnd="8dp"
             android:paddingTop="10dp"
             android:paddingBottom="10dp"
-            android:text="跳过"
+            android:text="@string/ui_119"
             android:textColor="@color/text_hint"
             android:textSize="15sp" />
 
@@ -183,7 +183,7 @@
             android:id="@+id/btn_next"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="下一步"
+            android:text="@string/ui_016"
             app:cornerRadius="22dp" />
     </LinearLayout>
 </LinearLayout>

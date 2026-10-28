@@ -72,7 +72,7 @@ class FragmentFocus : Fragment() {
     ) { granted ->
         if (granted) startFocus() else {
             Toast.makeText(
-                requireContext(), "没有通知权限，倒计时通知将无法显示", Toast.LENGTH_SHORT
+                requireContext(), getString(com.example.focuspets.R.string.core_message_3), Toast.LENGTH_SHORT
             ).show()
             startFocus()   // Timing still works without notification permission; only the notification is hidden.
         }
@@ -151,7 +151,7 @@ class FragmentFocus : Fragment() {
 
         // Room LiveData points update automatically when a session is inserted.
         viewModel.availablePoints.observe(viewLifecycleOwner) {
-            binding.tvPointsFocus.text = "可用积分 $it"
+            binding.tvPointsFocus.text = getString(com.example.focuspets.R.string.core_message_4, it)
         }
 
         // New-pet celebration event.
@@ -234,7 +234,7 @@ class FragmentFocus : Fragment() {
         val input = binding.etCustomMinutes.text.toString().trim()
         val minutes = input.toIntOrNull()
         if (minutes == null || minutes < 1 || minutes > 180) {
-            Toast.makeText(requireContext(), "请输入 1~180 之间的分钟数", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), getString(com.example.focuspets.R.string.core_message_5), Toast.LENGTH_SHORT).show()
             return
         }
         selectedMinutes = minutes
@@ -249,13 +249,13 @@ class FragmentFocus : Fragment() {
         if (FocusService.isRunning) return
         val content = binding.etFocusContent.text.toString().trim()
         if (content.isEmpty()) {
-            Toast.makeText(requireContext(), "请先填写专注内容再保存预设", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), getString(com.example.focuspets.R.string.core_message_6), Toast.LENGTH_SHORT).show()
             return
         }
         FocusPresetManager.savePreset(requireContext(), content, selectedMinutes)
         loadPresets()
         Toast.makeText(
-            requireContext(), "已保存预设：$content · ${selectedMinutes} 分钟", Toast.LENGTH_SHORT
+            requireContext(), getString(com.example.focuspets.R.string.core_message_7, content, selectedMinutes), Toast.LENGTH_SHORT
         ).show()
     }
 
@@ -280,10 +280,10 @@ class FragmentFocus : Fragment() {
         binding.tvPresetHint.visibility = View.VISIBLE
         for (p in presets) {
             val chip = Chip(requireContext()).apply {
-                text = "${p.content} · ${p.minutes}分"
+                text = getString(com.example.focuspets.R.string.core_message_8, p.content, p.minutes)
                 isCheckable = false
                 isCloseIconVisible = true
-                closeIconContentDescription = "删除预设 ${p.content}"
+                closeIconContentDescription = getString(com.example.focuspets.R.string.core_message_9, p.content)
                 setOnClickListener { applyPreset(p) }
                 setOnCloseIconClickListener {
                     FocusPresetManager.removePreset(requireContext(), p.content)
@@ -320,15 +320,15 @@ class FragmentFocus : Fragment() {
 
     private fun confirmCancel() {
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("放弃本次专注？")
-            .setMessage("已专注的时间不会计入积分")
-            .setPositiveButton("放弃") { _, _ ->
+            .setTitle(getString(com.example.focuspets.R.string.core_message_10))
+            .setMessage(getString(com.example.focuspets.R.string.core_message_11))
+            .setPositiveButton(getString(com.example.focuspets.R.string.core_message_12)) { _, _ ->
                 requireContext().startService(
                     Intent(requireContext(), FocusService::class.java)
                         .setAction(FocusService.ACTION_STOP)
                 )
             }
-            .setNegativeButton("继续专注", null)
+            .setNegativeButton(getString(com.example.focuspets.R.string.core_message_13), null)
             .show()
     }
 
@@ -339,7 +339,7 @@ class FragmentFocus : Fragment() {
         refreshPetMood()
         com.example.focuspets.util.AlertPlayer.play(requireContext())
         Toast.makeText(
-            requireContext(), "🍅 专注完成！+$minutes 积分", Toast.LENGTH_SHORT
+            requireContext(), getString(com.example.focuspets.R.string.core_message_14, minutes), Toast.LENGTH_SHORT
         ).show()
         // After settling points, check for newly affordable pets using the ViewModel query logic.
         viewModel.checkNewlyAffordablePets()
@@ -349,9 +349,9 @@ class FragmentFocus : Fragment() {
         renderIdle()
         refreshPetMood()
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("😿 专注失败")
-            .setMessage("你切走超过了 5 秒，本次专注没有完成。\n宠物饿坏了，快完成一次专注哄哄它吧！")
-            .setPositiveButton("知道了", null)
+            .setTitle(getString(com.example.focuspets.R.string.core_message_15))
+            .setMessage(getString(com.example.focuspets.R.string.core_message_16))
+            .setPositiveButton(getString(com.example.focuspets.R.string.core_message_17), null)
             .show()
     }
 
@@ -361,14 +361,14 @@ class FragmentFocus : Fragment() {
             pendingCelebration = pets
             return
         }
-        val lines = pets.joinToString("\n") { "${it.emoji} ${it.name}（${it.unlockCost} 积分）" }
+        val lines = pets.joinToString("\n") { getString(com.example.focuspets.R.string.core_message_18, it.emoji, com.example.focuspets.model.UiStrings.petName(it.id, it.name), it.unlockCost) }
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("🎉 恭喜！有新宠物可以解锁啦")
-            .setMessage("这次专注攒够了积分！快去图鉴领取你的新伙伴：\n\n$lines")
-            .setPositiveButton("去图鉴看看") { _, _ ->
+            .setTitle(getString(com.example.focuspets.R.string.core_message_19))
+            .setMessage(getString(com.example.focuspets.R.string.core_message_20, lines))
+            .setPositiveButton(getString(com.example.focuspets.R.string.core_message_21)) { _, _ ->
                 (activity as? MainActivity)?.navigateToCollection()
             }
-            .setNegativeButton("稍后再说", null)
+            .setNegativeButton(getString(com.example.focuspets.R.string.ui_106), null)
             .show()
         viewModel.consumeCelebration()
     }
@@ -376,12 +376,12 @@ class FragmentFocus : Fragment() {
     // ---------------- Rendering ----------------
 
     private fun renderRunning(remaining: Long?) {
-        binding.btnStart.text = "放弃专注"
+        binding.btnStart.text = getString(com.example.focuspets.R.string.core_message_22)
         binding.toggleDuration.isEnabled = false
         binding.etCustomMinutes.isEnabled = false
         binding.btnCustom.isEnabled = false
         binding.etFocusContent.isEnabled = false
-        binding.tvSubtitle.text = "专注中…请保持 App 在前台"
+        binding.tvSubtitle.text = getString(com.example.focuspets.R.string.core_message_23)
         if (remaining != null) {
             binding.tvRemaining.text = formatMillis(remaining)
             val percent = if (totalMillisAtStart > 0)
@@ -394,12 +394,12 @@ class FragmentFocus : Fragment() {
     }
 
     private fun renderIdle() {
-        binding.btnStart.text = "开始专注"
+        binding.btnStart.text = getString(com.example.focuspets.R.string.ui_067)
         binding.toggleDuration.isEnabled = true
         binding.etCustomMinutes.isEnabled = true
         binding.btnCustom.isEnabled = true
         binding.etFocusContent.isEnabled = true
-        binding.tvSubtitle.text = "选择时长，开始一次专注"
+        binding.tvSubtitle.text = getString(com.example.focuspets.R.string.ui_128)
         binding.tvRemaining.text = formatMillis(selectedMinutes * 60_000L)
         binding.progressFocus.setProgress(0)
     }
@@ -444,7 +444,7 @@ class FragmentFocus : Fragment() {
                 this.text = text
                 isCheckable = false
                 isCloseIconVisible = true
-                closeIconContentDescription = "删除 $text"
+                closeIconContentDescription = getString(com.example.focuspets.R.string.core_message_24, text)
                 setOnClickListener {
                     binding.etFocusContent.setText(text)
                     binding.etFocusContent.setSelection(text.length)
@@ -458,15 +458,15 @@ class FragmentFocus : Fragment() {
     /** Confirm deletion of all records for a recent content value, then refresh. */
     private fun confirmDeleteContent(content: String) {
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("删除专注内容？")
-            .setMessage("将删除所有「$content」的专注记录（含对应积分）。此操作不可撤销。")
-            .setPositiveButton("删除") { _, _ ->
+            .setTitle(getString(com.example.focuspets.R.string.core_message_25))
+            .setMessage(getString(com.example.focuspets.R.string.core_message_26, content))
+            .setPositiveButton(getString(com.example.focuspets.R.string.core_message_27)) { _, _ ->
                 lifecycleScope.launch(Dispatchers.IO) {
                     runCatching { repository.deleteRecordsByContent(content) }
                     withContext(Dispatchers.Main) { loadContentHistory() }
                 }
             }
-            .setNegativeButton("取消", null)
+            .setNegativeButton(getString(com.example.focuspets.R.string.core_message_28), null)
             .show()
     }
 

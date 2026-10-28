@@ -27,7 +27,7 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="返回"
+                android:contentDescription="@string/ui_121"
                 android:padding="10dp"
                 android:src="@drawable/ic_arrow_back" />
 
@@ -35,14 +35,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
-                android:text="设置"
+                android:text="@string/ui_115"
                 android:textColor="@color/text_primary"
                 android:textSize="20sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
         <!-- Account. -->
-        <TextView style="@style/SettingsSectionTitle" android:text="账号" />
+        <TextView style="@style/SettingsSectionTitle" android:text="@string/ui_116" />
 
         <com.google.android.material.card.MaterialCardView
             style="@style/SettingsCard"
@@ -69,12 +69,12 @@
 
                         <TextView
                             style="@style/SettingsLabel"
-                            android:text="昵称（排行榜显示）" />
+                            android:text="@string/ui_082" />
 
                         <TextView
                             android:id="@+id/tv_nickname"
                             style="@style/SettingsValue"
-                            android:text="专注者" />
+                            android:text="@string/ui_029" />
                     </LinearLayout>
 
                     <com.google.android.material.button.MaterialButton
@@ -82,7 +82,7 @@
                         style="?attr/materialButtonOutlinedStyle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="编辑"
+                        android:text="@string/ui_110"
                         app:cornerRadius="16dp" />
                 </LinearLayout>
 
@@ -103,12 +103,12 @@
 
                         <TextView
                             style="@style/SettingsLabel"
-                            android:text="云端账号" />
+                            android:text="@string/ui_034" />
 
                         <TextView
                             android:id="@+id/tv_uid"
                             style="@style/SettingsValue"
-                            android:text="匿名账号" />
+                            android:text="@string/ui_049" />
                     </LinearLayout>
 
                     <com.google.android.material.button.MaterialButton
@@ -116,19 +116,19 @@
                         style="?attr/materialButtonOutlinedStyle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="注销"
+                        android:text="@string/ui_093"
                         android:textColor="#E53935"
                         app:cornerRadius="16dp" />
                 </LinearLayout>
 
                 <TextView
                     style="@style/SettingsHint"
-                    android:text="本应用为匿名登录，注销会清除本机绑定的云端身份，下次启动生成新的匿名账号（本地进度保留）。" />
+                    android:text="@string/ui_087" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <!-- Data and progress. -->
-        <TextView style="@style/SettingsSectionTitle" android:text="数据与进度" />
+        <TextView style="@style/SettingsSectionTitle" android:text="@string/ui_077" />
 
         <com.google.android.material.card.MaterialCardView
             style="@style/SettingsCard"
@@ -142,11 +142,11 @@
 
                 <TextView
                     style="@style/SettingsLabel"
-                    android:text="重置进度" />
+                    android:text="@string/ui_134" />
 
                 <TextView
                     style="@style/SettingsHint"
-                    android:text="清空全部专注记录、已解锁图鉴、猫咪妆扮与心情状态，回到刚安装的状态；同时会注销云端账号，避免云端把旧数据同步回来。此操作不可撤销。" />
+                    android:text="@string/ui_098" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_reset"
@@ -154,14 +154,14 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:text="⚠️ 重置进度"
+                    android:text="@string/ui_010"
                     android:textColor="#E53935"
                     app:cornerRadius="16dp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <!-- Lock mode. -->
-        <TextView style="@style/SettingsSectionTitle" android:text="锁机" />
+        <TextView style="@style/SettingsSectionTitle" android:text="@string/ui_135" />
 
         <com.google.android.material.card.MaterialCardView
             style="@style/SettingsCard"
@@ -182,11 +182,11 @@
 
                     <TextView
                         style="@style/SettingsLabel"
-                        android:text="锁机时使用系统屏幕固定" />
+                        android:text="@string/ui_136" />
 
                     <TextView
                         style="@style/SettingsHint"
-                        android:text="开启后锁机会触发系统「应用已固定」提示（需手动确认）；关闭则用普通全屏锁定，无系统弹窗，但可按 Home 退出。" />
+                        android:text="@string/ui_066" />
                 </LinearLayout>
 
                 <com.google.android.material.switchmaterial.SwitchMaterial
@@ -196,8 +196,47 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Language. -->
+        <TextView style="@style/SettingsSectionTitle" android:text="@string/language_title" />
+
+        <com.google.android.material.card.MaterialCardView
+            style="@style/SettingsCard"
+            app:cardCornerRadius="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="14dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/SettingsLabel"
+                        android:text="@string/language_title" />
+
+                    <TextView
+                        android:id="@+id/tv_language"
+                        style="@style/SettingsValue" />
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_language"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ui_110"
+                    app:cornerRadius="16dp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- Alerts. -->
-        <TextView style="@style/SettingsSectionTitle" android:text="结束提醒" />
+        <TextView style="@style/SettingsSectionTitle" android:text="@string/ui_108" />
 
         <com.google.android.material.card.MaterialCardView
             style="@style/SettingsCard"
@@ -211,18 +250,18 @@
 
                 <TextView
                     style="@style/SettingsLabel"
-                    android:text="专注 / 锁机结束时" />
+                    android:text="@string/ui_019" />
 
                 <TextView
                     style="@style/SettingsHint"
-                    android:text="选择结束时如何提醒你（铃声、震动二选一，或两者皆无）。" />
+                    android:text="@string/ui_130" />
 
                 <com.google.android.material.button.MaterialButtonToggleGroup
                     android:id="@+id/alert_toggle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:contentDescription="结束提醒方式"
+                    android:contentDescription="@string/ui_109"
                     app:singleSelection="true"
                     app:selectionRequired="true">
 
@@ -232,7 +271,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="仅震动"
+                        android:text="@string/ui_035"
                         app:cornerRadius="12dp" />
 
                     <com.google.android.material.button.MaterialButton
@@ -241,7 +280,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="默认铃声"
+                        android:text="@string/ui_139"
                         app:cornerRadius="12dp" />
 
                     <com.google.android.material.button.MaterialButton
@@ -250,7 +289,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="自定义音频"
+                        android:text="@string/ui_112"
                         app:cornerRadius="12dp" />
 
                     <com.google.android.material.button.MaterialButton
@@ -259,7 +298,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="关闭"
+                        android:text="@string/ui_040"
                         app:cornerRadius="12dp" />
                 </com.google.android.material.button.MaterialButtonToggleGroup>
 
@@ -277,7 +316,7 @@
                         style="?attr/materialButtonOutlinedStyle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="选择音频文件"
+                        android:text="@string/ui_131"
                         app:cornerRadius="16dp" />
 
                     <TextView
@@ -290,7 +329,7 @@
         </com.google.android.material.card.MaterialCardView>
 
         <!-- Onboarding. -->
-        <TextView style="@style/SettingsSectionTitle" android:text="引导" />
+        <TextView style="@style/SettingsSectionTitle" android:text="@string/ui_069" />
 
         <com.google.android.material.card.MaterialCardView
             style="@style/SettingsCard"
@@ -311,11 +350,11 @@
 
                     <TextView
                         style="@style/SettingsLabel"
-                        android:text="新手引导" />
+                        android:text="@string/ui_079" />
 
                     <TextView
                         style="@style/SettingsValue"
-                        android:text="重新查看三页使用说明" />
+                        android:text="@string/ui_133" />
                 </LinearLayout>
 
                 <com.google.android.material.button.MaterialButton
@@ -323,13 +362,13 @@
                     style="?attr/materialButtonOutlinedStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="查看"
+                    android:text="@string/ui_090"
                     app:cornerRadius="16dp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <!-- Appearance. -->
-        <TextView style="@style/SettingsSectionTitle" android:text="外观" />
+        <TextView style="@style/SettingsSectionTitle" android:text="@string/ui_055" />
 
         <com.google.android.material.card.MaterialCardView
             style="@style/SettingsCard"
@@ -343,18 +382,18 @@
 
                 <TextView
                     style="@style/SettingsLabel"
-                    android:text="深色模式" />
+                    android:text="@string/ui_096" />
 
                 <TextView
                     style="@style/SettingsHint"
-                    android:text="可手动切换浅色 / 深色，或跟随系统设置" />
+                    android:text="@string/ui_050" />
 
                 <com.google.android.material.button.MaterialButtonToggleGroup
                     android:id="@+id/theme_toggle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:contentDescription="深色模式切换：跟随系统、浅色或深色"
+                    android:contentDescription="@string/ui_097"
                     app:singleSelection="true"
                     app:selectionRequired="true">
 
@@ -364,7 +403,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="跟随系统"
+                        android:text="@string/ui_118"
                         app:cornerRadius="12dp" />
 
                     <com.google.android.material.button.MaterialButton
@@ -373,7 +412,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="浅色"
+                        android:text="@string/ui_094"
                         app:cornerRadius="12dp" />
 
                     <com.google.android.material.button.MaterialButton
@@ -382,14 +421,14 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="深色"
+                        android:text="@string/ui_095"
                         app:cornerRadius="12dp" />
                 </com.google.android.material.button.MaterialButtonToggleGroup>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <!-- About. -->
-        <TextView style="@style/SettingsSectionTitle" android:text="关于" />
+        <TextView style="@style/SettingsSectionTitle" android:text="@string/ui_039" />
 
         <com.google.android.material.card.MaterialCardView
             style="@style/SettingsCard"
@@ -403,11 +442,11 @@
 
                 <TextView
                     style="@style/SettingsLabel"
-                    android:text="专注养宠 v1.0" />
+                    android:text="@string/ui_022" />
 
                 <TextView
                     style="@style/SettingsHint"
-                    android:text="专注数据保存在本机；开启云端同步后会镜像到自建后端，用于跨设备与排行榜。" />
+                    android:text="@string/ui_025" />
 
                 <TextView
                     android:id="@+id/tv_version"

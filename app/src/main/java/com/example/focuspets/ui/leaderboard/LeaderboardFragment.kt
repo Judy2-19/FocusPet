@@ -38,7 +38,7 @@ class LeaderboardFragment : Fragment() {
         binding.rvLeaderboard.layoutManager = LinearLayoutManager(requireContext())
         binding.rvLeaderboard.adapter = adapter
 
-        binding.tvMyName.text = "昵称：${CloudSyncManager.currentName()}"
+        binding.tvMyName.text = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_112 ,(CloudSyncManager.currentName()).toString())
 
         binding.btnRefresh.setOnClickListener { vm.refresh() }
         binding.btnRename.setOnClickListener { showRenameDialog() }
@@ -47,8 +47,8 @@ class LeaderboardFragment : Fragment() {
             result ?: return@observe
             adapter.submit(result.list)
             binding.tvMyRank.text =
-                if (result.me?.rank != null) "我的排名：#${result.me.rank}" else "我的排名：未上榜"
-            binding.tvMyPoints.text = "我的积分：${result.me?.totalPoints ?: 0}"
+                if (result.me?.rank != null) com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_109 ,(result.me.rank).toString()) else com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_110)
+            binding.tvMyPoints.text = com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_108 ,(result.me?.totalPoints ?: 0).toString())
         }
         vm.status.observe(viewLifecycleOwner) { binding.tvStatus.text = it }
     }
@@ -59,13 +59,13 @@ class LeaderboardFragment : Fragment() {
             setText(CloudSyncManager.currentName())
         }
         AlertDialog.Builder(requireContext())
-            .setTitle("修改昵称")
+            .setTitle(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_044))
             .setView(edit)
-            .setPositiveButton("确定") { _, _ ->
+            .setPositiveButton(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_121)) { _, _ ->
                 val name = edit.text.toString().trim()
                 if (name.isNotEmpty()) vm.rename(name)
             }
-            .setNegativeButton("取消", null)
+            .setNegativeButton(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_042), null)
             .show()
     }
 

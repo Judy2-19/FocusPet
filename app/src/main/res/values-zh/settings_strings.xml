@@ -1,0 +1,28 @@
+<resources>
+    <string name="settings_message_0">已设置自定义提醒音频</string>
+    <string name="settings_message_1">版本 %1$s</string>
+    <string name="settings_message_2">未登录（离线或同步未初始化）</string>
+    <string name="settings_message_3">匿名账号 ····%1$s</string>
+    <string name="settings_message_4">2-12 个字符</string>
+    <string name="settings_message_5">修改昵称</string>
+    <string name="settings_message_6">取消</string>
+    <string name="settings_message_7">保存</string>
+    <string name="settings_message_8">昵称至少 2 个字符</string>
+    <string name="settings_message_9">昵称已更新：%1$s</string>
+    <string name="settings_message_10">注销云端账号？</string>
+    <string name="settings_message_11">会清除本机绑定的匿名云端身份，下次启动将生成一个新的匿名账号。\n\n</string>
+    <string name="settings_message_12">本机进度（专注记录、图鉴、妆扮）不会被删除。</string>
+    <string name="settings_message_13">确认注销</string>
+    <string name="settings_message_14">已注销，下次启动以新匿名账号同步</string>
+    <string name="settings_message_15">重置全部进度？</string>
+    <string name="settings_message_16">将清空：\n</string>
+    <string name="settings_message_17">· 全部专注记录与积分\n</string>
+    <string name="settings_message_18">· 已解锁的宠物图鉴（仅保留初始那只）\n</string>
+    <string name="settings_message_19">· 猫咪妆扮购买记录\n</string>
+    <string name="settings_message_20">· 宠物心情状态\n\n</string>
+    <string name="settings_message_21">同时会注销云端账号，避免旧数据被同步回来。\n此操作不可撤销。</string>
+    <string name="settings_message_22">确认重置</string>
+    <string name="settings_message_23">进度已重置，回到初始状态</string>
+    <string name="settings_message_24">已选择自定义音频</string>
+    <string name="settings_message_25">尚未选择文件</string>
+</resources>

@@ -35,7 +35,7 @@ class BadgeAdapter : RecyclerView.Adapter<BadgeAdapter.BadgeVH>() {
         fun bind(item: AchievementBadge) {
             b.tvEmoji.text = if (item.unlocked) item.emoji else "\uD83D\uDD12"
             b.tvTitle.text = item.title
-            b.tvDesc.text = if (item.unlocked) item.desc else "连续 ${item.target} 天解锁"
+            b.tvDesc.text = if (item.unlocked) item.desc else com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_170 ,(item.target).toString())
 
             val pct = (item.progress.toFloat() / item.target.coerceAtLeast(1))
                 .coerceIn(0f, 1f)

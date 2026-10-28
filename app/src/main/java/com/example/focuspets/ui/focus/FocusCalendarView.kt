@@ -22,7 +22,7 @@ class FocusCalendarView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : LinearLayout(context, attrs, defStyleAttr) {
 
-    private val weekLabels = listOf("日", "一", "二", "三", "四", "五", "六")
+    private val weekLabels = listOf(com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_146), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_102), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_156), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_176), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_152), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_079), com.example.focuspets.model.UiStrings.text(com.example.focuspets.R.string.dynamic_134))
     private val density = context.resources.displayMetrics.density
 
     private var year = 0
