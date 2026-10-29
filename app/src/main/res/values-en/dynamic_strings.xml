@@ -75,7 +75,7 @@
     <string name="dynamic_073">Focusing cat</string>
     <string name="dynamic_074">Focusing dog</string>
     <string name="dynamic_075">Focusing… Keep the app open 🐣</string>
-    <string name="dynamic_076">Force exit (1 remaining today)</string>
+    <string name="dynamic_076">Exit lock mode</string>
     <string name="dynamic_077">Force exit lock mode?</string>
     <string name="dynamic_078">Force exit</string>
     <string name="dynamic_079">Fri</string>
@@ -149,7 +149,7 @@
     <string name="dynamic_147">Test points</string>
     <string name="dynamic_148">The ultimate collection reward</string>
     <string name="dynamic_149">This focus session was not completed.</string>
-    <string name="dynamic_150">This is your last force exit today. Unlock and leave?</string>
+    <string name="dynamic_150">Leaving early deducts 10 points (or your remaining balance) and earns no reward. Unlock and leave?</string>
     <string name="dynamic_151">Three-day streak</string>
     <string name="dynamic_152">Thu</string>
     <string name="dynamic_153">Thunder Hound</string>
@@ -185,3 +185,5 @@
     <string name="dynamic_192">🛠 Reset progress</string>
     <string name="dynamic_193">🛠 Unlock all</string>
 </resources>
+
+

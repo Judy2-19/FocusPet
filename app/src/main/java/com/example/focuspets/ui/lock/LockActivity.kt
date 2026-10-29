@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.BitmapFactory
+import android.view.WindowManager
 import android.os.Bundle
 import android.os.PowerManager
 import android.view.View
@@ -52,7 +53,7 @@ class LockActivity : AppCompatActivity() {
 
     /** Whether today's once-daily forced exit remains available; resets the next day. */
     private fun forceExitAvailable(): Boolean =
-        SettingsManager.getLockForceExitDate(this) != todayStr()
+        true
 
     private val timerReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -76,6 +77,13 @@ class LockActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityLockBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        window.statusBarColor = ContextCompat.getColor(this, R.color.page_background)
+        window.navigationBarColor = ContextCompat.getColor(this, R.color.page_background)
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+        if (android.os.Build.VERSION.SDK_INT >= 28) window.attributes = window.attributes.apply {
+            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
 
         // Reset locking flags because singleTask reuses this Activity across sessions.
         exiting = false
@@ -161,7 +169,7 @@ class LockActivity : AppCompatActivity() {
                 finish()
                 return
             }
-            // Prevent exiting during locked focus; soft monitoring also returns from disallowed apps.
+            confirmForceExit()
         }
     }
 
@@ -302,13 +310,12 @@ class LockActivity : AppCompatActivity() {
 
     private fun doForceExit() {
         // Record today's forced exit; it becomes available again tomorrow.
-        SettingsManager.setLockForceExitDate(this, todayStr())
+        
         // Stop the underlying focus timer; the service also stops monitoring.
         startService(
             Intent(this, FocusService::class.java).setAction(FocusService.ACTION_STOP)
         )
         releaseLock()
-        finish()
     }
 
     private fun onFinished(minutes: Int) {
@@ -367,6 +374,11 @@ class LockActivity : AppCompatActivity() {
     }
 
     private fun renderIdle() {
+        WindowCompat.getInsetsController(window, window.decorView).apply {
+            show(WindowInsetsCompat.Type.systemBars())
+            isAppearanceLightStatusBars = true
+            isAppearanceLightNavigationBars = true
+        }
         binding.overlayDone.visibility = View.GONE
         // Idle allows exit, duration configuration, and allowlist setup before locking.
         binding.toggleDuration.visibility = View.VISIBLE
@@ -408,3 +420,6 @@ class LockActivity : AppCompatActivity() {
         return "%02d:%02d".format(s / 60, s % 60)
     }
 }
+
+
+

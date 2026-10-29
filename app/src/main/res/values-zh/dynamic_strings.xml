@@ -75,7 +75,7 @@
     <string name="dynamic_073">专注中的小猫</string>
     <string name="dynamic_074">专注中的小狗</string>
     <string name="dynamic_075">专注中…不要切走哦 🐣</string>
-    <string name="dynamic_076">强制退出（今日剩余 1 次）</string>
+    <string name="dynamic_076">Exit lock mode</string>
     <string name="dynamic_077">强制退出锁机？</string>
     <string name="dynamic_078">强制退出</string>
     <string name="dynamic_079">五</string>
@@ -149,7 +149,7 @@
     <string name="dynamic_147">测试积分</string>
     <string name="dynamic_148">集齐所有图鉴后的终极奖励</string>
     <string name="dynamic_149">本次专注没有完成。</string>
-    <string name="dynamic_150">这是今天的最后一次强制退出机会，确定要解锁离开吗？</string>
+    <string name="dynamic_150">Leaving early deducts 10 points (or your remaining balance) and earns no reward. Unlock and leave?</string>
     <string name="dynamic_151">三日之约</string>
     <string name="dynamic_152">四</string>
     <string name="dynamic_153">雷电犬</string>
@@ -185,3 +185,5 @@
     <string name="dynamic_192">🛠 重置进度</string>
     <string name="dynamic_193">🛠 一键满配</string>
 </resources>
+
+

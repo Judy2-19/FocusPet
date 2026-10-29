@@ -88,6 +88,7 @@ class FocusService : Service() {
     private var countdown: CountDownTimer? = null
     private var totalMillis = 0L
     /** Session content passed by the UI through EXTRA_CONTENT at startup and saved on completion. */
+    private var lockedSession = false
     private var focusContent: String = ""
 
     // Allowlist monitoring state: detect foreground apps and bring the lock page back for disallowed apps.
@@ -123,6 +124,7 @@ class FocusService : Service() {
     private fun startTimer(minutes: Int, content: String, enableMonitor: Boolean = false) {
         if (isRunning) return
         totalMillis = minutes * 60_000L
+        lockedSession = lockActive
         focusContent = content.trim()
         isRunning = true
 
@@ -156,7 +158,7 @@ class FocusService : Service() {
                     focusDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()),
                     content = focusContent,
                     durationMinutes = minutes,
-                    points = minutes
+                    points = minutes * if (lockedSession) 2 else 1
                 )
             )
             // 2. Restore pet health and increment the success streak in the mood state machine.
@@ -190,8 +192,19 @@ class FocusService : Service() {
         countdown?.cancel()
         isRunning = false
         stopMonitor()
-        send(BROADCAST_CANCELLED)
-        stopSelf()
+        serviceScope.launch {
+            if (lockedSession) {
+                val db = AppDatabase.getInstance(applicationContext)
+                val penalty = minOf(10, db.userCollectionDao().getAvailablePointsOnce().coerceAtLeast(0))
+                if (penalty > 0) db.focusRecordDao().insert(FocusRecordEntity(
+                    focusDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()),
+                    content = focusContent, durationMinutes = 0, points = -penalty
+                ))
+                CloudSyncManager.notifyChanged()
+            }
+            send(BROADCAST_CANCELLED)
+            stopSelf()
+        }
     }
 
     override fun onDestroy() {
@@ -312,3 +325,5 @@ class FocusService : Service() {
         sendBroadcast(Intent(action).setPackage(packageName).apply(configurator))
     }
 }
+
+
